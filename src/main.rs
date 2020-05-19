@@ -1,6 +1,6 @@
 extern crate rustnomial;
 
-use rustnomial::rustnomial::polynomial::Polynomial;
+use rustnomial::Polynomial;
 use std::any::Any;
 
 fn main() {
