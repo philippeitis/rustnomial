@@ -1,0 +1,16 @@
+[package]
+name = "rustnomial"
+version = "0.0.1"
+authors = ["Philippe Solodov <solop1906@gmail.com>"]
+
+[lib]
+name = "rustnomial"
+path = "src/lib.rs"
+
+[[bin]]
+name = "main"
+path = "src/main.rs"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
