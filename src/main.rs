@@ -1,14 +1,26 @@
 extern crate rustnomial;
+extern crate core;
 
 use rustnomial::Polynomial;
 use std::any::Any;
+use std::io::Result;
 
 fn main() {
-    let a = Polynomial::new(vec![1, 2, 3, 4, 5]);
+    let a = Polynomial::new(vec![1, 6, 12, 8]);
+    let b = Polynomial::new(vec![1, 1, 1, 1, 1]);
+    let res = a.div_mod(&b);
     println!("{}", a);
-    println!("{:?}", 1.type_id());
-    let mut ap = Polynomial::new(vec![]);
-    ap.terms = vec![0; 10];
-    ap.trim();
-    println!("{}", ap.terms.len());
+    println!("{}", b);
+    match res {
+        Ok((c, d)) => {
+            println!("Div successful.");
+            println!("{}", c);
+            println!("{}", d);
+        }
+        _ => {
+            println!("Div unsuccessful.");
+        }
+    }
+
+
 }

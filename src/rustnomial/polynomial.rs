@@ -1,6 +1,7 @@
 use std::ops;
 use std::fmt;
 use std::ops::Mul;
+use std::fmt::Error;
 
 //trait GenericPolynomial {
 //    fn add_term(&self, term: &Add, deg: usize) {
@@ -84,6 +85,7 @@ impl Iterator for PolynomialDegreeIterator<'_> {
     }
 }
 
+
 fn first_nonzero_index(terms: &Vec<i32>) -> usize {
     let mut ind = 0;
     while (ind < terms.len()) && (terms[ind] == 0) {
@@ -107,6 +109,27 @@ fn vec_mul(_lhs: &Vec<i32>, _rhs: &Vec<i32>) -> Vec<i32> {
     terms
 }
 
+fn degree(val: &Vec<i32>) -> usize {
+    for ind in 0..val.len() {
+        if val[ind] != 0 {
+            return val.len() - ind - 1;
+        }
+    }
+
+    0
+}
+
+fn degree_and_first_val(val: &Vec<i32>) -> (usize, i32) {
+    for ind in 0..val.len() {
+        if val[ind] != 0 {
+            return (val.len() - ind - 1, val[ind]);
+        }
+    }
+
+    (0, 0)
+}
+
+
 impl Polynomial {
     pub fn new(terms: Vec<i32>) -> Polynomial {
         let first_non_zero = first_nonzero_index(&terms);
@@ -125,13 +148,7 @@ impl Polynomial {
     }
 
     pub fn degree(&self) -> usize {
-        for ind in 0..self.terms.len() {
-            if self.terms[ind] != 0 {
-                return self.terms.len() - ind - 1;
-            }
-        }
-
-        0
+        degree(&self.terms)
     }
 
     pub fn trim(&mut self) {
@@ -204,6 +221,58 @@ impl Polynomial {
         } else {
             self.borrow_mul(&self.exp(exp - 1))
         }
+    }
+
+    pub fn div_mod(&self, _rhs: &Polynomial) -> Result<(Polynomial, Polynomial), &'static str> {
+        // fn vec_sub(_lhs: &mut Vec<i32>, _rhs: Vec<i32>) {
+        //     for (_lhs_t, _rhs_t) in _lhs[_lhs.len() - _rhs.len()..].iter_mut().zip(_rhs) {
+        //         *_lhs_t -= _rhs_t;
+        //     }
+        // }
+
+        fn vec_sub_w_scale(_lhs: &mut Vec<i32>, _lhs_degree: usize, _rhs: &Vec<i32>, _rhs_deg: usize, _rhs_scale: i32) {
+            let loc = _lhs.len() - _lhs_degree - 1;
+            for (_lhs_t, _rhs_t) in _lhs[loc..].iter_mut().zip(_rhs) {
+                *_lhs_t -= (*_rhs_t) * _rhs_scale;
+            }
+        }
+
+        let (_rhs_deg, _rhs_first) = degree_and_first_val(&_rhs.terms);
+
+        if _rhs_deg == 0 {
+            match _rhs.terms.first() {
+                None => {
+                return Err("Can't divide by 0.");
+                }
+                Some(&x) => {
+                    if x == 0 {
+                        return Err("Can't divide by 0.");
+                    }
+                }
+            }
+        }
+
+        let (mut self_degree, mut term) = degree_and_first_val(&self.terms);
+
+        if self_degree < _rhs_deg {
+            let zero_vec = vec![0; 1];
+            return Ok((Polynomial::new(zero_vec), Polynomial::new(self.terms.clone())));
+        }
+
+        let mut remainder = self.terms.clone();
+        let offset = self_degree - _rhs_deg;
+        let mut div = vec![0; offset + 1];
+
+        while self_degree >= _rhs_deg {
+            let scale = term / _rhs_first;
+            vec_sub_w_scale(&mut remainder, self_degree, &_rhs.terms, _rhs_deg, scale);
+            div[offset - (self_degree - _rhs_deg)] = scale;
+            let (sd, t) = degree_and_first_val(&remainder);
+            self_degree = sd;
+            term = t;
+        }
+
+        Ok((Polynomial::new(div), Polynomial::new(remainder)))
     }
 }
 
