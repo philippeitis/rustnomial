@@ -14,8 +14,8 @@ fn main() {
     match res {
         Ok((c, d)) => {
             println!("Div successful.");
-            println!("{}", c);
-            println!("{}", d);
+            println!("{}, {}", c, c.is_zero());
+            println!("{}, {}", d, d.is_zero());
         }
         _ => {
             println!("Div unsuccessful.");

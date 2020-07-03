@@ -158,6 +158,21 @@ impl Polynomial {
         };
     }
 
+    pub fn is_zero(&self) -> bool {
+        if self.degree() == 0 {
+            return match self.terms.last() {
+                None => {
+                    true
+                }
+                Some(&x) => {
+                    x == 0
+                }
+            }
+        }
+
+        false
+    }
+
     pub fn iter(&self) -> PolynomialIterator {
         PolynomialIterator{polynomial: self, index: self.len() - self.degree() - 1}
     }
@@ -240,7 +255,7 @@ impl Polynomial {
         let (_rhs_deg, _rhs_first) = degree_and_first_val(&_rhs.terms);
 
         if _rhs_deg == 0 {
-            match _rhs.terms.first() {
+            match _rhs.terms.last() {
                 None => {
                 return Err("Can't divide by 0.");
                 }
