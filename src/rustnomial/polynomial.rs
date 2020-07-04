@@ -109,24 +109,28 @@ fn vec_mul(_lhs: &Vec<i32>, _rhs: &Vec<i32>) -> Vec<i32> {
     terms
 }
 
-fn degree(val: &Vec<i32>) -> usize {
-    for ind in 0..val.len() {
-        if val[ind] != 0 {
-            return val.len() - ind - 1;
+fn degree<N>(poly_vec: &Vec<N>) -> usize
+    where N: PartialEq + From<i8> + Copy {
+    let zero = N::from(0);
+    for (ind, &val) in poly_vec.iter().enumerate() {
+        if val != zero {
+            return poly_vec.len() - ind - 1;
         }
     }
 
     0
 }
 
-fn degree_and_first_val(val: &Vec<i32>) -> (usize, i32) {
-    for ind in 0..val.len() {
-        if val[ind] != 0 {
-            return (val.len() - ind - 1, val[ind]);
+fn degree_and_first_val<N>(poly_vec: &Vec<N>) -> (usize, N)
+    where N: PartialEq + From<i8> + Copy {
+    let zero = N::from(0);
+    for (ind, &val) in poly_vec.iter().enumerate() {
+        if val != zero {
+            return (poly_vec.len() - ind - 1, val);
         }
     }
 
-    (0, 0)
+    (0, zero)
 }
 
 
@@ -319,7 +323,7 @@ impl Integral {
 
 impl PartialEq for Polynomial {
     fn eq(&self, other: &Self) -> bool {
-        if self.len() != other.len() {
+        if self.degree() != other.degree() {
             return false;
         }
 
