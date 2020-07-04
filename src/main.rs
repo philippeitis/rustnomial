@@ -6,8 +6,13 @@ use std::any::Any;
 use std::io::Result;
 
 fn main() {
-    let a = Polynomial::new(vec![1, 6, 12, 8]);
+    let a = Polynomial::new(vec![1, -6, -12, -8]);
     let b = Polynomial::new(vec![1, 1, 1, 1, 1]);
+    let g = Polynomial::new(vec![]);
+    let h = Polynomial{ terms: vec![0, 0, 0, 0]};
+    println!("{}", g);
+    println!("{}", h);
+
     let res = a.div_mod(&b);
     println!("{}", a);
     println!("{}", b);

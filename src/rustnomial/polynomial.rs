@@ -174,13 +174,24 @@ impl Polynomial {
     }
 
     pub fn iter(&self) -> PolynomialIterator {
-        PolynomialIterator{polynomial: self, index: self.len() - self.degree() - 1}
+        PolynomialIterator{
+            polynomial: self,
+            index: if self.len() == 0 {
+                0
+            } else {
+                self.len() - self.degree() - 1
+            }
+        }
     }
 
     pub fn degree_iter(&self) -> PolynomialDegreeIterator {
         PolynomialDegreeIterator{
             polynomial: self,
-            index: self.len() - self.degree() - 1,
+            index: if self.len() == 0 {
+                0
+            } else {
+                self.len() - self.degree() - 1
+            },
             degree: self.degree()
         }
     }
@@ -324,29 +335,40 @@ impl PartialEq for Polynomial {
 
 impl fmt::Display for Polynomial {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        if self.terms.len() == 0 {
-            return write!(f, "0");
-        }
+        let mut iter = self.degree_iter();
 
-        let own_degree = self.degree();
-        for (term, degree) in self.degree_iter() {
-            if degree != own_degree {
-                if term > 0 {
-                    write!(f, " + ")?;
-                } else {
-                    write!(f, " - ")?;
-                }
-                let term = term.abs();
-                if (term != 1) || (degree == 0) {
-                    write!(f, "{}", term)?;
-                }
-            } else {
-                // Handles leading degree.
+        match iter.next() {
+            None => {
+                return write!(f, "0");
+            }
+
+            Some((term, degree)) => {
                 if term == -1 {
                     write!(f, "-")?;
                 } else if (term != 1) || (degree == 0) {
                     write!(f, "{}", term.abs())?;
                 }
+
+                match degree {
+                    0 => {},
+                    1 => {write!(f, "x")?;},
+                    _ => {write!(f, "x^{}", degree)?;}
+                }
+            }
+        }
+
+
+        for (term, degree) in iter {
+            if term > 0 {
+                write!(f, " + ")?;
+            } else {
+                write!(f, " - ")?;
+            }
+
+            let term = term.abs();
+
+            if (term != 1) || (degree == 0) {
+                write!(f, "{}", term)?;
             }
 
             match degree {
@@ -355,6 +377,7 @@ impl fmt::Display for Polynomial {
                 _ => {write!(f, "x^{}", degree)?;}
             }
         }
+
         write!(f, "")
     }
 }
@@ -796,6 +819,40 @@ mod tests {
             assert_eq!(b, a.exp(i));
             b *= a;
         }
+    }
+
+    #[test]
+    fn test_polynomial_str_all_zeroes() {
+        let a = Polynomial::new(vec![0]);
+        let mut a_str = String::new();
+        write!(&mut a_str, "{}", a).unwrap();
+        assert_eq!(a_str, "0");
+
+        let a = Polynomial::new(vec![]);
+        let mut a_str = String::new();
+        write!(&mut a_str, "{}", a).unwrap();
+        assert_eq!(a_str, "0");
+
+        let a = Polynomial::new(vec![0, 0]);
+        let mut a_str = String::new();
+        write!(&mut a_str, "{}", a).unwrap();
+        assert_eq!(a_str, "0");
+
+        let a = Polynomial{terms: vec![]};
+        let mut a_str = String::new();
+        write!(&mut a_str, "{}", a).unwrap();
+        assert_eq!(a_str, "0");
+
+        let a = Polynomial{terms: vec![0]};
+        let mut a_str = String::new();
+        write!(&mut a_str, "{}", a).unwrap();
+        assert_eq!(a_str, "0");
+
+        let a = Polynomial{terms: vec![0, 0]};
+        let mut a_str = String::new();
+        write!(&mut a_str, "{}", a).unwrap();
+        assert_eq!(a_str, "0");
+
     }
 
     #[test]
