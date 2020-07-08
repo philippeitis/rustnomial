@@ -1,6 +1,6 @@
 use std::ops;
 use std::fmt;
-use std::ops::Mul;
+use std::ops::{Mul, AddAssign};
 use std::fmt::Error;
 
 //trait GenericPolynomial {
@@ -85,21 +85,24 @@ impl Iterator for PolynomialDegreeIterator<'_> {
     }
 }
 
-
-fn first_nonzero_index(terms: &Vec<i32>) -> usize {
+fn first_nonzero_index<N>(terms: &Vec<N>) -> usize
+    where N: PartialEq + From<i8> + Copy {
     let mut ind = 0;
-    while (ind < terms.len()) && (terms[ind] == 0) {
+    let zero = N::from(0);
+    while (ind < terms.len()) && (terms[ind] == zero) {
         ind += 1;
     }
     ind
 }
 
-fn vec_mul(_lhs: &Vec<i32>, _rhs: &Vec<i32>) -> Vec<i32> {
+fn vec_mul<N>(_lhs: &Vec<N>, _rhs: &Vec<N>) -> Vec<N>
+    where N: Mul<Output=N> + AddAssign + Copy + From<i8> + PartialEq {
     let _rhs_ind = first_nonzero_index(&_rhs);
     let _lhs = &_lhs[first_nonzero_index(&_lhs)..];
-    let mut terms = vec![0; _rhs.len() + _lhs.len() - 1 - _rhs_ind];
+    let zero = N::from(0);
+    let mut terms = vec![zero; _rhs.len() + _lhs.len() - 1 - _rhs_ind];
     for (index, &rterm) in _rhs[_rhs_ind..].iter().enumerate() {
-        if rterm == 0 {
+        if rterm == zero {
             continue;
         }
         for (&lterm, term) in _lhs.iter().zip(terms[index..].iter_mut()) {
