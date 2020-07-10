@@ -1,6 +1,6 @@
 use std::ops;
 use std::fmt;
-use std::ops::{Mul, AddAssign, Add, MulAssign, DivAssign, Div, SubAssign, Neg, Sub};
+use std::ops::{Mul, AddAssign, MulAssign, DivAssign, Div, SubAssign, Neg, Sub};
 use std::fmt::{Error, Display, Write};
 
 #[macro_export]
@@ -41,40 +41,29 @@ macro_rules! derivative {
         }
     };
 }
-
-//trait GenericPolynomial {
-//    fn add_term(&self, term: &Add, deg: usize) {
-//    }
 //
-//    fn scale(&mut self, _rhs: &Mul) {
-//        let mut result = Polynomial::new(vec![]);
-//        for (term, deg) in self.degree_iter() {
-//            result.add_term(term * _rhs, deg);
-//        }
-//    }
+// trait GenericPolynomial<N: Copy + Mul<Output=N>> {
+//     fn from_vec(terms: Vec<N>) -> GenericPolynomial<N>;
 //
+//     fn add_term(&self, term: &N, deg: usize);
 //
-//    fn mul(&self, _rhs: &GenericPolynomial) -> Polynomial {
-//        let mut result = Polynomial::new(vec![]);
+//     fn scale(&mut self, _rhs: &N);
+//
+//     fn mul(&self, _rhs: &GenericPolynomial<N>) -> &GenericPolynomial<N> {
+//        let mut result = GenericPolynomial::from_vec(vec![]);
 //        for (rterm, rdeg) in self.degree_iter() {
 //            for (lterm, ldeg) in _rhs.degree_iter() {
 //                result.add_term(rterm * lterm, rdeg, ldeg);
 //            }
 //        }
+//
 //        result
 //    }
 //
-//    fn iter(&self) -> PolynomialDegreeIterator {
-//    }
+//     fn iter(&self) -> PolynomialDegreeIterator<N>;
 //
-//    fn degree_iter(&self) -> PolynomialDegreeIterator {
-//    }
-//}
-
-fn make_num<N: From<i8>>(source: N, num: i8) -> N {
-    N::from(num)
-}
-
+//     fn degree_iter(&self) -> PolynomialDegreeIterator<N>;
+// }
 
 #[derive(Debug, Clone)]
 pub struct Polynomial<N> {
@@ -232,6 +221,31 @@ fn degree_and_first_val<N>(poly_vec: &Vec<N>) -> (usize, N)
     (0, zero)
 }
 
+fn generic_pow<N>(base: N, exp: usize) -> N
+    where N: Copy + MulAssign + From<i8>{
+    if exp == 0 {
+        N::from(1)
+    } else {
+        let mut result = base.clone();
+        for _i in 1..exp {
+            result *= base;
+        }
+        result
+    }
+}
+
+fn generic_pow_u8<N>(base: N, exp: usize) -> N
+    where N: Copy + MulAssign + From<u8>{
+    if exp == 0 {
+        N::from(1)
+    } else {
+        let mut result = base.clone();
+        for _i in 1..exp {
+            result *= base;
+        }
+        result
+    }
+}
 
 impl<N> Polynomial<N>
     where N: PartialEq + From<i8> + Copy {
@@ -303,13 +317,46 @@ impl<N> Polynomial<N> {
 }
 
 impl<N> Polynomial<N>
+    where N: From<u8> + Copy + AddAssign + MulAssign + Mul<Output=N> + Display {
+    pub fn eval_sparse_uint(&self, point: N) -> N {
+        let mut sum = N::from(0);
+        let mut pow = 0;
+        for &val in self.terms.iter().rev() {
+            sum += val * generic_pow_u8(point, pow);
+            pow += 1;
+        }
+        sum
+    }
+
+    pub fn eval_uint(&self, point: N) -> N {
+        let mut sum = N::from(0);
+        let mut pow = N::from(1);
+        for &val in self.terms.iter().rev() {
+            sum += pow * val;
+            pow *= point;
+        }
+        sum
+    }
+}
+
+impl<N> Polynomial<N>
     where N: From<i8> + Copy + AddAssign + MulAssign + Mul<Output=N> {
+    pub fn eval_sparse(&self, point: N) -> N {
+        let mut sum = N::from(0);
+        let mut pow = 1;
+        for &val in self.terms.iter().rev() {
+            sum += val * generic_pow(point, pow);
+            pow += 1;
+        }
+        sum
+    }
+
     pub fn eval(&self, point: N) -> N {
         let mut sum = N::from(0);
-        let mut exp = N::from(1);
+        let mut pow = N::from(1);
         for &val in self.terms.iter().rev() {
-            sum += exp * val;
-            exp *= point;
+            sum += pow * val;
+            pow *= point;
         }
         sum
     }
@@ -354,7 +401,7 @@ impl<N> Polynomial<N>
         Polynomial{terms: vec_mul(&self.terms, &_rhs.terms)}
     }
 
-    pub fn exp(&self, exp: usize) -> Polynomial<N> {
+    pub fn pow(&self, exp: usize) -> Polynomial<N> {
         if exp == 0 {
             Polynomial{terms: vec![N::from(1); 1]}
         } else if exp == 1 {
@@ -362,9 +409,9 @@ impl<N> Polynomial<N>
         } else if exp == 2 {
             self.borrow_mul(self)
         } else if exp % 2 == 0 {
-            self.exp(exp / 2).exp(2)
+            self.pow(exp / 2).pow(2)
         } else {
-            self.borrow_mul(&self.exp(exp - 1))
+            self.borrow_mul(&self.pow(exp - 1))
         }
     }
 }
@@ -478,44 +525,63 @@ impl<N> Polynomial<N>
         }
     }
 
-    pub fn to_str_uint(&self) -> String {
+    pub fn to_str_uint(&self) -> Result<String, Error> {
         let mut s = String::new();
         let mut iter = self.degree_iter_uint();
         let one = N::from(1);
+
+
         match iter.next() {
             None => {
-                s.write_str("0");
-                return s;
+                return match s.write_str("0") {
+                     Ok(_)=> {
+                        Ok(s)
+                    }
+                    Err(e) => {
+                        Err(e)
+                    }
+                };
             }
 
             Some((term, degree)) => {
                 if (term != one) || (degree == 0) {
-                    s.write_str(&format!("{}", term));
+                    if let Err(e) = s.write_str(&format!("{}", term)) {
+                        return Err(e);
+                    };
                 }
 
-                match degree {
-                    0 => {},
-                    1 => {s.write_str("x");},
-                    _ => {s.write_str(&format!("x^{}", degree));}
+                if let Err(e) = match degree {
+                    0 => {Ok(())},
+                    1 => {s.write_str("x")},
+                    _ => {s.write_str(&format!("x^{}", degree))}
+                } {
+                    return Err(e);
                 }
             }
         }
 
 
         for (term, degree) in iter {
-            s.write_str(" + ");
+            if let Err(e) = s.write_str(" + ") {
+                return Err(e);
+            };
+
             if (term != one) || (degree == 0) {
-                s.write_str(&format!("{}", term));
+                if let Err(e) = s.write_str(&format!("{}", term)) {
+                    return Err(e);
+                };
             }
 
-            match degree {
-                0 => {},
-                1 => {s.write_str("x");},
-                _ => {s.write_str(&format!("x^{}", degree));}
+            if let Err(e) = match degree {
+                0 => {Ok(())},
+                1 => {s.write_str("x")},
+                _ => {s.write_str(&format!("x^{}", degree))}
+            } {
+                return Err(e);
             }
         }
 
-        s
+        Ok(s)
     }
 }
 
@@ -1021,9 +1087,9 @@ mod tests {
     fn test_exp() {
         let a = &Polynomial::new(vec![1, 2]);
         let mut b = a.clone();
-        assert_eq!(Polynomial::new(vec![1]), a.exp(0));
+        assert_eq!(Polynomial::new(vec![1]), a.pow(0));
         for i in 1..10 {
-            assert_eq!(b, a.exp(i));
+            assert_eq!(b, a.pow(i));
             b *= a;
         }
     }
@@ -1155,4 +1221,39 @@ mod bench {
             ap.trim()
         }));
     }
+
+    #[bench]
+    fn bench_pow(b: &mut Bencher) {
+        let mut a = Polynomial::new(vec![1i32, 2, 3, 4, 5]);
+        b.iter(|| black_box({
+            a.pow(37);
+        }));
+    }
+
+    #[bench]
+    fn bench_pow_manual(b: &mut Bencher) {
+        let a = Polynomial::new(vec![1i32, 2, 3, 4, 5]);
+        b.iter(|| black_box({
+            let b = a
+            .borrow_mul(&a).borrow_mul(&a)
+            .borrow_mul(&a).borrow_mul(&a)
+            .borrow_mul(&a).borrow_mul(&a)
+            .borrow_mul(&a).borrow_mul(&a)
+            .borrow_mul(&a).borrow_mul(&a)
+            .borrow_mul(&a).borrow_mul(&a)
+            .borrow_mul(&a).borrow_mul(&a)
+            .borrow_mul(&a).borrow_mul(&a)
+            .borrow_mul(&a).borrow_mul(&a)
+            .borrow_mul(&a).borrow_mul(&a)
+            .borrow_mul(&a).borrow_mul(&a)
+            .borrow_mul(&a).borrow_mul(&a)
+            .borrow_mul(&a).borrow_mul(&a)
+            .borrow_mul(&a).borrow_mul(&a)
+            .borrow_mul(&a).borrow_mul(&a)
+            .borrow_mul(&a).borrow_mul(&a)
+            .borrow_mul(&a).borrow_mul(&a)
+            .borrow_mul(&a).borrow_mul(&a);
+        }));
+    }
+
 }
