@@ -5,6 +5,7 @@ use rustnomial::Polynomial;
 use std::any::Any;
 use std::io::Result;
 use rustnomial::{polynomial, integral, derivative};
+use std::fmt::Debug;
 
 fn main() {
     // let a = Polynomial::new(vec![1, -6, -12, -8]);
@@ -36,7 +37,6 @@ fn main() {
     println!("{}", c.eval(1.0));
     c -= c.clone();
     println!("{}", c);
-    let mut f = polynomial!(1.0);
-    println!("{}", f.integral().replace_c(0.0));
-    println!("{}", f.integral().replace_c(0.0).integral());
+    let mut f = Polynomial{terms: vec!{1usize, 1usize, 25usize}};
+    println!("{}", f.to_str_uint());
 }

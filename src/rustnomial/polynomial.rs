@@ -1,7 +1,7 @@
 use std::ops;
 use std::fmt;
 use std::ops::{Mul, AddAssign, Add, MulAssign, DivAssign, Div, SubAssign, Neg, Sub};
-use std::fmt::{Error, Display};
+use std::fmt::{Error, Display, Write};
 
 #[macro_export]
 macro_rules! polynomial {
@@ -91,8 +91,7 @@ pub struct PolynomialIterator<'a, N> {
     index: usize,
 }
 
-impl<N> Iterator for PolynomialIterator<'_, N>
-    where N: From<i8> + Copy + Mul<Output=N> + MulAssign + Add<Output=N> + Neg<Output=N> + AddAssign + Sub<Output=N> + SubAssign + Div<Output=N> + DivAssign  + PartialEq + PartialOrd + Display {
+impl<N: Copy> Iterator for PolynomialIterator<'_, N> {
     type Item = N;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -130,8 +129,42 @@ impl<N: PartialEq + From<i8> + Copy> Iterator for PolynomialDegreeIterator<'_, N
     }
 }
 
+pub struct PolynomialDegreeIteratorUInt<'a, N> {
+    polynomial: &'a Polynomial<N>,
+    index: usize,
+    degree: usize,
+}
+
+impl<N: PartialEq + From<u8> + Copy> Iterator for PolynomialDegreeIteratorUInt<'_, N> {
+    type Item = (N, usize);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        while self.index < self.polynomial.len() {
+            let ret_val = self.polynomial.terms[self.index];
+            self.index += 1;
+            let degree = self.degree;
+            self.degree = if self.degree >= 1 {self.degree - 1} else {0};
+            if ret_val != N::from(0) {
+                return Some((ret_val, degree));
+            }
+        }
+
+        None
+    }
+}
+
 fn first_nonzero_index<N>(terms: &Vec<N>) -> usize
     where N: PartialEq + From<i8> + Copy {
+    let mut ind = 0;
+    let zero = N::from(0);
+    while (ind < terms.len()) && (terms[ind] == zero) {
+        ind += 1;
+    }
+    ind
+}
+
+fn first_nonzero_index_u8<N>(terms: &Vec<N>) -> usize
+    where N: PartialEq + From<u8> + Copy {
     let mut ind = 0;
     let zero = N::from(0);
     while (ind < terms.len()) && (terms[ind] == zero) {
@@ -165,6 +198,18 @@ fn vec_mul<N>(_lhs: &Vec<N>, _rhs: &Vec<N>) -> Vec<N>
 
 fn degree<N>(poly_vec: &Vec<N>) -> usize
     where N: PartialEq + From<i8> + Copy {
+    let zero = N::from(0);
+    for (ind, &val) in poly_vec.iter().enumerate() {
+        if val != zero {
+            return poly_vec.len() - ind - 1;
+        }
+    }
+
+    0
+}
+
+fn degree_u8<N>(poly_vec: &Vec<N>) -> usize
+    where N: PartialEq + From<u8> + Copy {
     let zero = N::from(0);
     for (ind, &val) in poly_vec.iter().enumerate() {
         if val != zero {
@@ -249,8 +294,6 @@ impl<N> Polynomial<N>
             degree: self.degree()
         }
     }
-
-
 }
 
 impl<N> Polynomial<N> {
@@ -417,6 +460,62 @@ impl<N> PartialEq for Polynomial<N>
         }
 
         true
+    }
+}
+
+
+impl<N> Polynomial<N>
+    where N: Copy + PartialEq + PartialOrd + Display + From<u8> {
+    pub fn degree_iter_uint(&self) -> PolynomialDegreeIteratorUInt<N> {
+        PolynomialDegreeIteratorUInt{
+            polynomial: self,
+            index: if self.len() == 0 {
+                0
+            } else {
+                self.len() - degree_u8(&self.terms) - 1
+            },
+            degree: degree_u8(&self.terms)
+        }
+    }
+
+    pub fn to_str_uint(&self) -> String {
+        let mut s = String::new();
+        let mut iter = self.degree_iter_uint();
+        let one = N::from(1);
+        match iter.next() {
+            None => {
+                s.write_str("0");
+                return s;
+            }
+
+            Some((term, degree)) => {
+                if (term != one) || (degree == 0) {
+                    s.write_str(&format!("{}", term));
+                }
+
+                match degree {
+                    0 => {},
+                    1 => {s.write_str("x");},
+                    _ => {s.write_str(&format!("x^{}", degree));}
+                }
+            }
+        }
+
+
+        for (term, degree) in iter {
+            s.write_str(" + ");
+            if (term != one) || (degree == 0) {
+                s.write_str(&format!("{}", term));
+            }
+
+            match degree {
+                0 => {},
+                1 => {s.write_str("x");},
+                _ => {s.write_str(&format!("x^{}", degree));}
+            }
+        }
+
+        s
     }
 }
 
