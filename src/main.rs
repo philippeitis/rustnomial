@@ -8,7 +8,7 @@ use std::io::Result;
 fn main() {
     let a = Polynomial::new(vec![1, -6, -12, -8]);
     let b = Polynomial::new(vec![1, 1, 1, 1, 1]);
-    let g = Polynomial::new(vec![]);
+    let g: Polynomial<i8> = Polynomial::new(vec![]);
     let h = Polynomial{ terms: vec![0, 0, 0, 0]};
     println!("{}", g);
     println!("{}", h);
