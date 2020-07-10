@@ -1,4 +1,5 @@
 use std::ops;
+use std::fmt;
 use std::ops::{Mul, AddAssign, Add, MulAssign, DivAssign, Div, SubAssign, Neg, Sub};
 use std::fmt::{Error, Display};
 
@@ -351,7 +352,7 @@ impl<N> PartialEq for Polynomial<N>
     }
 }
 
-impl<N> Display for Polynomial<N>
+impl<N> fmt::Display for Polynomial<N>
     where N: From<i8> + Copy + Mul<Output=N> + MulAssign + Add<Output=N> + Neg<Output=N> + AddAssign + Sub<Output=N> + SubAssign + Div<Output=N> + DivAssign  + PartialEq + PartialOrd + Display{
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let mut iter = self.degree_iter();
@@ -366,7 +367,7 @@ impl<N> Display for Polynomial<N>
                 if term == -one {
                     write!(f, "-")?;
                 } else if (term != one) || (degree == 0) {
-                    write!(f, "{}", if term < zero {-term} else {term})?;
+                    write!(f, "{}", term)?;
                 }
 
                 match degree {
@@ -924,6 +925,14 @@ mod tests {
         let mut a_str = String::new();
         write!(&mut a_str, "{}", a).unwrap();
         assert_eq!(a_str, "-x^3 - x^2 - x");
+    }
+
+    #[test]
+    fn test_polynomial_str_has_negative() {
+        let a = Polynomial::new(vec![-2, -1, -1, 0]);
+        let mut a_str = String::new();
+        write!(&mut a_str, "{}", a).unwrap();
+        assert_eq!(a_str, "-2x^3 - x^2 - x");
     }
 
     #[test]
