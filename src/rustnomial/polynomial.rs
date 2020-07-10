@@ -3,6 +3,18 @@ use std::fmt;
 use std::ops::{Mul, AddAssign, Add, MulAssign, DivAssign, Div, SubAssign, Neg, Sub};
 use std::fmt::{Error, Display};
 
+#[macro_export]
+macro_rules! polynomial {
+    ( $( $x:expr ),* ) => {
+        {
+            let mut temp_vec = Vec::new();
+            $(
+                temp_vec.push($x);
+            )*
+            Polynomial::new(temp_vec)
+        }
+    };
+}
 //trait GenericPolynomial {
 //    fn add_term(&self, term: &Add, deg: usize) {
 //    }
