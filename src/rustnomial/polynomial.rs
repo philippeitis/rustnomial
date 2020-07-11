@@ -239,7 +239,7 @@ fn generic_pow_u8<N>(base: N, exp: usize) -> N
     if exp == 0 {
         N::from(1)
     } else {
-        let mut result = base.clone();
+        let mut result = base;
         for _i in 1..exp {
             result *= base;
         }
@@ -1185,75 +1185,6 @@ mod tests {
         }
 
         assert_eq!(num_iters, 3);
-    }
-
-}
-
-mod bench {
-    extern crate test;
-    use self::test::Bencher;
-    use self::test::black_box;
-    use super::Polynomial;
-
-    #[bench]
-    fn bench_mul(b: &mut Bencher) {
-        b.iter(|| {
-            let ap = Polynomial::new(vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
-            let bp = Polynomial::new(vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
-            ap * bp
-        });
-    }
-
-    #[bench]
-    fn bench_degree(b: &mut Bencher) {
-        let mut ap = black_box(Polynomial::new(vec![]));
-        ap.terms = vec![0; 100000];
-
-        b.iter(|| black_box(ap.degree()));
-    }
-
-    #[bench]
-    fn bench_trim(b: &mut Bencher) {
-        let mut ap = Polynomial::new(vec![]);
-        let terms = vec![0; 10000];
-        b.iter(|| black_box({
-            ap.terms = terms.clone();
-            ap.trim()
-        }));
-    }
-
-    #[bench]
-    fn bench_pow(b: &mut Bencher) {
-        let mut a = Polynomial::new(vec![1i32, 2, 3, 4, 5]);
-        b.iter(|| black_box({
-            a.pow(37);
-        }));
-    }
-
-    #[bench]
-    fn bench_pow_manual(b: &mut Bencher) {
-        let a = Polynomial::new(vec![1i32, 2, 3, 4, 5]);
-        b.iter(|| black_box({
-            let b = a
-            .borrow_mul(&a).borrow_mul(&a)
-            .borrow_mul(&a).borrow_mul(&a)
-            .borrow_mul(&a).borrow_mul(&a)
-            .borrow_mul(&a).borrow_mul(&a)
-            .borrow_mul(&a).borrow_mul(&a)
-            .borrow_mul(&a).borrow_mul(&a)
-            .borrow_mul(&a).borrow_mul(&a)
-            .borrow_mul(&a).borrow_mul(&a)
-            .borrow_mul(&a).borrow_mul(&a)
-            .borrow_mul(&a).borrow_mul(&a)
-            .borrow_mul(&a).borrow_mul(&a)
-            .borrow_mul(&a).borrow_mul(&a)
-            .borrow_mul(&a).borrow_mul(&a)
-            .borrow_mul(&a).borrow_mul(&a)
-            .borrow_mul(&a).borrow_mul(&a)
-            .borrow_mul(&a).borrow_mul(&a)
-            .borrow_mul(&a).borrow_mul(&a)
-            .borrow_mul(&a).borrow_mul(&a);
-        }));
     }
 
 }
