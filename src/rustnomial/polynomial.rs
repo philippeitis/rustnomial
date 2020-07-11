@@ -132,7 +132,7 @@ impl<N: PartialEq + From<u8> + Copy> Iterator for PolynomialDegreeIteratorUInt<'
             let ret_val = self.polynomial.terms[self.index];
             self.index += 1;
             let degree = self.degree;
-            self.degree = if self.degree >= 1 {self.degree - 1} else {0};
+            self.degree = if degree >= 1 {degree - 1} else {0};
             if ret_val != N::from(0) {
                 return Some((ret_val, degree));
             }
@@ -222,15 +222,17 @@ fn degree_and_first_val<N>(poly_vec: &Vec<N>) -> (usize, N)
 }
 
 fn generic_pow<N>(base: N, exp: usize) -> N
-    where N: Copy + MulAssign + From<i8>{
+    where N: Copy + Mul<Output=N> + From<i8> {
     if exp == 0 {
         N::from(1)
+    } else if exp == 1 {
+        base
+    } else if exp == 2 {
+        base * base
+    } else if exp % 2 == 0 {
+        generic_pow(generic_pow(base, exp / 2), 2)
     } else {
-        let mut result = base.clone();
-        for _i in 1..exp {
-            result *= base;
-        }
-        result
+        base * generic_pow(base, exp - 1)
     }
 }
 
@@ -249,6 +251,20 @@ fn generic_pow_u8<N>(base: N, exp: usize) -> N
 
 impl<N> Polynomial<N>
     where N: PartialEq + From<i8> + Copy {
+    /// Returns a `Polynomial` with the corresponding terms,
+    /// in order of ax^n + bx^(n-1) + ... + cx + d
+    ///
+    /// # Arguments
+    ///
+    /// * ` terms ` - A vector of constants, in decreasing order of degree.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use rustnomial::Polynomial;
+    /// // Corresponds to 1.0x^2 + 4.0x + 4.0
+    /// let polynomial = Polynomial::new(vec![1.0, 4.0, 4.0]);
+    /// ```
     pub fn new(terms: Vec<N>) -> Polynomial<N> {
         let first_non_zero = first_nonzero_index(&terms);
         Polynomial {
@@ -260,10 +276,31 @@ impl<N> Polynomial<N>
         }
     }
 
+    /// Returns the degree of the `Polynomial` it is called on, corresponding to the
+    /// largest non-zero term.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use rustnomial::Polynomial;
+    /// let polynomial = Polynomial::new(vec![1.0, 4.0, 4.0]);
+    /// assert_eq!(2, polynomial.degree());
+    /// ```
     pub fn degree(&self) -> usize {
         degree(&self.terms)
     }
 
+    /// Reduces the size of the `Polynomial` in memory if the leading terms are zero.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use rustnomial::Polynomial;
+    /// let mut polynomial = Polynomial::new(vec![1.0, 4.0, 4.0]);
+    /// polynomial.terms = vec![0.0, 0.0, 0.0, 0.0, 1.0, 4.0, 4.0];
+    /// polynomial.trim();
+    /// assert_eq!(vec![1.0, 4.0, 4.0], polynomial.terms);
+    /// ```
     pub fn trim(&mut self) {
         let ind = first_nonzero_index(&self.terms);
         if ind != 0 {
@@ -271,6 +308,17 @@ impl<N> Polynomial<N>
         };
     }
 
+    /// Returns true if all terms are zero, and false if a non-zero term exists.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use rustnomial::Polynomial;
+    /// let zero = Polynomial::new(vec![0, 0]);
+    /// assert!(zero.is_zero());
+    /// let non_zero = Polynomial::new(vec![0, 1]);
+    /// assert!(!non_zero.is_zero());
+    /// ```
     pub fn is_zero(&self) -> bool {
         if self.degree() == 0 {
             return match self.terms.last() {
@@ -286,6 +334,21 @@ impl<N> Polynomial<N>
         false
     }
 
+    /// Returns an iterator for the `Polynomial`, yielding term constants. Terms are iterated over
+    /// in descending degree order, including zero terms.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use rustnomial::Polynomial;
+    /// let polynomial = Polynomial::new(vec![1, 0, 2, 3]);
+    /// let mut iter = polynomial.iter();
+    /// assert_eq!(Some(1), iter.next());
+    /// assert_eq!(Some(0), iter.next());
+    /// assert_eq!(Some(2), iter.next());
+    /// assert_eq!(Some(3), iter.next());
+    /// assert_eq!(None, iter.next());
+    /// ```
     pub fn iter(&self) -> PolynomialIterator<N> {
         PolynomialIterator{
             polynomial: self,
@@ -297,6 +360,20 @@ impl<N> Polynomial<N>
         }
     }
 
+    /// Returns an iterator for the `Polynomial`, yielding the term constant and degree. Terms are
+    /// iterated over in descending degree order, excluding zero terms.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use rustnomial::Polynomial;
+    /// let polynomial = Polynomial::new(vec![1, 0, 2, 3]);
+    /// let mut iter = polynomial.degree_iter();
+    /// assert_eq!(Some((1, 3)), iter.next());
+    /// assert_eq!(Some((2, 1)), iter.next());
+    /// assert_eq!(Some((3, 0)), iter.next());
+    /// assert_eq!(None, iter.next());
+    /// ```
     pub fn degree_iter(&self) -> PolynomialDegreeIterator<N> {
         PolynomialDegreeIterator{
             polynomial: self,
@@ -341,6 +418,8 @@ impl<N> Polynomial<N>
 
 impl<N> Polynomial<N>
     where N: From<i8> + Copy + AddAssign + MulAssign + Mul<Output=N> {
+    /// Returns the value of the `Polynomial` at the given point.
+    /// Intended usage is large polynomials with very few terms.
     pub fn eval_sparse(&self, point: N) -> N {
         let mut sum = N::from(0);
         let mut pow = 1;
@@ -351,6 +430,7 @@ impl<N> Polynomial<N>
         sum
     }
 
+    /// Returns the value of the `Polynomial` at the given point.
     pub fn eval(&self, point: N) -> N {
         let mut sum = N::from(0);
         let mut pow = N::from(1);
@@ -1021,6 +1101,20 @@ mod tests {
         a *= 10;
         let c = Polynomial::new(vec![10, 20]);
         assert_eq!(a, c);
+    }
+
+    #[test]
+    fn test_equality() {
+        let a = Polynomial::new(vec![1, 2]);
+        let mut c = Polynomial::new(vec![0, 0, 0, 1, 2]);
+        c.terms = vec![0, 0, 0, 1, 2];
+
+        assert_eq!(a, c);
+
+        c.terms = vec![1, 2, 0, 0, 0];
+
+        assert_ne!(a, c);
+
     }
 
     #[test]
