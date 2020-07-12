@@ -33,6 +33,6 @@ fn main() {
     println!("{}", c.eval(1.0));
     c -= c.clone();
     println!("{}", c);
-    let f = Polynomial{terms: vec!{1.0, 1.0, 25.0}};
-    println!("{}, {}", f.to_str_uint().unwrap(), f.eval_sparse_uint(5.0));
+    let f = Polynomial{terms: vec!{1usize, 1, 25}};
+    println!("{}, {}", f, f.eval(5));
 }

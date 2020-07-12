@@ -3,6 +3,8 @@ use std::fmt;
 use std::ops::{Mul, AddAssign, MulAssign, DivAssign, Div, SubAssign, Neg, Sub};
 use std::fmt::{Error, Display, Write};
 
+use rustnomial::numerics::{HasZero, HasOne, IsNegativeOne, Abs};
+
 #[macro_export]
 macro_rules! polynomial {
     ( $( $x:expr ),* ) => {
@@ -100,7 +102,7 @@ pub struct PolynomialDegreeIterator<'a, N> {
     degree: usize,
 }
 
-impl<N: PartialEq + From<i8> + Copy> Iterator for PolynomialDegreeIterator<'_, N> {
+impl<N: PartialEq + HasZero + Copy> Iterator for PolynomialDegreeIterator<'_, N> {
     type Item = (N, usize);
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -109,31 +111,7 @@ impl<N: PartialEq + From<i8> + Copy> Iterator for PolynomialDegreeIterator<'_, N
             self.index += 1;
             let degree = self.degree;
             self.degree = if self.degree >= 1 {self.degree - 1} else {0};
-            if ret_val != N::from(0) {
-                return Some((ret_val, degree));
-            }
-        }
-
-        None
-    }
-}
-
-pub struct PolynomialDegreeIteratorUInt<'a, N> {
-    polynomial: &'a Polynomial<N>,
-    index: usize,
-    degree: usize,
-}
-
-impl<N: PartialEq + From<u8> + Copy> Iterator for PolynomialDegreeIteratorUInt<'_, N> {
-    type Item = (N, usize);
-
-    fn next(&mut self) -> Option<Self::Item> {
-        while self.index < self.polynomial.len() {
-            let ret_val = self.polynomial.terms[self.index];
-            self.index += 1;
-            let degree = self.degree;
-            self.degree = if degree >= 1 {degree - 1} else {0};
-            if ret_val != N::from(0) {
+            if ret_val != N::zero() {
                 return Some((ret_val, degree));
             }
         }
@@ -143,19 +121,9 @@ impl<N: PartialEq + From<u8> + Copy> Iterator for PolynomialDegreeIteratorUInt<'
 }
 
 fn first_nonzero_index<N>(terms: &Vec<N>) -> usize
-    where N: PartialEq + From<i8> + Copy {
+    where N: PartialEq + HasZero + Copy {
     let mut ind = 0;
-    let zero = N::from(0);
-    while (ind < terms.len()) && (terms[ind] == zero) {
-        ind += 1;
-    }
-    ind
-}
-
-fn first_nonzero_index_u8<N>(terms: &Vec<N>) -> usize
-    where N: PartialEq + From<u8> + Copy {
-    let mut ind = 0;
-    let zero = N::from(0);
+    let zero = N::zero();
     while (ind < terms.len()) && (terms[ind] == zero) {
         ind += 1;
     }
@@ -163,10 +131,10 @@ fn first_nonzero_index_u8<N>(terms: &Vec<N>) -> usize
 }
 
 fn vec_mul<N>(_lhs: &Vec<N>, _rhs: &Vec<N>) -> Vec<N>
-    where N: Mul<Output=N> + AddAssign + Copy + From<i8> + PartialEq {
+    where N: Mul<Output=N> + AddAssign + Copy + HasZero + PartialEq {
     let _rhs_ind = first_nonzero_index(&_rhs);
     let _lhs = &_lhs[first_nonzero_index(&_lhs)..];
-    let zero = N::from(0);
+    let zero = N::zero();
     let mut terms = vec![zero; _rhs.len() + _lhs.len() - 1 - _rhs_ind];
     for (index, &rterm) in _rhs[_rhs_ind..].iter().enumerate() {
         if rterm == zero {
@@ -186,20 +154,8 @@ fn vec_mul<N>(_lhs: &Vec<N>, _rhs: &Vec<N>) -> Vec<N>
 // }
 
 fn degree<N>(poly_vec: &Vec<N>) -> usize
-    where N: PartialEq + From<i8> + Copy {
-    let zero = N::from(0);
-    for (ind, &val) in poly_vec.iter().enumerate() {
-        if val != zero {
-            return poly_vec.len() - ind - 1;
-        }
-    }
-
-    0
-}
-
-fn degree_u8<N>(poly_vec: &Vec<N>) -> usize
-    where N: PartialEq + From<u8> + Copy {
-    let zero = N::from(0);
+    where N: PartialEq + HasZero + Copy {
+    let zero = N::zero();
     for (ind, &val) in poly_vec.iter().enumerate() {
         if val != zero {
             return poly_vec.len() - ind - 1;
@@ -210,8 +166,8 @@ fn degree_u8<N>(poly_vec: &Vec<N>) -> usize
 }
 
 fn degree_and_first_val<N>(poly_vec: &Vec<N>) -> (usize, N)
-    where N: PartialEq + From<i8> + Copy {
-    let zero = N::from(0);
+    where N: PartialEq + HasZero + Copy {
+    let zero = N::zero();
     for (ind, &val) in poly_vec.iter().enumerate() {
         if val != zero {
             return (poly_vec.len() - ind - 1, val);
@@ -222,9 +178,9 @@ fn degree_and_first_val<N>(poly_vec: &Vec<N>) -> (usize, N)
 }
 
 fn generic_pow<N>(base: N, exp: usize) -> N
-    where N: Copy + Mul<Output=N> + From<i8> {
+    where N: Copy + Mul<Output=N> + HasOne {
     if exp == 0 {
-        N::from(1)
+        N::one()
     } else if exp == 1 {
         base
     } else if exp == 2 {
@@ -236,21 +192,8 @@ fn generic_pow<N>(base: N, exp: usize) -> N
     }
 }
 
-fn generic_pow_u8<N>(base: N, exp: usize) -> N
-    where N: Copy + MulAssign + From<u8>{
-    if exp == 0 {
-        N::from(1)
-    } else {
-        let mut result = base;
-        for _i in 1..exp {
-            result *= base;
-        }
-        result
-    }
-}
-
 impl<N> Polynomial<N>
-    where N: PartialEq + From<i8> + Copy {
+    where N: PartialEq + HasZero + Copy {
     /// Returns a `Polynomial` with the corresponding terms,
     /// in order of ax^n + bx^(n-1) + ... + cx + d
     ///
@@ -326,7 +269,7 @@ impl<N> Polynomial<N>
                     true
                 }
                 Some(&x) => {
-                    x == N::from(0)
+                    x == N::zero()
                 }
             }
         }
@@ -394,34 +337,11 @@ impl<N> Polynomial<N> {
 }
 
 impl<N> Polynomial<N>
-    where N: From<u8> + Copy + AddAssign + MulAssign + Mul<Output=N> + Display {
-    pub fn eval_sparse_uint(&self, point: N) -> N {
-        let mut sum = N::from(0);
-        let mut pow = 0;
-        for &val in self.terms.iter().rev() {
-            sum += val * generic_pow_u8(point, pow);
-            pow += 1;
-        }
-        sum
-    }
-
-    pub fn eval_uint(&self, point: N) -> N {
-        let mut sum = N::from(0);
-        let mut pow = N::from(1);
-        for &val in self.terms.iter().rev() {
-            sum += pow * val;
-            pow *= point;
-        }
-        sum
-    }
-}
-
-impl<N> Polynomial<N>
-    where N: From<i8> + Copy + AddAssign + MulAssign + Mul<Output=N> {
+    where N: HasZero + HasOne + Copy + AddAssign + MulAssign + Mul<Output=N> {
     /// Returns the value of the `Polynomial` at the given point.
     /// Intended usage is large polynomials with very few terms.
     pub fn eval_sparse(&self, point: N) -> N {
-        let mut sum = N::from(0);
+        let mut sum = N::zero();
         let mut pow = 1;
         for &val in self.terms.iter().rev() {
             sum += val * generic_pow(point, pow);
@@ -429,11 +349,13 @@ impl<N> Polynomial<N>
         }
         sum
     }
-
+}
+impl<N> Polynomial<N>
+    where N: HasZero + HasOne + Copy + AddAssign + MulAssign + Mul<Output=N> {
     /// Returns the value of the `Polynomial` at the given point.
     pub fn eval(&self, point: N) -> N {
-        let mut sum = N::from(0);
-        let mut pow = N::from(1);
+        let mut sum = N::zero();
+        let mut pow = N::one();
         for &val in self.terms.iter().rev() {
             sum += pow * val;
             pow *= point;
@@ -443,7 +365,7 @@ impl<N> Polynomial<N>
 }
 
 impl<N> Polynomial<N>
-    where N: PartialEq + From<i8> + Copy + MulAssign {
+    where N: PartialEq + HasZero + From<u8> + Copy + MulAssign {
     /// Returns the derivative of the `Polynomial`.
     ///
     /// # Example
@@ -456,7 +378,7 @@ impl<N> Polynomial<N>
     pub fn derivative(&self) -> Polynomial<N> {
         let index = first_nonzero_index(&self.terms);
         // TODO: Fix for degrees of arbitrary size.
-        let mut degree = (self.len() - index) as i8;
+        let mut degree = (self.len() - index) as u8;
         let mut terms = self.terms[0..self.len()-1].to_vec();
         for term in terms.iter_mut() {
             degree -= 1;
@@ -467,7 +389,7 @@ impl<N> Polynomial<N>
 }
 
 impl<N> Polynomial<N>
-    where N: PartialEq + From<i8> + Copy + DivAssign {
+    where N: PartialEq + HasZero + From<u8> + Copy + DivAssign {
     /// Returns the integral of the `Polynomial`.
     ///
     /// # Example
@@ -481,13 +403,13 @@ impl<N> Polynomial<N>
     pub fn integral(&self) -> Integral<N> {
         let index = first_nonzero_index(&self.terms);
         // TODO: Fix for degrees of arbitrary size.
-        let mut degree = (self.len() - index + 1) as i8;
+        let mut degree = (self.len() - index + 1) as u8;
         let mut terms = self.terms.clone();
         for term in terms.iter_mut() {
             degree -= 1;
             *term /= N::from(degree);
         }
-        terms.push(N::from(0));
+        terms.push(N::zero());
         Integral {
             polynomial: Polynomial { terms }
         }
@@ -495,7 +417,7 @@ impl<N> Polynomial<N>
 }
 
 impl<N> Polynomial<N>
-    where N: Mul<Output=N> + AddAssign + Copy + From<i8> + PartialEq {
+    where N: Mul<Output=N> + AddAssign + Copy + HasZero + HasOne + PartialEq {
     pub fn borrow_mul(&self, _rhs: &Polynomial<N>) -> Polynomial<N> {
         Polynomial{terms: vec_mul(&self.terms, &_rhs.terms)}
     }
@@ -514,7 +436,7 @@ impl<N> Polynomial<N>
     /// ```
     pub fn pow(&self, exp: usize) -> Polynomial<N> {
         if exp == 0 {
-            Polynomial{terms: vec![N::from(1); 1]}
+            Polynomial{terms: vec![N::one(); 1]}
         } else if exp == 1 {
             Polynomial::new(self.terms.clone())
         } else if exp == 2 {
@@ -528,7 +450,7 @@ impl<N> Polynomial<N>
 }
 
 impl<N> Polynomial<N>
-    where N: Copy + PartialEq + From<i8> + SubAssign + Mul<Output=N> + Div<Output=N> {
+    where N: Copy + PartialEq + HasZero + SubAssign + Mul<Output=N> + Div<Output=N> {
     /// Divides self by the given `Polynomial`, and returns the quotient and remainder.
     ///
     /// # Example
@@ -551,7 +473,7 @@ impl<N> Polynomial<N>
         }
 
         let (_rhs_deg, _rhs_first) = degree_and_first_val(&_rhs.terms);
-        let zero = N::from(0);
+        let zero = N::zero();
 
         if _rhs_deg == 0 {
             match _rhs.terms.last() {
@@ -605,7 +527,7 @@ impl<N> Integral<N> {
     /// assert_eq!(4.0, integral.eval(1.0, 2.0));
     /// ```
     pub fn eval(&self, start: N, end: N) -> N
-        where N: From<i8> + Copy + AddAssign + Sub<Output=N> + MulAssign + Mul<Output=N> {
+        where N: HasZero + HasOne + Copy + AddAssign + Sub<Output=N> + MulAssign + Mul<Output=N> {
         self.polynomial.eval(end) - self.polynomial.eval(start)
     }
 
@@ -629,7 +551,7 @@ impl<N> Integral<N> {
 }
 
 impl<N> PartialEq for Polynomial<N>
-    where N: PartialEq + From<i8> + Copy {
+    where N: PartialEq + HasZero + Copy {
     /// Returns true if self has the same terms as other.
     ///
     /// # Example
@@ -666,94 +588,19 @@ impl<N> PartialEq for Polynomial<N>
     }
 }
 
-
-impl<N> Polynomial<N>
-    where N: Copy + PartialEq + PartialOrd + Display + From<u8> {
-    pub fn degree_iter_uint(&self) -> PolynomialDegreeIteratorUInt<N> {
-        PolynomialDegreeIteratorUInt{
-            polynomial: self,
-            index: if self.len() == 0 {
-                0
-            } else {
-                self.len() - degree_u8(&self.terms) - 1
-            },
-            degree: degree_u8(&self.terms)
-        }
-    }
-
-    pub fn to_str_uint(&self) -> Result<String, Error> {
-        let mut s = String::new();
-        let mut iter = self.degree_iter_uint();
-        let one = N::from(1);
-
-
-        match iter.next() {
-            None => {
-                return match s.write_str("0") {
-                     Ok(_)=> {
-                        Ok(s)
-                    }
-                    Err(e) => {
-                        Err(e)
-                    }
-                };
-            }
-
-            Some((term, degree)) => {
-                if (term != one) || (degree == 0) {
-                    if let Err(e) = s.write_str(&format!("{}", term)) {
-                        return Err(e);
-                    };
-                }
-
-                if let Err(e) = match degree {
-                    0 => {Ok(())},
-                    1 => {s.write_str("x")},
-                    _ => {s.write_str(&format!("x^{}", degree))}
-                } {
-                    return Err(e);
-                }
-            }
-        }
-
-
-        for (term, degree) in iter {
-            if let Err(e) = s.write_str(" + ") {
-                return Err(e);
-            };
-
-            if (term != one) || (degree == 0) {
-                if let Err(e) = s.write_str(&format!("{}", term)) {
-                    return Err(e);
-                };
-            }
-
-            if let Err(e) = match degree {
-                0 => {Ok(())},
-                1 => {s.write_str("x")},
-                _ => {s.write_str(&format!("x^{}", degree))}
-            } {
-                return Err(e);
-            }
-        }
-
-        Ok(s)
-    }
-}
-
 impl<N> fmt::Display for Polynomial<N>
-    where N: From<i8> + Copy + Neg<Output=N> + PartialEq + PartialOrd + Display {
+    where N: HasZero + HasOne + Copy + IsNegativeOne + PartialEq + PartialOrd + Display + Abs {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let mut iter = self.degree_iter();
-        let one = N::from(1);
-        let zero = N::from(0);
+        let one = N::one();
+        let zero = N::zero();
         match iter.next() {
             None => {
                 return write!(f, "0");
             }
 
             Some((term, degree)) => {
-                if term == -one {
+                if term.is_negative_one() {
                     write!(f, "-")?;
                 } else if (term != one) || (degree == 0) {
                     write!(f, "{}", term)?;
@@ -775,7 +622,7 @@ impl<N> fmt::Display for Polynomial<N>
                 write!(f, " - ")?;
             }
 
-            let term = if term < zero {-term} else {term};
+            let term = term.abs();
 
             if (term != one) || (degree == 0) {
                 write!(f, "{}", term)?;
@@ -793,7 +640,7 @@ impl<N> fmt::Display for Polynomial<N>
 }
 
 impl<N> fmt::Display for Integral<N>
-    where N: From<i8> + Copy + Neg<Output=N> + PartialEq + PartialOrd + Display {
+    where N: HasZero + HasOne + IsNegativeOne + Abs + Copy + Neg<Output=N> + PartialEq + PartialOrd + Display {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         if self.polynomial.terms.len() == 0 {
             return write!(f, "C");
@@ -809,7 +656,7 @@ impl<N> fmt::Display for Integral<N>
 }
 
 impl<N> ops::Neg for Polynomial<N>
-    where N: PartialEq + From<i8> + Copy + Neg<Output=N>{
+    where N: PartialEq + HasZero + Copy + Neg<Output=N>{
     type Output = Polynomial<N>;
 
     fn neg(self) -> Polynomial<N> {
@@ -818,7 +665,7 @@ impl<N> ops::Neg for Polynomial<N>
 }
 
 impl<N> ops::Sub<Polynomial<N>> for Polynomial<N>
-    where N: PartialEq + From<i8> + Copy + Sub<Output=N> + SubAssign + Neg<Output=N>{
+    where N: PartialEq + HasZero + Copy + Sub<Output=N> + SubAssign + Neg<Output=N>{
     type Output = Polynomial<N>;
 
     fn sub(self, _rhs: Polynomial<N>) -> Polynomial<N> {
@@ -846,7 +693,7 @@ impl<N> ops::Sub<Polynomial<N>> for Polynomial<N>
 }
 
 impl<N> ops::SubAssign<Polynomial<N>> for Polynomial<N>
-    where N: From<i8> + Copy + Neg<Output=N> + Sub<Output=N> + SubAssign {
+    where N: Copy + Neg<Output=N> + Sub<Output=N> + SubAssign {
     fn sub_assign(&mut self, _rhs: Polynomial<N>) {
         if _rhs.len() > self.len() {
             let mut terms = _rhs.terms.clone();
@@ -870,7 +717,7 @@ impl<N> ops::SubAssign<Polynomial<N>> for Polynomial<N>
 }
 
 impl<N> ops::Add<Polynomial<N>> for Polynomial<N>
-    where N: PartialEq + From<i8> + Copy + AddAssign {
+    where N: PartialEq + HasZero + Copy + AddAssign {
     type Output = Polynomial<N>;
 
     fn add(self, _rhs: Polynomial<N>) -> Polynomial<N> {
@@ -909,7 +756,7 @@ impl<N: Copy + AddAssign> ops::AddAssign<Polynomial<N>> for Polynomial<N> {
 }
 
 impl<N> ops::Mul<Polynomial<N>> for Polynomial<N>
-    where N: Mul<Output=N> + AddAssign + Copy + From<i8> + PartialEq {
+    where N: Mul<Output=N> + AddAssign + Copy + HasZero + PartialEq {
     type Output = Polynomial<N>;
 
     fn mul(self, _rhs: Polynomial<N>) -> Polynomial<N> {
@@ -918,7 +765,7 @@ impl<N> ops::Mul<Polynomial<N>> for Polynomial<N>
 }
 
 impl<N> ops::MulAssign<Polynomial<N>> for Polynomial<N>
-    where N: Mul<Output=N> + AddAssign + Copy + From<i8> + PartialEq {
+    where N: Mul<Output=N> + AddAssign + Copy + HasZero + PartialEq {
     fn mul_assign(&mut self, _rhs: Polynomial<N>) {
         self.terms = vec_mul(&self.terms, &_rhs.terms);
     }
@@ -926,7 +773,7 @@ impl<N> ops::MulAssign<Polynomial<N>> for Polynomial<N>
 
 
 impl<N> ops::Mul<&Polynomial<N>> for Polynomial<N>
-    where N: Mul<Output=N> + AddAssign + Copy + From<i8> + PartialEq {
+    where N: Mul<Output=N> + AddAssign + Copy + HasZero + PartialEq {
     type Output = Polynomial<N>;
 
     fn mul(self, _rhs: &Polynomial<N>) -> Polynomial<N> {
@@ -935,13 +782,13 @@ impl<N> ops::Mul<&Polynomial<N>> for Polynomial<N>
 }
 
 impl<N> ops::MulAssign<&Polynomial<N>> for Polynomial<N>
-    where N: Mul<Output=N> + AddAssign + Copy + From<i8> + PartialEq {
+    where N: Mul<Output=N> + AddAssign + Copy + HasZero + PartialEq {
     fn mul_assign(&mut self, _rhs: &Polynomial<N>) {
         self.terms = vec_mul(&self.terms, &_rhs.terms);
     }
 }
 
-impl<N: PartialEq + From<i8> + Copy + Mul<Output=N>> ops::Mul<N> for Polynomial<N> {
+impl<N: PartialEq + HasZero + Copy + Mul<Output=N>> ops::Mul<N> for Polynomial<N> {
     type Output = Polynomial<N>;
 
     fn mul(self, _rhs: N) -> Polynomial<N> {
@@ -958,7 +805,7 @@ impl<N: Copy + MulAssign> ops::MulAssign<N> for Polynomial<N> {
 }
 
 impl<N> ops::Div<N> for Polynomial<N>
-    where N: PartialEq + From<i8> + Copy + Div<Output=N> {
+    where N: PartialEq + HasZero + Copy + Div<Output=N> {
     type Output = Polynomial<N>;
 
     fn div(self, _rhs: N) -> Polynomial<N> {
@@ -967,7 +814,7 @@ impl<N> ops::Div<N> for Polynomial<N>
 }
 
 impl<N> ops::DivAssign<N> for Polynomial<N>
-    where N: PartialEq + From<i8> + Copy + DivAssign {
+    where N: PartialEq + Copy + DivAssign {
     fn div_assign(&mut self, _rhs: N) {
         for p in self.terms.iter_mut() {
             *p /= _rhs;
@@ -975,7 +822,7 @@ impl<N> ops::DivAssign<N> for Polynomial<N>
     }
 }
 
-impl<N: PartialEq + From<i8> + Copy> ops::Shl<i32> for Polynomial<N> {
+impl<N: PartialEq + HasZero + Copy> ops::Shl<i32> for Polynomial<N> {
     type Output = Polynomial<N>;
 
     fn shl(self, _rhs: i32) -> Polynomial<N> {
@@ -984,23 +831,23 @@ impl<N: PartialEq + From<i8> + Copy> ops::Shl<i32> for Polynomial<N> {
         } else {
             let index = first_nonzero_index(&self.terms);
             let mut terms = self.terms[index..].to_vec();
-            terms.extend(vec![N::from(0); _rhs as usize]);
+            terms.extend(vec![N::zero(); _rhs as usize]);
             Polynomial{terms}
         }
     }
 }
 
-impl<N: From<i8> + Copy> ops::ShlAssign<i32> for Polynomial<N> {
+impl<N: HasZero + Copy> ops::ShlAssign<i32> for Polynomial<N> {
     fn shl_assign(&mut self, _rhs: i32) {
         if _rhs < 0 {
             *self >>= -_rhs;
         } else {
-            self.terms.extend(vec![N::from(0); _rhs as usize]);
+            self.terms.extend(vec![N::zero(); _rhs as usize]);
         }
     }
 }
 
-impl<N: PartialEq + From<i8> + Copy> ops::Shr<i32> for Polynomial<N> {
+impl<N: PartialEq + HasZero + Copy> ops::Shr<i32> for Polynomial<N> {
     type Output = Polynomial<N>;
 
     fn shr(self, _rhs: i32) -> Polynomial<N> {
@@ -1013,7 +860,7 @@ impl<N: PartialEq + From<i8> + Copy> ops::Shr<i32> for Polynomial<N> {
     }
 }
 
-impl<N: From<i8> + Copy> ops::ShrAssign<i32> for Polynomial<N> {
+impl<N: HasZero + Copy> ops::ShrAssign<i32> for Polynomial<N> {
     fn shr_assign(&mut self, _rhs: i32) {
         if _rhs < 0 {
             *self <<= -_rhs;
