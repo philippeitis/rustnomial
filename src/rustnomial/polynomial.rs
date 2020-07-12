@@ -335,13 +335,13 @@ impl<N> Polynomial<N>
     }
 
     /// Returns an iterator for the `Polynomial`, yielding term constants. Terms are iterated over
-    /// in descending degree order, including zero terms.
+    /// in descending degree order, exluding leading zero terms.
     ///
     /// # Example
     ///
     /// ```
     /// use rustnomial::Polynomial;
-    /// let polynomial = Polynomial::new(vec![1, 0, 2, 3]);
+    /// let polynomial = Polynomial::new(vec![0, 1, 0, 2, 3]);
     /// let mut iter = polynomial.iter();
     /// assert_eq!(Some(1), iter.next());
     /// assert_eq!(Some(0), iter.next());
@@ -444,6 +444,15 @@ impl<N> Polynomial<N>
 
 impl<N> Polynomial<N>
     where N: PartialEq + From<i8> + Copy + MulAssign {
+    /// Returns the derivative of the `Polynomial`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use rustnomial::Polynomial;
+    /// let polynomial = Polynomial::new(vec![4, 1, 5]);
+    /// assert_eq!(Polynomial::new(vec![8, 1]), polynomial.derivative());
+    /// ```
     pub fn derivative(&self) -> Polynomial<N> {
         let index = first_nonzero_index(&self.terms);
         // TODO: Fix for degrees of arbitrary size.
@@ -459,6 +468,16 @@ impl<N> Polynomial<N>
 
 impl<N> Polynomial<N>
     where N: PartialEq + From<i8> + Copy + DivAssign {
+    /// Returns the integral of the `Polynomial`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use rustnomial::Polynomial;
+    /// let polynomial = Polynomial::new(vec![1.0, 2.0, 5.0]);
+    /// let integral = polynomial.integral();
+    /// assert_eq!(Polynomial::new(vec![1.0/3.0, 1.0, 5.0, 0.0]), integral.polynomial);
+    /// ```
     pub fn integral(&self) -> Integral<N> {
         let index = first_nonzero_index(&self.terms);
         // TODO: Fix for degrees of arbitrary size.
@@ -477,10 +496,22 @@ impl<N> Polynomial<N>
 
 impl<N> Polynomial<N>
     where N: Mul<Output=N> + AddAssign + Copy + From<i8> + PartialEq {
-    fn borrow_mul(&self, _rhs: &Polynomial<N>) -> Polynomial<N> {
+    pub fn borrow_mul(&self, _rhs: &Polynomial<N>) -> Polynomial<N> {
         Polynomial{terms: vec_mul(&self.terms, &_rhs.terms)}
     }
 
+    /// Raises the `Polynomial` to the power of exp, using exponentiation by squaring.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use rustnomial::Polynomial;
+    /// let polynomial = Polynomial::new(vec![1.0, 2.0]);
+    /// let polynomial_sqr = polynomial.pow(2);
+    /// let polynomial_cub = polynomial.pow(3);
+    /// assert_eq!(polynomial.clone() * polynomial.clone(), polynomial_sqr);
+    /// assert_eq!(polynomial_sqr.clone() * polynomial.clone(), polynomial_cub);
+    /// ```
     pub fn pow(&self, exp: usize) -> Polynomial<N> {
         if exp == 0 {
             Polynomial{terms: vec![N::from(1); 1]}
@@ -498,6 +529,18 @@ impl<N> Polynomial<N>
 
 impl<N> Polynomial<N>
     where N: Copy + PartialEq + From<i8> + SubAssign + Mul<Output=N> + Div<Output=N> {
+    /// Divides self by the given `Polynomial`, and returns the quotient and remainder.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use rustnomial::Polynomial;
+    /// let polynomial = Polynomial::new(vec![1.0, 2.0]);
+    /// let polynomial_sqr = polynomial.pow(2);
+    /// let polynomial_cub = polynomial.pow(3);
+    /// assert_eq!(polynomial.clone() * polynomial.clone(), polynomial_sqr);
+    /// assert_eq!(polynomial_sqr.clone() * polynomial.clone(), polynomial_cub);
+    /// ```
     pub fn div_mod(&self, _rhs: &Polynomial<N>) -> Result<(Polynomial<N>, Polynomial<N>), &'static str> {
         fn vec_sub_w_scale<N>(_lhs: &mut Vec<N>, _lhs_degree: usize, _rhs: &Vec<N>, _rhs_deg: usize, _rhs_scale: N)
             where N: Copy + Mul<Output=N> + SubAssign {
@@ -549,6 +592,18 @@ impl<N> Polynomial<N>
 }
 
 impl<N> Integral<N> {
+    /// Returns the area of the underlying `Polynomial` from the first point to the second point.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use rustnomial::Polynomial;
+    /// let polynomial = Polynomial::new(vec![2.0, 1.0]);
+    /// let integral = polynomial.integral();
+    /// assert_eq!(2.0, integral.eval(0.0, 1.0));
+    /// assert_eq!(6.0, integral.eval(0.0, 2.0));
+    /// assert_eq!(4.0, integral.eval(1.0, 2.0));
+    /// ```
     pub fn eval(&self, start: N, end: N) -> N
         where N: From<i8> + Copy + AddAssign + Sub<Output=N> + MulAssign + Mul<Output=N> {
         self.polynomial.eval(end) - self.polynomial.eval(start)
@@ -575,18 +630,39 @@ impl<N> Integral<N> {
 
 impl<N> PartialEq for Polynomial<N>
     where N: PartialEq + From<i8> + Copy {
+    /// Returns true if self has the same terms as other.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use rustnomial::Polynomial;
+    /// let a = Polynomial::new(vec![1.0, 2.0]);
+    /// let b = Polynomial::new(vec![2.0, 2.0]);
+    /// let c = Polynomial::new(vec![1.0, 0.0]);
+    /// assert_ne!(a, b);
+    /// assert_ne!(a, c);
+    /// assert_eq!(a, b - c);
+    /// ```
     fn eq(&self, other: &Self) -> bool {
         if self.degree() != other.degree() {
             return false;
         }
 
-        for (a, b) in self.degree_iter().zip(other.degree_iter()) {
-            if a != b {
+        let mut self_iter = self.degree_iter();
+        let mut other_iter = other.degree_iter();
+
+        loop {
+            let self_term = self_iter.next();
+            let other_term = other_iter.next();
+            if self_term != other_term {
                 return false;
             }
-        }
 
-        true
+            // Can only get here if self_term and other_term are both None
+            if self_term == None {
+                return true;
+            }
+        }
     }
 }
 
@@ -1114,7 +1190,20 @@ mod tests {
         c.terms = vec![1, 2, 0, 0, 0];
 
         assert_ne!(a, c);
+    }
 
+    #[test]
+    fn test_equality_first_match() {
+        let a = Polynomial::new(vec![1, 2]);
+        let b = Polynomial::new(vec![1, 0]);
+        assert_ne!(a, b);
+    }
+
+    #[test]
+    fn test_equality_different() {
+        let a = Polynomial::new(vec![1, 2]);
+        let b = Polynomial::new(vec![3, 7, 4]);
+        assert_ne!(a, b);
     }
 
     #[test]
