@@ -1,5 +1,3 @@
-use std::convert::TryFrom;
-
 pub trait HasOne {
     fn one() -> Self;
 }
@@ -345,5 +343,89 @@ impl Abs for f32 {
 impl Abs for f64 {
     fn abs(self) -> Self {
         self.abs()
+    }
+}
+
+
+pub trait PowUsize {
+    fn upow(self, exp: usize) -> Self;
+}
+
+
+impl PowUsize for u8 {
+    fn upow(self, exp: usize) -> Self {
+        self.pow(exp as u32)
+    }
+}
+
+impl PowUsize for u16 {
+    fn upow(self, exp: usize) -> Self {
+        self.pow(exp as u32)
+    }
+}
+
+impl PowUsize for u32 {
+    fn upow(self, exp: usize) -> Self {
+        self.pow(exp as u32)
+    }
+}
+
+impl PowUsize for u64 {
+    fn upow(self, exp: usize) -> Self {
+        self.pow(exp as u32)
+    }
+}
+
+impl PowUsize for u128 {
+    fn upow(self, exp: usize) -> Self {
+        self.pow(exp as u32)
+    }
+}
+
+impl PowUsize for usize {
+    fn upow(self, exp: usize) -> Self {
+        self.pow(exp as u32)
+    }
+}
+
+impl PowUsize for i8 {
+    fn upow(self, exp: usize) -> Self {
+        self.pow(exp as u32)
+    }
+}
+
+impl PowUsize for i16 {
+    fn upow(self, exp: usize) -> Self {
+        self.pow(exp as u32)
+    }
+}
+
+impl PowUsize for i32 {
+    fn upow(self, exp: usize) -> Self {
+        self.pow(exp as u32)
+    }
+}
+
+impl PowUsize for i64 {
+    fn upow(self, exp: usize) -> Self {
+        self.pow(exp as u32)
+    }
+}
+
+impl PowUsize for i128 {
+    fn upow(self, exp: usize) -> Self {
+        self.pow(exp as u32)
+    }
+}
+
+impl PowUsize for f32 {
+    fn upow(self, exp: usize) -> Self {
+        self.powi(exp as i32)
+    }
+}
+
+impl PowUsize for f64 {
+    fn upow(self, exp: usize) -> Self {
+        self.powi(exp as i32)
     }
 }
