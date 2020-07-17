@@ -1,8 +1,7 @@
 extern crate rustnomial;
 extern crate core;
 
-use rustnomial::Polynomial;
-use rustnomial::{polynomial, integral, derivative};
+use rustnomial::{polynomial, integral, Integrable, Polynomial, derivative};
 
 fn main() {
     let a = Polynomial::new(vec![1, -2, -24]);
@@ -35,4 +34,6 @@ fn main() {
     println!("{}", c);
     let f = Polynomial{terms: vec!{1usize, 1, 25}};
     println!("{}, {}", f, f.eval(5));
+    let a = -2.0f32;
+    println!("{}", a.abs());
 }
