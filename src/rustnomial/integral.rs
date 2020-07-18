@@ -1,6 +1,6 @@
-use ::{GenericPolynomial, Polynomial};
+use ::{GenericPolynomial, Polynomial, Evaluable};
 use core::fmt;
-use rustnomial::numerics::{HasZero, HasOne, IsNegativeOne, Abs, PowUsize};
+use rustnomial::numerics::{HasZero, HasOne, IsNegativeOne, Abs};
 use std::fmt::{Display, Debug};
 use std::ops::{Neg, AddAssign, Sub, MulAssign, Mul};
 

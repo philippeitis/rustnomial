@@ -6,7 +6,7 @@ use std::fmt::{Display};
 use rustnomial::integral::Integrable;
 use rustnomial::numerics::{HasZero, HasOne, IsNegativeOne, Abs};
 use rustnomial::traits::{PolynomialDegreeIterator, GenericPolynomial};
-use Integral;
+use ::{Integral, Evaluable};
 use rustnomial::degree::{Term, Degree};
 
 #[macro_export]
@@ -22,50 +22,14 @@ macro_rules! polynomial {
     };
 }
 
-#[macro_export]
-macro_rules! derivative {
-    ( $( $x:expr ),* ) => {
-        {
-            let mut temp_vec = Vec::new();
-            $(
-                temp_vec.push($x);
-            )*
-            Polynomial::new(temp_vec).derivative()
-        }
-    };
-}
-//
-// trait GenericPolynomial<N: Copy + Mul<Output=N>> {
-//     fn from_vec(terms: Vec<N>) -> GenericPolynomial<N>;
-//
-//     fn add_term(&self, term: &N, deg: usize);
-//
-//     fn scale(&mut self, _rhs: &N);
-//
-//     fn mul(&self, _rhs: &GenericPolynomial<N>) -> &GenericPolynomial<N> {
-//        let mut result = GenericPolynomial::from_vec(vec![]);
-//        for (rterm, rdeg) in self.degree_iter() {
-//            for (lterm, ldeg) in _rhs.degree_iter() {
-//                result.add_term(rterm * lterm, rdeg, ldeg);
-//            }
-//        }
-//
-//        result
-//    }
-//
-//     fn iter(&self) -> PolynomialDegreeIterator<N>;
-//
-//     fn degree_iter(&self) -> PolynomialDegreeIterator<N>;
-// }
-
 #[derive(Debug, Clone)]
 pub struct Polynomial<N> {
     pub terms: Vec<N>,
 }
 
 pub struct PolynomialIterator<'a, N> {
-    polynomial: &'a Polynomial<N>,
-    index: usize,
+    pub(crate) polynomial: &'a Polynomial<N>,
+    pub(crate) index: usize,
 }
 
 impl<N: Copy + HasZero + PartialEq> Iterator for PolynomialIterator<'_, N> {
@@ -84,21 +48,33 @@ impl<N: Copy + HasZero + PartialEq> Iterator for PolynomialIterator<'_, N> {
 
 fn first_nonzero_index<N>(terms: &Vec<N>) -> usize
     where N: PartialEq + HasZero + Copy {
-    let mut ind = 0;
     let zero = N::zero();
-    while (ind < terms.len()) && (terms[ind] == zero) {
-        ind += 1;
+    for (degree, chunk) in terms.chunks_exact(4).enumerate() {
+        for (index, &val) in chunk.iter().enumerate() {
+            if val != zero {
+                return degree * 4 + index;
+            }
+        }
     }
-    ind
+
+    let mut len = terms.chunks_exact(4).len() * 4;
+    for &value in terms.chunks_exact(4).remainder().iter() {
+        if value != zero {
+            return len;
+        }
+        len += 1;
+    }
+
+    len
 }
 
 fn vec_mul<N>(_lhs: &Vec<N>, _rhs: &Vec<N>) -> Vec<N>
     where N: Mul<Output=N> + AddAssign + Copy + HasZero + PartialEq {
-    let _rhs_ind = first_nonzero_index(&_rhs);
+    let _rhs = &_rhs[first_nonzero_index(&_rhs)..];
     let _lhs = &_lhs[first_nonzero_index(&_lhs)..];
     let zero = N::zero();
-    let mut terms = vec![zero; _rhs.len() + _lhs.len() - 1 - _rhs_ind];
-    for (index, &rterm) in _rhs[_rhs_ind..].iter().enumerate() {
+    let mut terms = vec![zero; _rhs.len() + _lhs.len() - 1];
+    for (index, &rterm) in _rhs.iter().enumerate() {
         if rterm == zero {
             continue;
         }
@@ -109,35 +85,38 @@ fn vec_mul<N>(_lhs: &Vec<N>, _rhs: &Vec<N>) -> Vec<N>
     terms
 }
 
-// fn vec_sub(_lhs: &mut Vec<i32>, _rhs: Vec<i32>) {
-//     for (_lhs_t, _rhs_t) in _lhs[_lhs.len() - _rhs.len()..].iter_mut().zip(_rhs) {
-//         *_lhs_t -= _rhs_t;
-//     }
-// }
-
 fn degree<N>(poly_vec: &Vec<N>) -> Degree
     where N: PartialEq + HasZero + Copy {
-    let zero = N::zero();
-    for (ind, &val) in poly_vec.iter().enumerate() {
-        if val != zero {
-            return Degree::Num(poly_vec.len() - ind - 1);
-        }
+    let index = first_nonzero_index(poly_vec);
+    if index == poly_vec.len() {
+        Degree::NegInf
+    } else {
+        Degree::Num(poly_vec.len() - index - 1)
     }
-
-    Degree::NegInf
 }
 
-fn degree_and_first_val<N>(poly_vec: &Vec<N>) -> (usize, N)
+fn first_term<N>(poly_vec: &Vec<N>) -> Term<N>
     where N: PartialEq + HasZero + Copy {
     let zero = N::zero();
-    for (ind, &val) in poly_vec.iter().enumerate() {
-        if val != zero {
-            return (poly_vec.len() - ind - 1, val);
+    for (degree, chunk) in poly_vec.chunks_exact(4).enumerate() {
+        for (index, &value) in chunk.iter().enumerate() {
+            if value != zero {
+                return Term::Term(value, poly_vec.len() - degree * 4 - index - 1);
+            }
         }
     }
 
-    (0, zero)
+    let mut index = poly_vec.chunks_exact(4).len() * 4;
+    for &value in poly_vec.chunks_exact(4).remainder().iter() {
+        if value != zero {
+            return Term::Term(value, poly_vec.len() - index - 1);
+        }
+        index += 1;
+    }
+
+    Term::ZeroTerm
 }
+
 //
 // fn generic_pow<N>(base: N, exp: usize) -> N
 //     where N: Copy + Mul<Output=N> + HasOne {
@@ -340,10 +319,17 @@ impl<N> Polynomial<N>
 //     }
 // }
 //
-impl<N> Polynomial<N>
+
+impl<N> Evaluable<N> for Polynomial<N>
     where N: HasZero + HasOne + Copy + AddAssign + MulAssign + Mul<Output=N> {
     /// Returns the value of the `Polynomial` at the given point.
-    pub fn eval(&self, point: N) -> N {
+    ///
+    /// # Example
+    ///
+    /// ```
+    ///
+    /// ```
+    fn eval(&self, point: N) -> N {
         let mut sum = N::zero();
         let mut pow = N::one();
         for &val in self.terms.iter().rev() {
@@ -462,29 +448,29 @@ impl<N> Polynomial<N>
             }
         }
 
-        let (_rhs_deg, _rhs_first) = degree_and_first_val(&_rhs.terms);
         let zero = N::zero();
-
-        if _rhs_deg == 0 {
-            match _rhs.terms.last() {
-                None => {
+        let (_rhs_first, _rhs_deg) = match first_term(&_rhs.terms) {
+            Term::ZeroTerm => {
                 return Err("Can't divide by 0.");
-                }
-                Some(&x) => {
-                    if x == zero {
-                        return Err("Can't divide by 0.");
-                    }
-                }
+            },
+            Term::Term(coeff, deg) => {
+                (coeff, deg)
             }
-        }
+        };
 
-        let (mut self_degree, mut term) = degree_and_first_val(&self.terms);
-
-
-        if self_degree < _rhs_deg {
-            let zero_vec = vec![zero; 1];
-            return Ok((Polynomial::new(zero_vec), Polynomial::new(self.terms.clone())));
-        }
+        let (mut term, mut self_degree) = match first_term(&self.terms) {
+            Term::ZeroTerm => {
+                let zero_vec = vec![zero; 1];
+                return Ok((Polynomial::new(zero_vec), Polynomial::new(self.terms.clone())));
+            }
+            Term::Term(term, degree) => {
+                if degree < _rhs_deg {
+                    let zero_vec = vec![zero; 1];
+                    return Ok((Polynomial::new(zero_vec), Polynomial::new(self.terms.clone())));
+                }
+                (term, degree)
+            }
+        };
 
         let mut remainder = self.terms.clone();
         let offset = self_degree - _rhs_deg;
@@ -494,9 +480,15 @@ impl<N> Polynomial<N>
             let scale = term / _rhs_first;
             vec_sub_w_scale(&mut remainder, self_degree, &_rhs.terms, _rhs_deg, scale);
             div[offset - (self_degree - _rhs_deg)] = scale;
-            let (sd, t) = degree_and_first_val(&remainder);
-            self_degree = sd;
-            term = t;
+            match first_term(&remainder) {
+                Term::ZeroTerm => {
+                    break;
+                },
+                Term::Term(coeff, degree) => {
+                    term = coeff;
+                    self_degree = degree;
+                }
+            }
         }
 
         Ok((Polynomial::new(div), Polynomial::new(remainder)))
@@ -708,7 +700,6 @@ impl<N> ops::MulAssign<Polynomial<N>> for Polynomial<N>
     }
 }
 
-
 impl<N> ops::Mul<&Polynomial<N>> for Polynomial<N>
     where N: Mul<Output=N> + AddAssign + Copy + HasZero + PartialEq {
     type Output = Polynomial<N>;
@@ -813,7 +804,7 @@ impl<N: HasZero + Copy> ops::ShrAssign<i32> for Polynomial<N> {
 mod tests {
     use std::fmt::Write;
     use super::Polynomial;
-    use ::{Integrable, Degree};
+    use ::{Integrable, Degree, Evaluable};
 
     #[test]
     fn test_eval() {
@@ -950,14 +941,14 @@ mod tests {
     }
 
     #[test]
-    fn test_mul_i32() {
+    fn test_mul_num() {
         let a = Polynomial::new(vec![1, 2]);
         let c = Polynomial::new(vec![10, 20]);
         assert_eq!(a * 10, c);
     }
 
     #[test]
-    fn test_mul_assign_i32() {
+    fn test_mul_assign_num() {
         let mut a = Polynomial::new(vec![1, 2]);
         a *= 10;
         let c = Polynomial::new(vec![10, 20]);

@@ -17,18 +17,18 @@ pub trait Evaluable<N> {
     fn eval(&self, point: N) -> N;
 }
 
-impl<T: GenericPolynomial<N>, N> Evaluable<N> for T
-    where N: HasZero + PowUsize + Copy + AddAssign + Mul<Output=N> + PartialEq {
-    fn eval(&self, point: N) -> N {
-        let mut sum = N::zero();
-        for (val, degree) in self.degree_iter() {
-            sum += val * point.upow(degree);
-        }
-        sum
-    }
-}
+// impl<T: GenericPolynomial<N>, N> Evaluable<N> for T
+//     where N: HasZero + PowUsize + Copy + AddAssign + Mul<Output=N> + PartialEq {
+//     fn eval(&self, point: N) -> N {
+//         let mut sum = N::zero();
+//         for (val, degree) in self.degree_iter() {
+//             sum += val * point.upow(degree);
+//         }
+//         sum
+//     }
+// }
 
- impl<N> fmt::Display for GenericPolynomial<N>
+ impl<N> fmt::Display for dyn GenericPolynomial<N>
     where N: HasZero + HasOne + Copy + IsNegativeOne + PartialEq + PartialOrd + Display + Abs {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let mut iter = self.degree_iter();
