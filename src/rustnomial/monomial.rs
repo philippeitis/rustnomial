@@ -1,8 +1,8 @@
 use rustnomial::traits::{PolynomialDegreeIterator, GenericPolynomial};
-use rustnomial::numerics::{HasZero, HasOne, IsNegativeOne, Abs};
+use rustnomial::numerics::{HasZero, HasOne, IsNegativeOne, Abs, PowUsize};
 use ::{Integrable, Integral};
-use Polynomial;
-use std::ops::{Div, AddAssign};
+use ::{Polynomial, Evaluable};
+use std::ops::{Div, AddAssign, Mul};
 use std::fmt;
 use std::fmt::Display;
 use rustnomial::degree::{Degree, Term};
@@ -20,6 +20,19 @@ impl<N> Monomial<N> {
 }
 
 impl<N: Copy + HasZero + PartialEq> Monomial<N> {
+    /// Returns the degree of the `Monomial`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use rustnomial::{Monomial, Degree};
+    /// let monomial = Monomial::new(3.0, 2);
+    /// assert_eq!(Degree::Num(2), monomial.degree());
+    /// let zero_with_nonzero_deg = Monomial::new(0.0, 2);
+    /// assert_eq!(Degree::NegInf, zero_with_nonzero_deg.degree());
+    /// let nonzero_with_zero_degree = Monomial::new(1.0, 0);
+    /// assert_eq!(Degree::Num(0), nonzero_with_zero_degree.degree());
+    /// ```
     pub fn degree(&self) -> Degree {
         if self.coefficient == N::zero() {
             Degree::NegInf
@@ -38,6 +51,16 @@ impl<N: Copy + HasZero + PartialEq> GenericPolynomial<N> for Monomial<N> {
         }
     }
 
+    /// Returns the nth term of the `Monomial`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use rustnomial::{Monomial, GenericPolynomial, Term};
+    /// let monomial = Monomial::new(5, 2);
+    /// assert_eq!(Term::Term(5, 2), monomial.nth_term(0));
+    /// assert_eq!(Term::ZeroTerm, monomial.nth_term(1));
+    /// ```
     fn nth_term(&self, index: usize) -> Term<N> {
         if index != 0 {
             Term::ZeroTerm
@@ -53,7 +76,7 @@ impl<N: Copy + HasZero + PartialEq> GenericPolynomial<N> for Monomial<N> {
         }
     }
 
-    /// Returns an iterator for the `Polynomial`, yielding the term constant and degree. Terms are
+    /// Returns an iterator for the `Monomial`, yielding the term constant and degree. Terms are
     /// iterated over in descending degree order, excluding zero terms.
     ///
     /// # Example
@@ -71,6 +94,16 @@ impl<N: Copy + HasZero + PartialEq> GenericPolynomial<N> for Monomial<N> {
 }
 
 impl<N: PartialEq + HasZero + Copy + AddAssign + Div<Output=N> + From<u8>> Integrable<N> for Monomial<N> {
+    /// Returns the integral of the `Monomial`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use rustnomial::{Monomial, Polynomial, Integrable};
+    /// let monomial = Monomial::new(3.0, 2);
+    /// let integral = monomial.integral();
+    /// assert_eq!(Polynomial::new(vec![1.0, 0.0, 0.0, 0.0]), integral.polynomial);
+    /// ```
     fn integral(&self) -> Integral<N> {
         match self.degree() {
             Degree::NegInf => Integral {
@@ -85,6 +118,19 @@ impl<N: PartialEq + HasZero + Copy + AddAssign + Div<Output=N> + From<u8>> Integ
     }
 }
 
+impl<N> Evaluable<N> for Monomial<N>
+    where N: PowUsize + Mul<Output=N> + Copy {
+    /// Returns the value of the `Polynomial` at the given point.
+    ///
+    /// # Example
+    ///
+    /// ```
+    ///
+    /// ```
+    fn eval(&self, point: N) -> N {
+        self.coefficient * point.upow(self.deg)
+    }
+}
 
 
  impl<N> fmt::Display for Monomial<N>
@@ -113,9 +159,8 @@ impl<N: PartialEq + HasZero + Copy + AddAssign + Div<Output=N> + From<u8>> Integ
 }
 
 mod tests {
-    use std::fmt::{Write, Debug};
-    use ::{Monomial, Integrable};
-    use rustnomial::traits::{Evaluable, GenericPolynomial, PolynomialDegreeIterator};
+    use std::fmt::{Write};
+    use ::{Monomial, Integrable, Evaluable};
     use Polynomial;
 
     #[test]
@@ -138,6 +183,4 @@ mod tests {
         write!(&mut a_str, "{}", a).unwrap();
         assert_eq!(a_str, "5x^2");
     }
-
-
 }
