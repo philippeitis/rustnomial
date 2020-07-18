@@ -4,6 +4,7 @@ pub enum Degree {
     Num(usize)
 }
 
+#[derive(Debug, Clone, PartialEq)]
 pub enum Term<N> {
     ZeroTerm,
     Term(N, usize)
