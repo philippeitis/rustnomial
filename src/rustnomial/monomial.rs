@@ -1,11 +1,13 @@
-use rustnomial::traits::{PolynomialDegreeIterator, GenericPolynomial};
+use rustnomial::traits::{TermIterator, GenericPolynomial};
 use rustnomial::numerics::{HasZero, HasOne, IsNegativeOne, Abs, PowUsize};
 use ::{Integrable, Integral};
-use ::{Polynomial, Evaluable};
-use std::ops::{Div, AddAssign, Mul};
+use ::{Evaluable};
+use std::ops::{Div, AddAssign, Mul, MulAssign, DivAssign, SubAssign, Neg};
 use std::fmt;
 use std::fmt::Display;
 use rustnomial::degree::{Degree, Term};
+use ::{Derivable, Polynomial};
+use core::ops;
 
 #[derive(Debug, Clone)]
 pub struct Monomial<N> {
@@ -40,14 +42,29 @@ impl<N: Copy + HasZero + PartialEq> Monomial<N> {
             Degree::Num(self.deg)
         }
     }
+
+    /// Returns true if all terms are zero, and false if a non-zero term exists.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use rustnomial::{Polynomial, Monomial};
+    /// let zero = Monomial::new(0, 1);
+    /// assert!(zero.is_zero());
+    /// let non_zero = Monomial::new(1, 0);
+    /// assert!(!non_zero.is_zero());
+    /// ```
+    pub fn is_zero(&self) -> bool {
+self.degree() == Degree::NegInf
+}
 }
 
 impl<N: Copy + HasZero + PartialEq> GenericPolynomial<N> for Monomial<N> {
     fn len(&self) -> usize {
-        if self.coefficient != N::zero() {
-            1
-        } else {
+        if self.is_zero() {
             0
+        } else {
+            1
         }
     }
 
@@ -84,16 +101,50 @@ impl<N: Copy + HasZero + PartialEq> GenericPolynomial<N> for Monomial<N> {
     /// ```
     /// use rustnomial::{Monomial, GenericPolynomial};
     /// let monomial = Monomial::new(5, 2);
-    /// let mut iter = monomial.degree_iter();
+    /// let mut iter = monomial.term_iter();
     /// assert_eq!(Some((5, 2)), iter.next());
     /// assert_eq!(None, iter.next());
     /// ```
-    fn degree_iter(&self) -> PolynomialDegreeIterator<N> {
-        PolynomialDegreeIterator::new(self)
+    fn term_iter(&self) -> TermIterator<N> {
+        TermIterator::new(self)
     }
 }
 
-impl<N: PartialEq + HasZero + Copy + AddAssign + Div<Output=N> + From<u8>> Integrable<N> for Monomial<N> {
+impl<N> Evaluable<N> for Monomial<N>
+    where N: PowUsize + Mul<Output=N> + Copy {
+    /// Returns the value of the `Monomial` at the given point.
+    ///
+    /// # Example
+    ///
+    /// ```
+    ///
+    /// ```
+    fn eval(&self, point: N) -> N {
+        self.coefficient * point.upow(self.deg)
+    }
+}
+
+impl<N> Derivable<N> for Monomial<N>
+    where N: PartialEq + HasZero + Copy + Mul<Output=N> + From<u8> {
+    /// Returns the integral of the `Monomial`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use rustnomial::{Monomial, Polynomial, Derivable};
+    /// let monomial = Monomial::new(3.0, 2);
+    /// assert_eq!(Monomial::new(6.0, 1), monomial.derivative());
+    /// ```
+    fn derivative(&self) -> Monomial<N> {
+        match self.degree() {
+            Degree::NegInf => Monomial::new(N::zero(), 0),
+            Degree::Num(x) => Monomial::new(self.coefficient * N::from(x as u8), x - 1)
+        }
+    }
+}
+
+impl<N> Integrable<N> for Monomial<N>
+    where N: PartialEq + HasZero + Copy + AddAssign + Div<Output=N> + From<u8> {
     /// Returns the integral of the `Monomial`.
     ///
     /// # Example
@@ -118,34 +169,60 @@ impl<N: PartialEq + HasZero + Copy + AddAssign + Div<Output=N> + From<u8>> Integ
     }
 }
 
-impl<N> Evaluable<N> for Monomial<N>
-    where N: PowUsize + Mul<Output=N> + Copy {
-    /// Returns the value of the `Polynomial` at the given point.
+impl<N> Monomial<N>
+    where N: PowUsize + Copy {
+
+    /// Raises the `Monomial` to the power of exp.
     ///
     /// # Example
     ///
     /// ```
-    ///
+    /// use rustnomial::Monomial;
+    /// let monomial = Monomial::new(2, 1);
+    /// let monomial_sqr = monomial.pow(2);
+    /// let monomial_cub = monomial.pow(3);
+    /// assert_eq!(monomial.clone() * monomial.clone(), monomial_sqr);
+    /// assert_eq!(monomial_sqr.clone() * monomial.clone(), monomial_cub);
     /// ```
-    fn eval(&self, point: N) -> N {
-        self.coefficient * point.upow(self.deg)
+    pub fn pow(&self, exp: usize) -> Monomial<N> {
+        Monomial::new(self.coefficient.upow(exp), self.deg * exp)
     }
 }
 
+// TODO: Divmod implementation.
+
+impl<N> PartialEq for Monomial<N>
+    where N: PartialEq + HasZero + Copy {
+    /// Returns true if self has the same terms as other.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use rustnomial::Monomial;
+    /// let a = Monomial::new(2, 2);
+    /// let b = Monomial::new(2, 2);
+    /// let c = Monomial::new(1, 2);
+    /// assert_eq!(a, b);
+    /// assert_ne!(a, c);
+    /// ```
+    fn eq(&self, other: &Self) -> bool {
+        self.nth_term(0) == other.nth_term(0)
+    }
+}
 
  impl<N> fmt::Display for Monomial<N>
     where N: HasZero + HasOne + Copy + IsNegativeOne + PartialEq + PartialOrd + Display + Abs {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let mut iter = self.degree_iter();
+        let mut iter = self.term_iter();
         return match iter.next() {
             None => {
                 write!(f, "0")
             }
-            Some((term, degree)) => {
-                if term.is_negative_one() {
+            Some((coeff, degree)) => {
+                if coeff.is_negative_one() {
                     write!(f, "-")?;
-                } else if (term != N::one()) || (degree == 0) {
-                    write!(f, "{}", term)?;
+                } else if (coeff != N::one()) || (degree == 0) {
+                    write!(f, "{}", coeff)?;
                 }
 
                 match degree {
@@ -157,6 +234,213 @@ impl<N> Evaluable<N> for Monomial<N>
         };
     }
 }
+
+impl<N> ops::Neg for Monomial<N>
+    where N: Copy + Neg<Output=N>{
+    type Output = Monomial<N>;
+
+    fn neg(self) -> Monomial<N> {
+        Monomial::new(-self.coefficient, self.deg)
+    }
+}
+
+// impl<N> ops::Sub<Polynomial<N>> for Polynomial<N>
+//     where N: PartialEq + HasZero + Copy + Sub<Output=N> + SubAssign + Neg<Output=N>{
+//     type Output = Polynomial<N>;
+//
+//     fn sub(self, _rhs: Polynomial<N>) -> Polynomial<N> {
+//         if _rhs.len() > self.len() {
+//             let mut terms = _rhs.terms.clone();
+//             let offset = _rhs.len() - self.len();
+//
+//             for index in terms[..offset].iter_mut() {
+//                 *index = -*index;
+//             }
+//
+//             for (index, val) in terms[offset..].iter_mut().zip(self.terms) {
+//                 *index = val - *index;
+//             }
+//             Polynomial::new(terms)
+//         } else {
+//             let mut terms = self.terms.clone();
+//             let offset = terms.len() - _rhs.len();
+//             for (index, val) in terms[offset..].iter_mut().zip(_rhs.terms) {
+//                 *index -= val;
+//             }
+//             Polynomial::new(terms)
+//         }
+//     }
+// }
+
+// impl<N> ops::SubAssign<Polynomial<N>> for Polynomial<N>
+//     where N: Neg<Output=N> + Sub<Output=N> + SubAssign + Copy + HasZero + PartialEq {
+//     fn sub_assign(&mut self, _rhs: Polynomial<N>) {
+//         if _rhs.len() > self.len() {
+//             let mut terms = _rhs.terms.clone();
+//             let offset = _rhs.len() - self.len();
+//
+//             for index in terms[..offset].iter_mut() {
+//                 *index = -*index;
+//             }
+//
+//             for (index, &val) in terms[offset..].iter_mut().zip(&self.terms) {
+//                 *index = val - *index;
+//             }
+//             self.terms = terms;
+//         } else {
+//             let offset = self.len() - _rhs.len();
+//             for (index, val) in self.terms[offset..].iter_mut().zip(_rhs.terms) {
+//                 *index -= val;
+//             }
+//         }
+//     }
+// }
+
+// impl<N> ops::Add<Polynomial<N>> for Polynomial<N>
+//     where N: PartialEq + HasZero + Copy + AddAssign {
+//     type Output = Polynomial<N>;
+//
+//     fn add(self, _rhs: Polynomial<N>) -> Polynomial<N> {
+//         let (mut terms, small) = if _rhs.len() > self.len() {
+//             (_rhs.terms.clone(), &self.terms)
+//         } else {
+//             (self.terms.clone(), &_rhs.terms)
+//         };
+//
+//         let offset = terms.len() - small.len();
+//
+//         for (index, &val) in terms[offset..].iter_mut().zip(small) {
+//             *index += val;
+//         }
+//
+//         Polynomial::new(terms)
+//     }
+// }
+
+// impl<N: Copy + HasZero + PartialEq + AddAssign> ops::AddAssign<Polynomial<N>> for Polynomial<N> {
+//     fn add_assign(&mut self, _rhs: Polynomial<N>) {
+//         if _rhs.len() > self.len() {
+//             let offset = _rhs.len() - self.len();
+//             let mut terms = _rhs.terms.clone();
+//             for (index, &val) in terms[offset..].iter_mut().zip(&self.terms) {
+//                 *index += val;
+//             }
+//             self.terms = terms;
+//         } else {
+//             let offset = self.len() - _rhs.len();
+//             for (index, val) in self.terms[offset..].iter_mut().zip(_rhs.terms) {
+//                 *index += val;
+//             }
+//         }
+//     }
+// }
+
+impl<N> ops::Mul<Monomial<N>> for Monomial<N>
+    where N: Mul<Output=N> + Copy {
+    type Output = Monomial<N>;
+
+    fn mul(self, _rhs: Monomial<N>) -> Monomial<N> {
+        Monomial::new(self.coefficient * _rhs.coefficient, self.deg + _rhs.deg)
+    }
+}
+
+impl<N> ops::MulAssign<Monomial<N>> for Monomial<N>
+    where N: MulAssign + AddAssign {
+    fn mul_assign(&mut self, _rhs: Monomial<N>) {
+        self.coefficient *= _rhs.coefficient;
+        self.deg += _rhs.deg;
+    }
+}
+
+impl<N> ops::Mul<&Monomial<N>> for Monomial<N>
+    where N: Mul<Output=N> + Copy {
+    type Output = Monomial<N>;
+
+    fn mul(self, _rhs: &Monomial<N>) -> Monomial<N> {
+        Monomial::new(self.coefficient * _rhs.coefficient, self.deg + _rhs.deg)
+    }
+}
+
+impl<N> ops::MulAssign<&Monomial<N>> for Monomial<N>
+    where N: MulAssign + AddAssign + Copy {
+    fn mul_assign(&mut self, _rhs: &Monomial<N>) {
+        self.coefficient *= _rhs.coefficient;
+        self.deg += _rhs.deg;
+    }
+}
+
+impl<N: Mul<Output=N>> ops::Mul<N> for Monomial<N> {
+    type Output = Monomial<N>;
+
+    fn mul(self, _rhs: N) -> Monomial<N> {
+        Monomial::new(self.coefficient * _rhs, self.deg)
+    }
+}
+
+impl<N: MulAssign> ops::MulAssign<N> for Monomial<N> {
+    fn mul_assign(&mut self, _rhs: N) {
+        self.coefficient *= _rhs;
+    }
+}
+
+impl<N: Div<Output=N>> ops::Div<N> for Monomial<N> {
+    type Output = Monomial<N>;
+
+    fn div(self, _rhs: N) -> Monomial<N> {
+        Monomial::new(self.coefficient / _rhs, self.deg)
+    }
+}
+
+impl<N: DivAssign> ops::DivAssign<N> for Monomial<N> {
+    fn div_assign(&mut self, _rhs: N) {
+        self.coefficient /= _rhs;
+    }
+}
+
+impl<N> ops::Shl<i32> for Monomial<N> {
+    type Output = Monomial<N>;
+
+    fn shl(self, _rhs: i32) -> Monomial<N> {
+        if _rhs < 0 {
+            self >> -_rhs
+        } else {
+            Monomial::new(self.coefficient, self.deg + (_rhs as usize))
+        }
+    }
+}
+
+impl<N> ops::ShlAssign<i32> for Monomial<N> {
+    fn shl_assign(&mut self, _rhs: i32) {
+        if _rhs < 0 {
+            *self >>= -_rhs;
+        } else {
+            self.deg += _rhs as usize;
+        }
+    }
+}
+
+impl<N> ops::Shr<i32> for Monomial<N> {
+    type Output = Monomial<N>;
+
+    fn shr(self, _rhs: i32) -> Monomial<N> {
+        if _rhs < 0 {
+            self << -_rhs
+        } else {
+            Monomial::new(self.coefficient, self.deg - (_rhs as usize))
+        }
+    }
+}
+
+impl<N> ops::ShrAssign<i32> for Monomial<N> {
+    fn shr_assign(&mut self, _rhs: i32) {
+        if _rhs < 0 {
+            *self <<= -_rhs;
+        } else {
+            self.deg -=_rhs as usize;
+        }
+    }
+}
+
 
 mod tests {
     use std::fmt::{Write};

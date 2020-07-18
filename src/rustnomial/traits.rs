@@ -1,5 +1,4 @@
-use rustnomial::numerics::{HasZero, PowUsize, HasOne, IsNegativeOne, Abs};
-use std::ops::{AddAssign, Mul};
+use rustnomial::numerics::{HasZero, HasOne, IsNegativeOne, Abs};
 use std::cmp::PartialEq;
 use std::fmt;
 use std::fmt::Display;
@@ -10,7 +9,7 @@ pub trait GenericPolynomial<N> {
 
     fn nth_term(&self, index: usize) -> Term<N>;
 
-    fn degree_iter(&self) -> PolynomialDegreeIterator<N>;
+    fn term_iter(&self) -> TermIterator<N>;
 }
 
 pub trait Evaluable<N> {
@@ -31,7 +30,7 @@ pub trait Evaluable<N> {
  impl<N> fmt::Display for dyn GenericPolynomial<N>
     where N: HasZero + HasOne + Copy + IsNegativeOne + PartialEq + PartialOrd + Display + Abs {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let mut iter = self.degree_iter();
+        let mut iter = self.term_iter();
         let one = N::one();
         let zero = N::zero();
         match iter.next() {
@@ -79,20 +78,20 @@ pub trait Evaluable<N> {
     }
 }
 
-pub struct PolynomialDegreeIterator<'a, N> {
+pub struct TermIterator<'a, N> {
     polynomial: &'a dyn GenericPolynomial<N>,
     index: usize,
 }
 
-impl<N> PolynomialDegreeIterator<'_, N> {
-   pub fn new(polynomial: & dyn GenericPolynomial<N>) -> PolynomialDegreeIterator<N> {
-        PolynomialDegreeIterator{
+impl<N> TermIterator<'_, N> {
+   pub fn new(polynomial: & dyn GenericPolynomial<N>) -> TermIterator<N> {
+        TermIterator {
             polynomial,
             index: 0,
         }
     }
 }
-impl<N: PartialEq + HasZero + Copy> Iterator for PolynomialDegreeIterator<'_, N> {
+impl<N: PartialEq + HasZero + Copy> Iterator for TermIterator<'_, N> {
     type Item = (N, usize);
 
     fn next(&mut self) -> Option<Self::Item> {

@@ -3,13 +3,13 @@ use std::fmt;
 use std::ops::{Mul, AddAssign, MulAssign, DivAssign, Div, SubAssign, Neg, Sub};
 use std::fmt::{Display};
 
-use rustnomial::integral::Integrable;
 use rustnomial::numerics::{HasZero, HasOne, IsNegativeOne, Abs, PowUsize};
-use rustnomial::traits::{PolynomialDegreeIterator, GenericPolynomial};
-use ::{Integral, Evaluable};
+use rustnomial::traits::{TermIterator, GenericPolynomial};
+use ::{Evaluable};
 use rustnomial::degree::{Term, Degree};
 use std::collections::HashMap;
 use rustnomial::degree::Term::ZeroTerm;
+use Derivable;
 
 #[derive(Debug, Clone)]
 pub struct SparsePolynomial<N> {
@@ -38,6 +38,45 @@ fn map_mul<N>(_lhs: &HashMap<usize, N>, _rhs: &HashMap<usize, N>) -> HashMap<usi
     terms
 }
 
+fn degree<N: HasZero + PartialEq + Copy>(terms: &HashMap<usize, N>) -> Degree {
+    let mut max_term = match terms.get(&0) {
+        None => N::zero(),
+        Some(&x) => x
+    };
+    let mut max_degree = 0;
+
+    for (&degree, &coeff) in terms.iter() {
+        if degree > max_degree && coeff != N::zero() {
+            max_term = coeff;
+            max_degree = degree;
+        }
+    }
+
+    if max_term == N::zero() {
+        Degree::NegInf
+    } else {
+        Degree::Num(max_degree)
+    }
+
+}
+
+fn first_term<N: HasZero + PartialEq + Copy>(terms: &HashMap<usize, N>) -> Term<N> {
+    let degree = match degree(terms) {
+        Degree::NegInf => {return ZeroTerm;},
+        Degree::Num(x) => {x},
+    };
+    match terms.get(&degree) {
+        None => ZeroTerm,
+        Some(&val) => {
+            if val == N::zero() {
+                ZeroTerm
+            } else {
+                 Term::Term(val, degree)
+            }
+        }
+    }
+}
+
 impl<N: Copy + HasZero + PartialEq> GenericPolynomial<N> for SparsePolynomial<N> {
     fn len(&self) -> usize {
         match self.degree() {
@@ -51,6 +90,7 @@ impl<N: Copy + HasZero + PartialEq> GenericPolynomial<N> for SparsePolynomial<N>
             Degree::NegInf => {return ZeroTerm;},
             Degree::Num(x) => {x - index},
         };
+
         match self.terms.get(&degree) {
             None => ZeroTerm,
             Some(&val) => {
@@ -71,14 +111,14 @@ impl<N: Copy + HasZero + PartialEq> GenericPolynomial<N> for SparsePolynomial<N>
     /// ```
     /// use rustnomial::{Polynomial, GenericPolynomial};
     /// let polynomial = Polynomial::new(vec![1, 0, 2, 3]);
-    /// let mut iter = polynomial.degree_iter();
+    /// let mut iter = polynomial.term_iter();
     /// assert_eq!(Some((1, 3)), iter.next());
     /// assert_eq!(Some((2, 1)), iter.next());
     /// assert_eq!(Some((3, 0)), iter.next());
     /// assert_eq!(None, iter.next());
     /// ```
-    fn degree_iter(&self) -> PolynomialDegreeIterator<N> {
-        PolynomialDegreeIterator::new(self)
+    fn term_iter(&self) -> TermIterator<N> {
+        TermIterator::new(self)
     }
 }
 
@@ -107,6 +147,10 @@ impl<N> SparsePolynomial<N>
     }
 
     fn add_term(&mut self, term: N, degree: usize) {
+        if term == N::zero() {
+            return;
+        }
+
         match self.terms.get_mut(&degree) {
             None => {
                 self.terms.insert(degree, term);
@@ -115,23 +159,6 @@ impl<N> SparsePolynomial<N>
                 *val += term;
             }
         }
-    }
-}
-
-impl<N> SparsePolynomial<N>
-    where N: PartialEq + HasZero + Copy + Display {
-
-    pub fn from_vec(term_vec: Vec<N>) -> SparsePolynomial<N> {
-        let mut terms: HashMap<usize, N> = HashMap::new();
-        if term_vec.len() != 0 {
-            let degree = term_vec.len() - 1;
-            for (index, &val) in term_vec.iter().enumerate() {
-                if val != N::zero() {
-                    terms.insert(degree - index, val);
-                }
-            }
-        }
-        SparsePolynomial { terms }
     }
 }
 
@@ -155,17 +182,18 @@ impl<N> SparsePolynomial<N>
         SparsePolynomial{terms}
     }
 
-    // pub fn from_vec(term_vec: Vec<N>) -> SparsePolynomial<N> {
-    //     let mut terms: HashMap<usize, N> = HashMap::new();
-    //     if terms.len() != 0 {
-    //         let degree = terms.len() - 1;
-    //         for (index, &val) in term_vec.iter().enumerate() {
-    //             println!("terms[{}] = {}", degree - index, val);
-    //             terms.insert(degree - index, val);
-    //         }
-    //     }
-    //     SparsePolynomial{terms}
-    // }
+    pub fn from_vec(term_vec: Vec<N>) -> SparsePolynomial<N> {
+    let mut terms: HashMap<usize, N> = HashMap::new();
+    if term_vec.len() != 0 {
+        let degree = term_vec.len() - 1;
+        for (index, &val) in term_vec.iter().enumerate() {
+            if val != N::zero() {
+                terms.insert(degree - index, val);
+            }
+        }
+    }
+    SparsePolynomial { terms }
+}
 
     /// Returns the degree of the `Polynomial` it is called on, corresponding to the
     /// largest non-zero term.
@@ -223,56 +251,34 @@ impl<N> SparsePolynomial<N>
     pub fn is_zero(&self) -> bool {
         self.degree() == Degree::NegInf
     }
-
-    // / Returns an iterator for the `Polynomial`, yielding term constants. Terms are iterated over
-    // / in descending degree order, exluding leading zero terms.
-    // /
-    // / # Example
-    // /
-    // / ```
-    // / use rustnomial::Polynomial;
-    // / let polynomial = Polynomial::new(vec![0, 1, 0, 2, 3]);
-    // / let mut iter = polynomial.iter();
-    // / assert_eq!(Some(1), iter.next());
-    // / assert_eq!(Some(0), iter.next());
-    // / assert_eq!(Some(2), iter.next());
-    // / assert_eq!(Some(3), iter.next());
-    // / assert_eq!(None, iter.next());
-    // / ```
-    // pub fn iter(&self) -> PolynomialIterator<N> {
-    //     PolynomialIterator {
-    //         polynomial: self,
-    //         index: 0
-    //     }
-    // }
 }
 
 impl<N> Evaluable<N> for SparsePolynomial<N>
     where N: HasZero + PowUsize + Copy + AddAssign + Mul<Output=N> + PartialEq {
     fn eval(&self, point: N) -> N {
         let mut sum = N::zero();
-        for (val, degree) in self.degree_iter() {
+        for (val, degree) in self.term_iter() {
             sum += val * point.upow(degree);
         }
         sum
     }
 }
 
-impl<N> SparsePolynomial<N>
+impl<N> Derivable<N> for SparsePolynomial<N>
     where N: PartialEq + HasZero + From<u8> + Copy + Mul<Output=N> {
     /// Returns the derivative of the `Polynomial`.
     ///
     /// # Example
     ///
     /// ```
-    /// use rustnomial::SparsePolynomial;
+    /// use rustnomial::{SparsePolynomial, Derivable};
     /// let polynomial = SparsePolynomial::from_vec(vec![4, 1, 5]);
     /// assert_eq!(SparsePolynomial::from_vec(vec![8, 1]), polynomial.derivative());
     /// ```
-    pub fn derivative(&self) -> SparsePolynomial<N> {
+    fn derivative(&self) -> SparsePolynomial<N> {
         let mut terms = HashMap::with_capacity(self.len());
         // TODO: Fix for degrees of arbitrary size.
-        for (coeff, degree) in self.degree_iter() {
+        for (coeff, degree) in self.term_iter() {
             if degree != 0 {
                 terms.insert(degree - 1, coeff * N::from(degree as u8));
             }
@@ -350,75 +356,78 @@ impl<N> SparsePolynomial<N>
 }
 
 // TODO: Implement this.
-// impl<N> SparsePolynomial<N>
-//     where N: Copy + PartialEq + HasZero + SubAssign + Mul<Output=N> + Div<Output=N> {
-//     /// Divides self by the given `Polynomial`, and returns the quotient and remainder.
-//     ///
-//     /// # Example
-//     ///
-//     /// ```
-//     /// use rustnomial::Polynomial;
-//     /// let polynomial = Polynomial::new(vec![1.0, 2.0]);
-//     /// let polynomial_sqr = polynomial.pow(2);
-//     /// let polynomial_cub = polynomial.pow(3);
-//     /// assert_eq!(polynomial.clone() * polynomial.clone(), polynomial_sqr);
-//     /// assert_eq!(polynomial_sqr.clone() * polynomial.clone(), polynomial_cub);
-//     /// ```
-//     pub fn div_mod(&self, _rhs: &Polynomial<N>) -> Result<(Polynomial<N>, Polynomial<N>), &'static str> {
-//         fn vec_sub_w_scale<N>(_lhs: &mut Vec<N>, _lhs_degree: usize, _rhs: &Vec<N>, _rhs_deg: usize, _rhs_scale: N)
-//             where N: Copy + Mul<Output=N> + SubAssign {
-//             let loc = _lhs.len() - _lhs_degree - 1;
-//             for (_lhs_t, _rhs_t) in _lhs[loc..].iter_mut().zip(_rhs) {
-//                 *_lhs_t -= (*_rhs_t) * _rhs_scale;
-//             }
-//         }
-//
-//         let zero = N::zero();
-//         let (_rhs_first, _rhs_deg) = match first_term(&_rhs.terms) {
-//             Term::ZeroTerm => {
-//                 return Err("Can't divide by 0.");
-//             },
-//             Term::Term(coeff, deg) => {
-//                 (coeff, deg)
-//             }
-//         };
-//
-//         let (mut term, mut self_degree) = match first_term(&self.terms) {
-//             Term::ZeroTerm => {
-//                 let zero_vec = vec![zero; 1];
-//                 return Ok((Polynomial::new(zero_vec), Polynomial::new(self.terms.clone())));
-//             }
-//             Term::Term(term, degree) => {
-//                 if degree < _rhs_deg {
-//                     let zero_vec = vec![zero; 1];
-//                     return Ok((Polynomial::new(zero_vec), Polynomial::new(self.terms.clone())));
-//                 }
-//                 (term, degree)
-//             }
-//         };
-//
-//         let mut remainder = self.terms.clone();
-//         let offset = self_degree - _rhs_deg;
-//         let mut div = vec![zero; offset + 1];
-//
-//         while self_degree >= _rhs_deg {
-//             let scale = term / _rhs_first;
-//             vec_sub_w_scale(&mut remainder, self_degree, &_rhs.terms, _rhs_deg, scale);
-//             div[offset - (self_degree - _rhs_deg)] = scale;
-//             match first_term(&remainder) {
-//                 Term::ZeroTerm => {
-//                     break;
-//                 },
-//                 Term::Term(coeff, degree) => {
-//                     term = coeff;
-//                     self_degree = degree;
-//                 }
-//             }
-//         }
-//
-//         Ok((Polynomial::new(div), Polynomial::new(remainder)))
-//     }
-// }
+impl<N> SparsePolynomial<N>
+    where N: Copy + PartialEq + HasZero + Neg<Output=N> + Sub<Output=N> + SubAssign + Mul<Output=N> + Div<Output=N> + AddAssign {
+    /// Divides self by the given `Polynomial`, and returns the quotient and remainder.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use rustnomial::Polynomial;
+    /// let polynomial = Polynomial::new(vec![1.0, 2.0]);
+    /// let polynomial_sqr = polynomial.pow(2);
+    /// let polynomial_cub = polynomial.pow(3);
+    /// assert_eq!(polynomial.clone() * polynomial.clone(), polynomial_sqr);
+    /// assert_eq!(polynomial_sqr.clone() * polynomial.clone(), polynomial_cub);
+    /// ```
+    pub fn div_mod(&self, _rhs: &SparsePolynomial<N>) -> (SparsePolynomial<N>, SparsePolynomial<N>) {
+        fn map_sub_w_scale<N>(_lhs: &mut HashMap<usize, N>, _rhs: &HashMap<usize, N>, _rhs_scale: N)
+            where N: Copy + Neg<Output=N> + Sub<Output=N> + Mul<Output=N> + SubAssign {
+            for (rdeg, &rcoeff) in _rhs.iter() {
+                match _lhs.get_mut(rdeg) {
+                    None => {_lhs.insert(*rdeg, -rcoeff * _rhs_scale);}
+                    Some(lcoeff) => {*lcoeff -= rcoeff * _rhs_scale;}
+                }
+            }
+        }
+
+        let zero = N::zero();
+        let (_rhs_first, _rhs_deg) = match first_term(&_rhs.terms) {
+            Term::ZeroTerm => {
+                panic!("Can't divide by 0.");
+            },
+            Term::Term(coeff, deg) => {
+                (coeff, deg)
+            }
+        };
+
+        let (mut scale, mut self_degree) = match first_term(&self.terms) {
+            Term::ZeroTerm => {
+                let zero_vec = vec![zero; 1];
+                return (SparsePolynomial::from_vec(zero_vec),
+                    SparsePolynomial::new(self.terms.clone()));
+            }
+            Term::Term(term, degree) => {
+                if degree < _rhs_deg {
+                    let zero_vec = vec![zero; 1];
+                    return (SparsePolynomial::from_vec(zero_vec),
+                        SparsePolynomial::new(self.terms.clone()));
+                }
+                (term / _rhs_first, degree)
+            }
+        };
+
+        let mut remainder = self.terms.clone();
+        let offset = self_degree - _rhs_deg;
+        let mut div = SparsePolynomial::from_vec(Vec::new());
+
+        while self_degree >= _rhs_deg {
+            map_sub_w_scale(&mut remainder, &_rhs.terms, scale);
+            div.add_term(scale, offset);
+            match first_term(&remainder) {
+                Term::ZeroTerm => {
+                    break;
+                },
+                Term::Term(coeff, degree) => {
+                    scale = coeff / _rhs_first;
+                    self_degree = degree;
+                }
+            }
+        }
+
+        (div, SparsePolynomial::new(remainder))
+    }
+}
 
 impl<N> PartialEq for SparsePolynomial<N>
     where N: PartialEq + HasZero + Copy {
@@ -440,8 +449,8 @@ impl<N> PartialEq for SparsePolynomial<N>
             return false;
         }
 
-        let mut self_iter = self.degree_iter();
-        let mut other_iter = other.degree_iter();
+        let mut self_iter = self.term_iter();
+        let mut other_iter = other.term_iter();
 
         loop {
             let self_term = self_iter.next();
@@ -461,7 +470,7 @@ impl<N> PartialEq for SparsePolynomial<N>
 impl<N> fmt::Display for SparsePolynomial<N>
     where N: HasZero + HasOne + Copy + IsNegativeOne + PartialEq + PartialOrd + Display + Abs {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let mut iter = self.degree_iter();
+        let mut iter = self.term_iter();
         let one = N::one();
         let zero = N::zero();
         match iter.next() {
@@ -696,7 +705,7 @@ impl<N: HasZero + Copy> ops::ShlAssign<i32> for SparsePolynomial<N> {
         } else {
             let mut terms = HashMap::new();
             let _rhs = _rhs as usize;
-        for (&deg, &coeff) in self.terms.iter() {
+            for (&deg, &coeff) in self.terms.iter() {
                 terms.insert(deg + _rhs, coeff);
             }
             self.terms = terms;
@@ -742,7 +751,8 @@ impl<N: HasZero + Copy> ops::ShrAssign<i32> for SparsePolynomial<N> {
 mod tests {
     use std::fmt::Write;
     use super::SparsePolynomial;
-    use ::{Integrable, Degree, Evaluable};
+    use ::{Integrable, Degree, Evaluable, Derivable};
+    use Polynomial;
 
     #[test]
     fn test_eval() {
@@ -1072,4 +1082,16 @@ mod tests {
     //
     //     assert_eq!(num_iters, 3);
     // }
+
+    #[test]
+    fn test_pow() {
+        let vec = vec![1u32, 2, 3, 4, 5];
+        let a = SparsePolynomial::from_vec(vec.clone());
+        let b = Polynomial::new(vec.clone());
+        let a = a.pow(8);
+        let b = SparsePolynomial::from_vec(b.pow(8).terms);
+        assert_eq!(a, b);
+
+
+    }
 }

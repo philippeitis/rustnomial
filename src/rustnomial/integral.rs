@@ -45,7 +45,7 @@ impl<N> fmt::Display for Integral<N>
 impl<N> Integral<N>
     where N: HasZero + HasOne + Copy + AddAssign + PartialEq {
     pub fn replace_c(&self, c: N) -> Polynomial<N> where N: Copy {
-        let mut terms: Vec<(N, usize)> = self.polynomial.degree_iter().collect();
+        let mut terms: Vec<(N, usize)> = self.polynomial.term_iter().collect();
         terms.push((c, 0));
         Polynomial::from_terms(terms)
     }

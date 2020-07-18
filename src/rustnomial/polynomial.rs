@@ -5,9 +5,10 @@ use std::fmt::{Display};
 
 use rustnomial::integral::Integrable;
 use rustnomial::numerics::{HasZero, HasOne, IsNegativeOne, Abs};
-use rustnomial::traits::{PolynomialDegreeIterator, GenericPolynomial};
+use rustnomial::traits::{TermIterator, GenericPolynomial};
 use ::{Integral, Evaluable};
 use rustnomial::degree::{Term, Degree};
+use Derivable;
 
 #[macro_export]
 macro_rules! polynomial {
@@ -85,6 +86,14 @@ fn vec_mul<N>(_lhs: &Vec<N>, _rhs: &Vec<N>) -> Vec<N>
     terms
 }
 
+fn vec_sub_w_scale<N>(_lhs: &mut Vec<N>, _lhs_degree: usize, _rhs: &Vec<N>, _rhs_deg: usize, _rhs_scale: N)
+    where N: Copy + Mul<Output=N> + SubAssign {
+    let loc = _lhs.len() - _lhs_degree - 1;
+    for (_lhs_t, _rhs_t) in _lhs[loc..].iter_mut().zip(_rhs) {
+        *_lhs_t -= (*_rhs_t) * _rhs_scale;
+    }
+}
+
 fn degree<N>(poly_vec: &Vec<N>) -> Degree
     where N: PartialEq + HasZero + Copy {
     let index = first_nonzero_index(poly_vec);
@@ -115,90 +124,6 @@ fn first_term<N>(poly_vec: &Vec<N>) -> Term<N>
     }
 
     Term::ZeroTerm
-}
-
-//
-// fn generic_pow<N>(base: N, exp: usize) -> N
-//     where N: Copy + Mul<Output=N> + HasOne {
-//     if exp == 0 {
-//         N::one()
-//     } else if exp == 1 {
-//         base
-//     } else if exp == 2 {
-//         base * base
-//     } else if exp % 2 == 0 {
-//         generic_pow(generic_pow(base, exp / 2), 2)
-//     } else {
-//         base * generic_pow(base, exp - 1)
-//     }
-// }
-
-impl<N: Copy + HasZero + PartialEq> GenericPolynomial<N> for Polynomial<N> {
-    fn len(&self) -> usize {
-        self.terms.len()
-    }
-
-    fn nth_term(&self, index: usize) -> Term<N> {
-        let x = self.terms[index];
-        if x == N::zero() {
-            Term::ZeroTerm
-        } else {
-            Term::Term(x, self.len() - index - 1)
-        }
-    }
-
-    /// Returns an iterator for the `Polynomial`, yielding the term constant and degree. Terms are
-    /// iterated over in descending degree order, excluding zero terms.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use rustnomial::{Polynomial, GenericPolynomial};
-    /// let polynomial = Polynomial::new(vec![1, 0, 2, 3]);
-    /// let mut iter = polynomial.degree_iter();
-    /// assert_eq!(Some((1, 3)), iter.next());
-    /// assert_eq!(Some((2, 1)), iter.next());
-    /// assert_eq!(Some((3, 0)), iter.next());
-    /// assert_eq!(None, iter.next());
-    /// ```
-    fn degree_iter(&self) -> PolynomialDegreeIterator<N> {
-        PolynomialDegreeIterator::new(self)
-    }
-}
-
-impl<N> Polynomial<N>
-    where N: PartialEq + HasZero + Copy + AddAssign {
-    /// Returns a `Polynomial` with the corresponding terms,
-    /// in order of ax^n + bx^(n-1) + ... + cx + d
-    ///
-    /// # Arguments
-    ///
-    /// * ` terms ` - A vector of constants, in decreasing order of degree.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use rustnomial::Polynomial;
-    /// // Corresponds to 1.0x^2 + 4.0x + 4.0
-    /// let polynomial = Polynomial::new(vec![1.0, 4.0, 4.0]);
-    /// ```
-    pub fn from_terms(terms: Vec<(N, usize)>) -> Polynomial<N> {
-        let mut a = Polynomial::new(vec![]);
-        for (term, degree) in terms {
-            a.add_term(term, degree);
-        }
-        a
-    }
-
-    fn add_term(&mut self, term: N, degree: usize) {
-        if self.len() < degree + 1 {
-            let mut terms = vec![N::zero(); degree + 1 - self.len()];
-            terms.extend(&self.terms);
-            self.terms = terms;
-        }
-        let index = self.len() - degree - 1;
-        self.terms[index] += term;
-    }
 }
 
 impl<N> Polynomial<N>
@@ -274,34 +199,73 @@ impl<N> Polynomial<N>
     pub fn is_zero(&self) -> bool {
         self.degree() == Degree::NegInf
     }
+}
 
-    /// Returns an iterator for the `Polynomial`, yielding term constants. Terms are iterated over
-    /// in descending degree order, exluding leading zero terms.
+impl<N: Copy + HasZero + PartialEq> GenericPolynomial<N> for Polynomial<N> {
+    fn len(&self) -> usize {
+        self.terms.len()
+    }
+
+    fn nth_term(&self, index: usize) -> Term<N> {
+        let x = self.terms[index];
+        if x == N::zero() {
+            Term::ZeroTerm
+        } else {
+            Term::Term(x, self.len() - index - 1)
+        }
+    }
+
+    /// Returns an iterator for the `Polynomial`, yielding the term constant and degree. Terms are
+    /// iterated over in descending degree order, excluding zero terms.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use rustnomial::{Polynomial, GenericPolynomial};
+    /// let polynomial = Polynomial::new(vec![1, 0, 2, 3]);
+    /// let mut iter = polynomial.term_iter();
+    /// assert_eq!(Some((1, 3)), iter.next());
+    /// assert_eq!(Some((2, 1)), iter.next());
+    /// assert_eq!(Some((3, 0)), iter.next());
+    /// assert_eq!(None, iter.next());
+    /// ```
+    fn term_iter(&self) -> TermIterator<N> {
+        TermIterator::new(self)
+    }
+}
+
+impl<N> Polynomial<N>
+    where N: PartialEq + HasZero + Copy + AddAssign {
+    /// Returns a `Polynomial` with the corresponding terms,
+    /// in order of ax^n + bx^(n-1) + ... + cx + d
+    ///
+    /// # Arguments
+    ///
+    /// * ` terms ` - A vector of constants, in decreasing order of degree.
     ///
     /// # Example
     ///
     /// ```
     /// use rustnomial::Polynomial;
-    /// let polynomial = Polynomial::new(vec![0, 1, 0, 2, 3]);
-    /// let mut iter = polynomial.iter();
-    /// assert_eq!(Some(1), iter.next());
-    /// assert_eq!(Some(0), iter.next());
-    /// assert_eq!(Some(2), iter.next());
-    /// assert_eq!(Some(3), iter.next());
-    /// assert_eq!(None, iter.next());
+    /// // Corresponds to 1.0x^2 + 4.0x + 4.0
+    /// let polynomial = Polynomial::new(vec![1.0, 4.0, 4.0]);
     /// ```
-    pub fn iter(&self) -> PolynomialIterator<N> {
-        PolynomialIterator{
-            polynomial: self,
-            index: if self.len() == 0 {
-                0
-            } else {
-                match self.degree() {
-                    Degree::NegInf => self.len(),
-                    Degree::Num(x) => self.len() - x - 1
-                }
-            }
+    pub fn from_terms(terms: Vec<(N, usize)>) -> Polynomial<N> {
+        let mut a = Polynomial::new(vec![]);
+        for (term, degree) in terms {
+            a.add_term(term, degree);
         }
+        a
+    }
+
+    fn add_term(&mut self, term: N, degree: usize) {
+        if self.len() < degree + 1 {
+            let mut terms = vec![N::zero(); degree + 1 - self.len()];
+            terms.extend(&self.terms);
+            self.terms = terms;
+        }
+        let index = self.len() - degree - 1;
+        self.terms[index] += term;
     }
 }
 
@@ -340,18 +304,18 @@ impl<N> Evaluable<N> for Polynomial<N>
     }
 }
 
-impl<N> Polynomial<N>
+impl<N> Derivable<N> for Polynomial<N>
     where N: PartialEq + HasZero + From<u8> + Copy + MulAssign {
     /// Returns the derivative of the `Polynomial`.
     ///
     /// # Example
     ///
     /// ```
-    /// use rustnomial::Polynomial;
+    /// use rustnomial::{Polynomial, Derivable};
     /// let polynomial = Polynomial::new(vec![4, 1, 5]);
     /// assert_eq!(Polynomial::new(vec![8, 1]), polynomial.derivative());
     /// ```
-    pub fn derivative(&self) -> Polynomial<N> {
+    fn derivative(&self) -> Polynomial<N> {
         let index = first_nonzero_index(&self.terms);
         // TODO: Fix for degrees of arbitrary size.
         let mut degree = (self.len() - index) as u8;
@@ -439,36 +403,28 @@ impl<N> Polynomial<N>
     /// assert_eq!(polynomial.clone() * polynomial.clone(), polynomial_sqr);
     /// assert_eq!(polynomial_sqr.clone() * polynomial.clone(), polynomial_cub);
     /// ```
-    pub fn div_mod(&self, _rhs: &Polynomial<N>) -> Result<(Polynomial<N>, Polynomial<N>), &'static str> {
-        fn vec_sub_w_scale<N>(_lhs: &mut Vec<N>, _lhs_degree: usize, _rhs: &Vec<N>, _rhs_deg: usize, _rhs_scale: N)
-            where N: Copy + Mul<Output=N> + SubAssign {
-            let loc = _lhs.len() - _lhs_degree - 1;
-            for (_lhs_t, _rhs_t) in _lhs[loc..].iter_mut().zip(_rhs) {
-                *_lhs_t -= (*_rhs_t) * _rhs_scale;
-            }
-        }
-
+    pub fn div_mod(&self, _rhs: &Polynomial<N>) -> (Polynomial<N>, Polynomial<N>) {
         let zero = N::zero();
         let (_rhs_first, _rhs_deg) = match first_term(&_rhs.terms) {
             Term::ZeroTerm => {
-                return Err("Can't divide by 0.");
+                panic!("Division by 0.");
             },
             Term::Term(coeff, deg) => {
                 (coeff, deg)
             }
         };
 
-        let (mut term, mut self_degree) = match first_term(&self.terms) {
+        let (mut coeff, mut self_degree) = match first_term(&self.terms) {
             Term::ZeroTerm => {
                 let zero_vec = vec![zero; 1];
-                return Ok((Polynomial::new(zero_vec), Polynomial::new(self.terms.clone())));
+                return (Polynomial::new(zero_vec), Polynomial::new(self.terms.clone()));
             }
-            Term::Term(term, degree) => {
+            Term::Term(coeff, degree) => {
                 if degree < _rhs_deg {
                     let zero_vec = vec![zero; 1];
-                    return Ok((Polynomial::new(zero_vec), Polynomial::new(self.terms.clone())));
+                    return (Polynomial::new(zero_vec), Polynomial::new(self.terms.clone()));
                 }
-                (term, degree)
+                (coeff, degree)
             }
         };
 
@@ -477,21 +433,79 @@ impl<N> Polynomial<N>
         let mut div = vec![zero; offset + 1];
 
         while self_degree >= _rhs_deg {
-            let scale = term / _rhs_first;
+            let scale = coeff / _rhs_first;
             vec_sub_w_scale(&mut remainder, self_degree, &_rhs.terms, _rhs_deg, scale);
             div[offset - (self_degree - _rhs_deg)] = scale;
             match first_term(&remainder) {
                 Term::ZeroTerm => {
                     break;
                 },
-                Term::Term(coeff, degree) => {
-                    term = coeff;
+                Term::Term(coeffx, degree) => {
+                    coeff = coeffx;
                     self_degree = degree;
                 }
             }
         }
 
-        Ok((Polynomial::new(div), Polynomial::new(remainder)))
+        (Polynomial::new(div), Polynomial::new(remainder))
+    }
+}
+
+impl<N> ops::Rem<Polynomial<N>> for Polynomial<N>
+    where N: Copy + PartialEq + HasZero + SubAssign + Mul<Output=N> + Div<Output=N> {
+    type Output = Polynomial<N>;
+
+    /// Divides self by the given `Polynomial`, and returns the quotient and remainder.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use rustnomial::Polynomial;
+    /// let polynomial = Polynomial::new(vec![1.0, 2.0]);
+    /// let polynomial_sqr = polynomial.pow(2);
+    /// let polynomial_cub = polynomial.pow(3);
+    /// assert_eq!(polynomial.clone() * polynomial.clone(), polynomial_sqr);
+    /// assert_eq!(polynomial_sqr.clone() * polynomial.clone(), polynomial_cub);
+    /// ```
+    fn rem(self, _rhs: Polynomial<N>) -> Polynomial<N> {
+        let (_rhs_first, _rhs_deg) = match first_term(&_rhs.terms) {
+            Term::ZeroTerm => {
+                panic!("Can't divide by 0.");
+            },
+            Term::Term(coeff, deg) => {
+                (coeff, deg)
+            }
+        };
+
+        let (mut coeff, mut self_degree) = match first_term(&self.terms) {
+            Term::ZeroTerm => {
+                return Polynomial::new(self.terms.clone());
+            }
+            Term::Term(coeff, degree) => {
+                if degree < _rhs_deg {
+                    return Polynomial::new(self.terms.clone());
+                }
+                (coeff, degree)
+            }
+        };
+
+        let mut remainder = self.terms.clone();
+
+        while self_degree >= _rhs_deg {
+            let scale = coeff / _rhs_first;
+            vec_sub_w_scale(&mut remainder, self_degree, &_rhs.terms, _rhs_deg, scale);
+            match first_term(&remainder) {
+                Term::ZeroTerm => {
+                    break;
+                },
+                Term::Term(coeffx, degree) => {
+                    coeff = coeffx;
+                    self_degree = degree;
+                }
+            }
+        }
+
+        Polynomial::new(remainder)
     }
 }
 
@@ -515,8 +529,8 @@ impl<N> PartialEq for Polynomial<N>
             return false;
         }
 
-        let mut self_iter = self.degree_iter();
-        let mut other_iter = other.degree_iter();
+        let mut self_iter = self.term_iter();
+        let mut other_iter = other.term_iter();
 
         loop {
             let self_term = self_iter.next();
@@ -536,7 +550,7 @@ impl<N> PartialEq for Polynomial<N>
 impl<N> fmt::Display for Polynomial<N>
     where N: HasZero + HasOne + Copy + IsNegativeOne + PartialEq + PartialOrd + Display + Abs {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let mut iter = self.degree_iter();
+        let mut iter = self.term_iter();
         let one = N::one();
         let zero = N::zero();
         match iter.next() {
@@ -544,11 +558,11 @@ impl<N> fmt::Display for Polynomial<N>
                 return write!(f, "0");
             }
 
-            Some((term, degree)) => {
-                if term.is_negative_one() {
+            Some((coeff, degree)) => {
+                if coeff.is_negative_one() {
                     write!(f, "-")?;
-                } else if (term != one) || (degree == 0) {
-                    write!(f, "{}", term)?;
+                } else if (coeff != one) || (degree == 0) {
+                    write!(f, "{}", coeff)?;
                 }
 
                 match degree {
@@ -560,17 +574,17 @@ impl<N> fmt::Display for Polynomial<N>
         }
 
 
-        for (term, degree) in iter {
-            if term > zero {
+        for (coeff, degree) in iter {
+            if coeff > zero {
                 write!(f, " + ")?;
             } else {
                 write!(f, " - ")?;
             }
 
-            let term = term.abs();
+            let coeff = coeff.abs();
 
-            if (term != one) || (degree == 0) {
-                write!(f, "{}", term)?;
+            if (coeff != one) || (degree == 0) {
+                write!(f, "{}", coeff)?;
             }
 
             match degree {
@@ -804,7 +818,7 @@ impl<N: HasZero + Copy> ops::ShrAssign<i32> for Polynomial<N> {
 mod tests {
     use std::fmt::Write;
     use super::Polynomial;
-    use ::{Integrable, Degree, Evaluable};
+    use ::{Integrable, Degree, Evaluable, Derivable};
 
     #[test]
     fn test_eval() {
@@ -1132,18 +1146,4 @@ mod tests {
         let a = Polynomial::new(vec![0, 0, 0, -1, -2, 3]);
         assert_eq!(Degree::Num(2), a.degree());
     }
-
-    #[test]
-    fn test_iter() {
-        let mut num_iters = 0;
-        let a = Polynomial::new(vec![0, 0, 0, -1, -2, 3]);
-        let b=  vec![-1, -2, 3];
-        for (a_val, b_val) in a.iter().zip(b) {
-            num_iters += 1;
-            assert_eq!(a_val, b_val);
-        }
-
-        assert_eq!(num_iters, 3);
-    }
-
 }
