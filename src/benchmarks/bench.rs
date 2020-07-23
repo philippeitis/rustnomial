@@ -6,6 +6,7 @@ mod bench {
     extern crate test;
     use self::test::{Bencher, black_box};
     use rustnomial::{Evaluable, Polynomial, SparsePolynomial};
+    use std::ops::Div;
 
     #[bench]
     fn bench_init(b: &mut Bencher) {
@@ -54,21 +55,23 @@ mod bench {
     }
 
     #[bench]
-    fn bench_div(b: &mut Bencher) {
+    fn bench_div_poly(b: &mut Bencher) {
+        let a = &Polynomial::new(vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
         b.iter(|| {
-            Polynomial::new(vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10]) / 5;
+             a.clone() / 5;
         });
     }
 
     #[bench]
-    fn bench_divs(b: &mut Bencher) {
+    fn bench_div_sparse(b: &mut Bencher) {
+        let a = &SparsePolynomial::from_vec(vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
         b.iter(|| {
-            SparsePolynomial::from_vec(vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10]) / 5;
+            a.clone() / 5
         });
     }
 
     #[bench]
-    fn bench_degree_empty(b: &mut Bencher) {
+    fn bench_degree_empty_poly(b: &mut Bencher) {
         let mut ap = black_box(Polynomial::new(vec![]));
         ap.terms = vec![0; 100000];
 
@@ -76,13 +79,13 @@ mod bench {
     }
 
     #[bench]
-    fn bench_degree(b: &mut Bencher) {
+    fn bench_degree_poly(b: &mut Bencher) {
         let ap = black_box(Polynomial::new(vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10]));
         b.iter(|| black_box(ap.degree()));
     }
 
     #[bench]
-    fn bench_degrees(b: &mut Bencher) {
+    fn bench_degree_sparse(b: &mut Bencher) {
         let ap = black_box(SparsePolynomial::from_vec(vec![
             1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
         ]));
@@ -104,7 +107,7 @@ mod bench {
     }
 
     #[bench]
-    fn bench_trim(b: &mut Bencher) {
+    fn bench_trim_poly(b: &mut Bencher) {
         let mut ap = Polynomial::new(vec![]);
         let terms = vec![0, 1, 2];
         let expected_vec = vec![1, 2];
@@ -118,7 +121,7 @@ mod bench {
     }
 
     #[bench]
-    fn bench_pow(b: &mut Bencher) {
+    fn bench_pow_poly(b: &mut Bencher) {
         let a = Polynomial::new(vec![1i32, 2, 3, 4, 5]);
         b.iter(|| {
             black_box({
@@ -128,7 +131,7 @@ mod bench {
     }
 
     #[bench]
-    fn bench_pows(b: &mut Bencher) {
+    fn bench_pow_sparse(b: &mut Bencher) {
         let a = SparsePolynomial::from_vec(vec![1i32, 2, 3, 4, 5]);
         b.iter(|| {
             black_box({
@@ -138,7 +141,7 @@ mod bench {
     }
 
     #[bench]
-    fn bench_eval(b: &mut Bencher) {
+    fn bench_eval_poly(b: &mut Bencher) {
         let a = Polynomial::new(vec![1i32, 2, 3, 4, 5]);
         b.iter(|| {
             black_box({
@@ -148,7 +151,7 @@ mod bench {
     }
 
     #[bench]
-    fn bench_evals(b: &mut Bencher) {
+    fn bench_eval_sparse(b: &mut Bencher) {
         let a = SparsePolynomial::from_vec(vec![1i32, 2, 3, 4, 5]);
         b.iter(|| {
             black_box({
@@ -156,4 +159,23 @@ mod bench {
             })
         });
     }
+
+    #[bench]
+    fn bench_equal_sparse(b: &mut Bencher) {
+        let a = SparsePolynomial::from_vec(vec![1i32, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+        let c = SparsePolynomial::from_vec(vec![1i32, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+        b.iter(|| {
+            a == c
+        });
+    }
+
+    #[bench]
+    fn bench_equal_poly(b: &mut Bencher) {
+        let a = Polynomial::new(vec![1i32, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+        let c = Polynomial::new(vec![1i32, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+        b.iter(|| {
+            a == c
+        });
+    }
+
 }

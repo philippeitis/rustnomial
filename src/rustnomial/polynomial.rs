@@ -10,6 +10,7 @@ use rustnomial::numerics::{Abs, IsNegativeOne, IsPositive};
 use rustnomial::traits::TermIterator;
 use {Degree, Derivable, Evaluable, GenericPolynomial, Integrable, Integral, Term};
 use rustnomial::strings::{write_leading_term, write_trailing_term};
+use rustnomial::degree::TermTokenizer;
 
 #[macro_export]
 macro_rules! polynomial {
@@ -602,42 +603,23 @@ where
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let mut polynomial = Polynomial::zero();
-        let chars: Vec<char> = s.chars().collect();
-        let mut start_index = match chars.iter().position(|&x| !x.is_whitespace()) {
-            Some(pos) => pos,
-            None => {
-                return Err("No non-whitespace chars found.".to_string());
-            }
-        };
-        let mut end_index = start_index + 1;
-        while end_index < chars.len() {
-            if chars[end_index] == '+' || chars[end_index] == '-' {
-                let xs: String = chars[start_index..end_index].iter().collect();
-                match Term::<N>::from_str(xs.as_str()) {
-                    Err(msg) => {
-                        return Err(msg);
-                    }
-                    Ok(Term::ZeroTerm) => {}
-                    Ok(Term::Term(coeff, deg)) => {
-                        polynomial.add_term(coeff, deg);
-                    }
+        let mut has_iterated = false;
+        for term in TermTokenizer::new(s).map(|s| Term::from_str(s.as_str())) {
+            has_iterated = true;
+            match term {
+                Err(msg) => return Err(msg),
+                Ok(Term::ZeroTerm) => {},
+                Ok(Term::Term(coeff, deg)) => {
+                    polynomial.add_term(coeff, deg);
                 }
-                start_index = end_index;
-            }
-            end_index += 1;
-        }
-        let xs: String = chars[start_index..end_index].iter().collect();
-        match Term::<N>::from_str(xs.as_str()) {
-            Err(msg) => {
-                return Err(msg);
-            }
-            Ok(Term::ZeroTerm) => {}
-            Ok(Term::Term(coeff, deg)) => {
-                polynomial.add_term(coeff, deg);
             }
         }
 
-        Ok(polynomial)
+        if has_iterated {
+            Ok(polynomial)
+        } else {
+            Err("Given string did not have any terms.".to_string())
+        }
     }
 }
 
@@ -663,20 +645,20 @@ where
             let mut terms = _rhs.terms.clone();
             let offset = _rhs.len() - self.len();
 
-            for index in terms[..offset].iter_mut() {
-                *index = -*index;
-            }
+            terms[..offset]
+                .iter_mut()
+                .for_each(|term| *term = -*term);
+            terms[offset..]
+                .iter_mut()
+                .zip(self.terms)
+                .for_each(|(term, val)| *term = val - *term);
 
-            for (index, val) in terms[offset..].iter_mut().zip(self.terms) {
-                *index = val - *index;
-            }
             Polynomial::new(terms)
         } else {
             let mut terms = self.terms.clone();
-            let offset = terms.len() - _rhs.len();
-            for (index, val) in terms[offset..].iter_mut().zip(_rhs.terms) {
-                *index -= val;
-            }
+            terms[self.terms.len() - _rhs.len()..]
+                .iter_mut().zip(_rhs.terms)
+                .for_each(|(term, val)| *term -= val);
             Polynomial::new(terms)
         }
     }

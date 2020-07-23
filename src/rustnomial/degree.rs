@@ -1,5 +1,6 @@
 use num::{One, Zero};
 use std::str::FromStr;
+use GenericPolynomial;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Degree {
@@ -97,6 +98,47 @@ where
                 }
             };
         };
+    }
+}
+
+pub(crate) struct TermTokenizer {
+    chars: Vec<char>,
+    start_index: usize,
+    end_index: usize
+}
+
+impl TermTokenizer {
+    pub(crate) fn new(s: &str) -> Self {
+        let chars: Vec<char> = s.chars().collect();
+        let start_index = match chars.iter().position(|&x| !x.is_whitespace()) {
+            Some(pos) => pos,
+            None => chars.len(),
+        };
+        TermTokenizer{chars, start_index, end_index: start_index + 1}
+    }
+}
+
+impl Iterator for TermTokenizer {
+    type Item = String;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.start_index >= self.chars.len() {
+            return None;
+        }
+
+        let mut end_index = self.end_index;
+        while end_index < self.chars.len() {
+            if self.chars[end_index] == '+' || self.chars[end_index] == '-' {
+                let s: String = self.chars[self.start_index..end_index].iter().collect();
+                self.start_index = end_index;
+                self.end_index = end_index + 1;
+                return Some(s);
+            }
+            end_index += 1;
+        }
+        let s: String = self.chars[self.start_index..end_index].iter().collect();
+        self.start_index = end_index;
+        Some(s)
     }
 }
 

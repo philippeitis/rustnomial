@@ -11,6 +11,7 @@ use rustnomial::numerics::{Abs, IsNegativeOne, IsPositive, PowUsize};
 use rustnomial::traits::TermIterator;
 use {Degree, Derivable, Evaluable, GenericPolynomial, Polynomial, Term};
 use rustnomial::strings::{write_leading_term, write_trailing_term};
+use rustnomial::degree::TermTokenizer;
 
 #[derive(Debug, Clone)]
 pub struct SparsePolynomial<N> {
@@ -264,51 +265,22 @@ where
     /// assert_eq!(SparsePolynomial::from_vec(vec![5, 11, 2]), polynomial);
     /// ```
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let mut polynomial = HashMap::new();
-        let chars: Vec<char> = s.chars().collect();
-        let mut start_index = match chars.iter().position(|&x| x != ' ') {
-            Some(pos) => pos,
-            None => {
-                return Err("No non-whitespace chars found.".to_string());
-            }
-        };
-        let mut end_index = start_index + 1;
-        while end_index < chars.len() {
-            if chars[end_index] == '+' || chars[end_index] == '-' {
-                let xs: String = chars[start_index..end_index].iter().collect();
-                match Term::<N>::from_str(xs.as_str()) {
-                    Err(msg) => {
-                        return Err(msg);
-                    }
-                    Ok(Term::ZeroTerm) => {}
-                    Ok(Term::Term(coeff, deg)) => {
-                        if let Some(val) = polynomial.get_mut(&deg) {
-                            *val += coeff;
-                        } else {
-                            polynomial.insert(deg, coeff);
-                        }
-                    }
-                }
-                start_index = end_index;
-            }
-            end_index += 1;
-        }
-        let xs: String = chars[start_index..end_index].iter().collect();
-        match Term::<N>::from_str(xs.as_str()) {
-            Err(msg) => {
-                return Err(msg);
-            }
-            Ok(Term::ZeroTerm) => {}
-            Ok(Term::Term(coeff, deg)) => {
-                if let Some(val) = polynomial.get_mut(&deg) {
-                    *val += coeff;
-                } else {
-                    polynomial.insert(deg, coeff);
-                }
+        let mut polynomial = SparsePolynomial::zero();
+        let mut has_iterated = false;
+        for term in TermTokenizer::new(s).map(|s| Term::from_str(s.as_str())) {
+            has_iterated = true;
+            match term {
+                Err(msg) => return Err(msg),
+                Ok(Term::ZeroTerm) => {},
+                Ok(Term::Term(coeff, deg)) => { polynomial.add_term(coeff, deg); }
             }
         }
 
-        Ok(SparsePolynomial::new(polynomial))
+        if has_iterated {
+            Ok(polynomial)
+        } else {
+            Err("Given string did not have any terms.".to_string())
+        }
     }
 }
 
@@ -657,7 +629,18 @@ where
     /// assert_eq!(a, b - c);
     /// ```
     fn eq(&self, other: &Self) -> bool {
-        self.term_iter().eq(other.term_iter())
+        self.terms
+            .iter()
+            .all(|(key, value)| {
+                other.terms.get(key).map_or(value.is_zero(), |v| *value == *v)
+            }
+            ) &&
+        other.terms
+            .iter()
+            .all(|(key, value)| {
+                self.terms.get(key).map_or(value.is_zero(), |v| *value == *v)
+            }
+            )
     }
 }
 
@@ -928,7 +911,9 @@ impl<N: Copy> ops::Shr<i32> for SparsePolynomial<N> {
             let mut terms = HashMap::new();
             let _rhs = _rhs as usize;
             for (&deg, &coeff) in self.terms.iter() {
-                terms.insert(deg - _rhs, coeff);
+                if deg >= _rhs {
+                    terms.insert(deg - _rhs, coeff);
+                }
             }
             SparsePolynomial::new(terms)
         }
@@ -943,7 +928,9 @@ impl<N: Copy> ops::ShrAssign<i32> for SparsePolynomial<N> {
             let mut terms = HashMap::new();
             let _rhs = _rhs as usize;
             for (&deg, &coeff) in self.terms.iter() {
-                terms.insert(deg - _rhs, coeff);
+                if deg >= _rhs {
+                    terms.insert(deg - _rhs, coeff);
+                }
             }
             self.terms = terms;
         }
@@ -1241,6 +1228,13 @@ mod tests {
         a >>= 5;
         let c = SparsePolynomial::from_vec(vec![1, 2]);
         assert_eq!(a, c);
+    }
+
+    #[test]
+    fn test_shr_to_zero() {
+        let mut a = SparsePolynomial::from_vec(vec![1, 2, 0, 0, 0, 0, 0]);
+        a >>= 7;
+        assert_eq!(a, SparsePolynomial::zero());
     }
 
     #[test]
