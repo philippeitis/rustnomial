@@ -423,7 +423,7 @@ impl<N> Evaluable<N> for SparsePolynomial<N>
     where N: Zero + PowUsize + Copy + AddAssign + Mul<Output=N> {
     fn eval(&self, point: N) -> N {
         let mut sum = N::zero();
-        for (val, degree) in self.term_iter() {
+        for (&degree, &val) in self.terms.iter() {
             sum += val * point.upow(degree);
         }
         sum
@@ -442,10 +442,10 @@ impl<N> Derivable<N> for SparsePolynomial<N>
     /// assert_eq!(SparsePolynomial::from_vec(vec![8, 1]), polynomial.derivative());
     /// ```
     fn derivative(&self) -> SparsePolynomial<N> {
-        let mut terms = HashMap::with_capacity(self.len());
+        let mut terms = HashMap::with_capacity(self.terms.len());
         // TODO: Fix for degrees of arbitrary size.
-        for (coeff, degree) in self.term_iter() {
-            if degree != 0 {
+        for (&degree, &coeff) in self.terms.iter() {
+            if degree != 0 && !coeff.is_zero() {
                 terms.insert(degree - 1, coeff * N::from(degree as u8));
             }
         }
