@@ -1,15 +1,14 @@
 use std::fmt;
 use std::fmt::Display;
-use std::ops;
-use std::ops::{AddAssign, Div, DivAssign, Mul, MulAssign, Neg};
+use std::ops::{AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Shl, ShlAssign, Shr, ShrAssign};
 use std::str::FromStr;
 
 use num::{One, Zero};
 
 use rustnomial::numerics::{Abs, IsNegativeOne, PowUsize};
+use rustnomial::strings::write_leading_term;
 use rustnomial::traits::TermIterator;
 use {Degree, Derivable, Evaluable, GenericPolynomial, Integrable, Integral, Polynomial, Term};
-use rustnomial::strings::write_leading_term;
 
 #[derive(Debug, Clone)]
 pub struct Monomial<N> {
@@ -285,7 +284,7 @@ where
     }
 }
 
-impl<N: Copy + Neg<Output = N>> ops::Neg for Monomial<N> {
+impl<N: Copy + Neg<Output = N>> Neg for Monomial<N> {
     type Output = Monomial<N>;
 
     fn neg(self) -> Monomial<N> {
@@ -384,7 +383,7 @@ impl<N: Copy + Neg<Output = N>> ops::Neg for Monomial<N> {
 //     }
 // }
 
-impl<N: Copy + Mul<Output = N>> ops::Mul<Monomial<N>> for Monomial<N> {
+impl<N: Copy + Mul<Output = N>> Mul<Monomial<N>> for Monomial<N> {
     type Output = Monomial<N>;
 
     fn mul(self, _rhs: Monomial<N>) -> Monomial<N> {
@@ -392,14 +391,14 @@ impl<N: Copy + Mul<Output = N>> ops::Mul<Monomial<N>> for Monomial<N> {
     }
 }
 
-impl<N: MulAssign + AddAssign> ops::MulAssign<Monomial<N>> for Monomial<N> {
+impl<N: MulAssign + AddAssign> MulAssign<Monomial<N>> for Monomial<N> {
     fn mul_assign(&mut self, _rhs: Monomial<N>) {
         self.coefficient *= _rhs.coefficient;
         self.deg += _rhs.deg;
     }
 }
 
-impl<N: Copy + Mul<Output = N>> ops::Mul<&Monomial<N>> for Monomial<N> {
+impl<N: Copy + Mul<Output = N>> Mul<&Monomial<N>> for Monomial<N> {
     type Output = Monomial<N>;
 
     fn mul(self, _rhs: &Monomial<N>) -> Monomial<N> {
@@ -407,7 +406,7 @@ impl<N: Copy + Mul<Output = N>> ops::Mul<&Monomial<N>> for Monomial<N> {
     }
 }
 
-impl<N> ops::MulAssign<&Monomial<N>> for Monomial<N>
+impl<N> MulAssign<&Monomial<N>> for Monomial<N>
 where
     N: MulAssign + AddAssign + Copy,
 {
@@ -417,7 +416,7 @@ where
     }
 }
 
-impl<N: Mul<Output = N>> ops::Mul<N> for Monomial<N> {
+impl<N: Mul<Output = N>> Mul<N> for Monomial<N> {
     type Output = Monomial<N>;
 
     fn mul(self, _rhs: N) -> Monomial<N> {
@@ -425,13 +424,13 @@ impl<N: Mul<Output = N>> ops::Mul<N> for Monomial<N> {
     }
 }
 
-impl<N: MulAssign> ops::MulAssign<N> for Monomial<N> {
+impl<N: MulAssign> MulAssign<N> for Monomial<N> {
     fn mul_assign(&mut self, _rhs: N) {
         self.coefficient *= _rhs;
     }
 }
 
-impl<N: Div<Output = N>> ops::Div<N> for Monomial<N> {
+impl<N: Div<Output = N>> Div<N> for Monomial<N> {
     type Output = Monomial<N>;
 
     fn div(self, _rhs: N) -> Monomial<N> {
@@ -439,13 +438,13 @@ impl<N: Div<Output = N>> ops::Div<N> for Monomial<N> {
     }
 }
 
-impl<N: DivAssign> ops::DivAssign<N> for Monomial<N> {
+impl<N: DivAssign> DivAssign<N> for Monomial<N> {
     fn div_assign(&mut self, _rhs: N) {
         self.coefficient /= _rhs;
     }
 }
 
-impl<N: Zero + Copy> ops::Shl<i32> for Monomial<N> {
+impl<N: Zero + Copy> Shl<i32> for Monomial<N> {
     type Output = Monomial<N>;
 
     fn shl(self, _rhs: i32) -> Monomial<N> {
@@ -457,7 +456,7 @@ impl<N: Zero + Copy> ops::Shl<i32> for Monomial<N> {
     }
 }
 
-impl<N: Zero + Copy> ops::ShlAssign<i32> for Monomial<N> {
+impl<N: Zero + Copy> ShlAssign<i32> for Monomial<N> {
     fn shl_assign(&mut self, _rhs: i32) {
         if _rhs < 0 {
             *self >>= -_rhs;
@@ -467,7 +466,7 @@ impl<N: Zero + Copy> ops::ShlAssign<i32> for Monomial<N> {
     }
 }
 
-impl<N: Zero + Copy> ops::Shr<i32> for Monomial<N> {
+impl<N: Zero + Copy> Shr<i32> for Monomial<N> {
     type Output = Monomial<N>;
 
     fn shr(self, _rhs: i32) -> Monomial<N> {
@@ -484,7 +483,7 @@ impl<N: Zero + Copy> ops::Shr<i32> for Monomial<N> {
     }
 }
 
-impl<N: Zero + Copy> ops::ShrAssign<i32> for Monomial<N> {
+impl<N: Zero + Copy> ShrAssign<i32> for Monomial<N> {
     fn shr_assign(&mut self, _rhs: i32) {
         if _rhs < 0 {
             *self <<= -_rhs;

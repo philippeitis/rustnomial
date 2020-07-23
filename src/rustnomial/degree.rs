@@ -104,7 +104,7 @@ where
 pub(crate) struct TermTokenizer {
     chars: Vec<char>,
     start_index: usize,
-    end_index: usize
+    end_index: usize,
 }
 
 impl TermTokenizer {
@@ -114,7 +114,11 @@ impl TermTokenizer {
             Some(pos) => pos,
             None => chars.len(),
         };
-        TermTokenizer{chars, start_index, end_index: start_index + 1}
+        TermTokenizer {
+            chars,
+            start_index,
+            end_index: start_index + 1,
+        }
     }
 }
 

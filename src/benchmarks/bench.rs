@@ -4,7 +4,7 @@ extern crate rustnomial;
 
 mod bench {
     extern crate test;
-    use self::test::{Bencher, black_box};
+    use self::test::{black_box, Bencher};
     use rustnomial::{Evaluable, Polynomial, SparsePolynomial};
 
     #[bench]
@@ -57,16 +57,14 @@ mod bench {
     fn bench_div_poly(b: &mut Bencher) {
         let a = &Polynomial::new(vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
         b.iter(|| {
-             a.clone() / 5;
+            a.clone() / 5;
         });
     }
 
     #[bench]
     fn bench_div_sparse(b: &mut Bencher) {
         let a = &SparsePolynomial::from_vec(vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
-        b.iter(|| {
-            a.clone() / 5
-        });
+        b.iter(|| a.clone() / 5);
     }
 
     #[bench]
@@ -163,18 +161,13 @@ mod bench {
     fn bench_equal_sparse(b: &mut Bencher) {
         let a = SparsePolynomial::from_vec(vec![1i32, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
         let c = SparsePolynomial::from_vec(vec![1i32, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
-        b.iter(|| {
-            a == c
-        });
+        b.iter(|| a == c);
     }
 
     #[bench]
     fn bench_equal_poly(b: &mut Bencher) {
         let a = Polynomial::new(vec![1i32, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
         let c = Polynomial::new(vec![1i32, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
-        b.iter(|| {
-            a == c
-        });
+        b.iter(|| a == c);
     }
-
 }

@@ -1,6 +1,6 @@
-use std::fmt;
 use std::fmt::{Debug, Display};
 use std::ops::{AddAssign, Mul, MulAssign, Sub};
+use std::{fmt, iter};
 
 use num::{One, Zero};
 
@@ -31,21 +31,25 @@ pub trait Integrable<N> {
 
 impl<N> Display for Integral<N>
 where
-    N: IsPositive + Zero + One + Copy + IsNegativeOne + PartialEq + PartialOrd + Display + Abs,
+    N: IsPositive + Zero + One + Copy + IsNegativeOne + PartialEq + Display + Abs,
 {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         if self.polynomial.is_zero() {
-            return write!(f, "C");
+            write!(f, "C")
+        } else {
+            write!(f, "{} + C", self.polynomial)
         }
-        write!(f, "{} + C", self.polynomial)
     }
 }
 
 impl<N: Zero + Copy + AddAssign> Integral<N> {
     pub fn replace_c(&self, c: N) -> Polynomial<N> {
-        let mut terms: Vec<(N, usize)> = self.polynomial.term_iter().collect();
-        terms.push((c, 0));
-        Polynomial::from_terms(terms)
+        Polynomial::from_terms(
+            self.polynomial
+                .term_iter()
+                .chain(iter::once((c, 0)))
+                .collect(),
+        )
     }
 }
 
@@ -71,9 +75,9 @@ where
 }
 
 mod test {
-    use ::{Integral, Polynomial};
     use std::str::FromStr;
     use Integrable;
+    use {Integral, Polynomial};
 
     #[test]
     fn test_integral_empty_polynomial() {
@@ -92,5 +96,4 @@ mod test {
         let a = Polynomial::new(vec![-3, -2, 1]).integral();
         assert_eq!(a.to_string(), "-x^3 - x^2 + x + C");
     }
-
 }
