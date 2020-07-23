@@ -6,7 +6,6 @@ mod bench {
     extern crate test;
     use self::test::{Bencher, black_box};
     use rustnomial::{Evaluable, Polynomial, SparsePolynomial};
-    use std::ops::Div;
 
     #[bench]
     fn bench_init(b: &mut Bencher) {
