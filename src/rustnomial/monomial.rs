@@ -9,6 +9,7 @@ use rustnomial::degree::{Degree, Term};
 use ::{Derivable, Polynomial};
 use std::ops;
 use num::{Zero, One};
+use std::str::FromStr;
 
 #[derive(Debug, Clone)]
 pub struct Monomial<N> {
@@ -17,12 +18,25 @@ pub struct Monomial<N> {
 }
 
 impl<N> Monomial<N> {
+    /// Create a `Monomial` with coefficient and degree.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use rustnomial::{Monomial, Degree};
+    /// let monomial = Monomial::new(3.0, 2);
+    /// assert_eq!(3.0, monomial.coefficient);
+    /// assert_eq!(Degree::Num(2), monomial.degree());
+    /// ```
     pub fn new(coefficient: N, degree: usize) -> Monomial<N> {
         Monomial{coefficient, deg: degree}
     }
 }
 
 impl<N: Copy + Zero> Monomial<N> {
+    pub fn zero() -> Self {
+        Monomial::new(N::zero(), 0)
+    }
     /// Returns the degree of the `Monomial`.
     ///
     /// # Example
@@ -61,6 +75,16 @@ impl<N: Copy + Zero> Monomial<N> {
 }
 
 impl<N: Copy + Zero> GenericPolynomial<N> for Monomial<N> {
+    /// Return the number of terms in `Monomial`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use rustnomial::{Monomial, GenericPolynomial};
+    /// let monomial = Monomial::new(3.0, 2);
+    /// assert_eq!(1, monomial.len());
+    /// assert_eq!(0, Monomial::<i32>::zero().len());
+    /// ```
     fn len(&self) -> usize {
         if self.is_zero() { 0 } else { 1 }
     }
@@ -107,7 +131,10 @@ impl<N> Evaluable<N> for Monomial<N>
     /// # Example
     ///
     /// ```
-    ///
+    /// use rustnomial::{Monomial, Evaluable};
+    /// let monomial = Monomial::new(5, 2);
+    /// assert_eq!(125, monomial.eval(5));
+    /// assert_eq!(1, Monomial::new(1, 0).eval(0));
     /// ```
     fn eval(&self, point: N) -> N {
         self.coefficient * point.upow(self.deg)
@@ -116,7 +143,7 @@ impl<N> Evaluable<N> for Monomial<N>
 
 impl<N> Derivable<N> for Monomial<N>
     where N: Zero + Copy + Mul<Output=N> + From<u8> {
-    /// Returns the integral of the `Monomial`.
+    /// Returns the derivative of the `Monomial`.
     ///
     /// # Example
     ///
@@ -127,7 +154,7 @@ impl<N> Derivable<N> for Monomial<N>
     /// ```
     fn derivative(&self) -> Monomial<N> {
         match self.degree() {
-            Degree::NegInf => Monomial::new(N::zero(), 0),
+            Degree::NegInf | Degree::Num(0) => Monomial::zero(),
             Degree::Num(x) => Monomial::new(self.coefficient * N::from(x as u8), x - 1)
         }
     }
@@ -160,7 +187,6 @@ impl<N> Integrable<N> for Monomial<N>
 }
 
 impl<N: PowUsize + Copy> Monomial<N> {
-
     /// Raises the `Monomial` to the power of exp.
     ///
     /// # Example
@@ -182,7 +208,7 @@ impl<N: PowUsize + Copy> Monomial<N> {
 
 impl<N> PartialEq for Monomial<N>
     where N: Zero + PartialEq + Copy {
-    /// Returns true if self has the same terms as other.
+    /// Returns true if this `Monomial` is equal to other.
     ///
     /// # Example
     ///
@@ -199,7 +225,36 @@ impl<N> PartialEq for Monomial<N>
     }
 }
 
- impl<N> fmt::Display for Monomial<N>
+impl<N> FromStr for Monomial<N>
+    where N: Zero + One + Copy + AddAssign + FromStr {
+    type Err = String;
+
+    /// Returns a `Polynomial` with the corresponding terms,
+    /// in order of ax^n + bx^(n-1) + ... + cx + d
+    ///
+    /// # Arguments
+    ///
+    /// * ` terms ` - A vector of constants, in decreasing order of degree.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use rustnomial::Monomial;
+    /// use std::str::FromStr;
+    /// // Corresponds to 1.0x^2 + 4.0x + 4.0
+    /// let monomial = Monomial::from_str("5x^2").unwrap();
+    /// assert_eq!(Monomial::new(5, 2), monomial);
+    /// ```
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match Term::from_str(s) {
+            Ok(Term::ZeroTerm) => Ok(Monomial::zero()),
+            Ok(Term::Term(coeff, deg)) => Ok(Monomial::new(coeff, deg)),
+            Err(e) => Err(e)
+        }
+    }
+}
+
+impl<N> fmt::Display for Monomial<N>
     where N: Zero + One + Copy + IsNegativeOne + PartialEq + PartialOrd + Display + Abs {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let mut iter = self.term_iter();
@@ -433,12 +488,30 @@ impl<N> ops::ShrAssign<i32> for Monomial<N> {
 mod tests {
     use std::fmt::{Write};
     use ::{Monomial, Integrable, Evaluable};
-    use Polynomial;
+    use ::{Polynomial, Derivable};
 
     #[test]
     fn test_eval() {
         let a = Monomial::new(5, 2);
         assert_eq!(a.eval(5), 125);
+    }
+
+    #[test]
+    fn test_derivative_of_zero() {
+        let a: Monomial<i32> = Monomial::zero();
+        assert_eq!(Monomial::zero(), a.derivative());
+    }
+
+    #[test]
+    fn test_derivative_of_monomial_degree_zero() {
+        let a = Monomial::new(5, 0);
+        assert_eq!(Monomial::zero(), a.derivative());
+    }
+
+    #[test]
+    fn test_derivative() {
+        let a= Monomial::new(5, 3);
+        assert_eq!(Monomial::new(15, 2), a.derivative());
     }
 
     #[test]
