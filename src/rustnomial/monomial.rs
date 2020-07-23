@@ -445,7 +445,7 @@ impl<N: DivAssign> ops::DivAssign<N> for Monomial<N> {
     }
 }
 
-impl<N> ops::Shl<i32> for Monomial<N> {
+impl<N: Zero + Copy> ops::Shl<i32> for Monomial<N> {
     type Output = Monomial<N>;
 
     fn shl(self, _rhs: i32) -> Monomial<N> {
@@ -457,7 +457,7 @@ impl<N> ops::Shl<i32> for Monomial<N> {
     }
 }
 
-impl<N> ops::ShlAssign<i32> for Monomial<N> {
+impl<N: Zero + Copy> ops::ShlAssign<i32> for Monomial<N> {
     fn shl_assign(&mut self, _rhs: i32) {
         if _rhs < 0 {
             *self >>= -_rhs;
@@ -467,24 +467,35 @@ impl<N> ops::ShlAssign<i32> for Monomial<N> {
     }
 }
 
-impl<N> ops::Shr<i32> for Monomial<N> {
+impl<N: Zero + Copy> ops::Shr<i32> for Monomial<N> {
     type Output = Monomial<N>;
 
     fn shr(self, _rhs: i32) -> Monomial<N> {
         if _rhs < 0 {
             self << -_rhs
         } else {
-            Monomial::new(self.coefficient, self.deg - (_rhs as usize))
+            let _rhs = _rhs as usize;
+            if _rhs > self.deg {
+                Monomial::zero()
+            } else {
+                Monomial::new(self.coefficient, self.deg - _rhs)
+            }
         }
     }
 }
 
-impl<N> ops::ShrAssign<i32> for Monomial<N> {
+impl<N: Zero + Copy> ops::ShrAssign<i32> for Monomial<N> {
     fn shr_assign(&mut self, _rhs: i32) {
         if _rhs < 0 {
             *self <<= -_rhs;
         } else {
-            self.deg -= _rhs as usize;
+            let _rhs = _rhs as usize;
+            if _rhs > self.deg {
+                self.coefficient = N::zero();
+                self.deg = 0;
+            } else {
+                self.deg -= _rhs;
+            }
         }
     }
 }
@@ -497,6 +508,79 @@ mod tests {
     fn test_eval() {
         let a = Monomial::new(5, 2);
         assert_eq!(a.eval(5), 125);
+    }
+
+    #[test]
+    fn test_shl_pos() {
+        let a = Monomial::new(1, 2);
+        let c = Monomial::new(1, 7);
+        assert_eq!(a << 5, c);
+    }
+
+    #[test]
+    fn test_shl_assign_pos() {
+        let mut a = Monomial::new(1, 2);
+        let c = Monomial::new(1, 7);
+        a <<= 5;
+        assert_eq!(a, c);
+    }
+
+    #[test]
+    fn test_shl_neg() {
+        let a = Monomial::new(1, 7);
+        let c = Monomial::new(1, 2);
+        assert_eq!(a << -5, c);
+    }
+
+    #[test]
+    fn test_shl_assign_neg() {
+        let mut a = Monomial::new(1, 7);
+        let c = Monomial::new(1, 2);
+        a <<= -5;
+        assert_eq!(a, c);
+    }
+
+    #[test]
+    fn test_shr_pos() {
+        let a = Monomial::new(1, 7);
+        let c = Monomial::new(1, 2);
+        assert_eq!(a >> 5, c);
+    }
+
+    #[test]
+    fn test_shr_assign_pos() {
+        let mut a = Monomial::new(1, 7);
+        let c = Monomial::new(1, 2);
+        a >>= 5;
+        assert_eq!(a, c);
+    }
+
+    #[test]
+    fn test_shr_neg() {
+        let a = Monomial::new(1, 2);
+        let c = Monomial::new(1, 7);
+        assert_eq!(a >> -5, c);
+    }
+
+    #[test]
+    fn test_shr_assign_neg() {
+        let mut a = Monomial::new(1, 2);
+        let c = Monomial::new(1, 7);
+        a >>= -5;
+        assert_eq!(a, c);
+    }
+
+    #[test]
+    fn test_shr_to_zero() {
+        let a = Monomial::new(5, 1);
+        assert_eq!(a >> 5, Monomial::zero());
+    }
+
+    #[test]
+    fn test_shr_assign_to_zero() {
+        let mut a = Monomial::new(5, 1);
+        a >>= 5;
+        assert_eq!(a, Monomial::zero());
     }
 
     #[test]

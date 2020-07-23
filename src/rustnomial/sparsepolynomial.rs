@@ -1231,13 +1231,6 @@ mod tests {
     }
 
     #[test]
-    fn test_shr_to_zero() {
-        let mut a = SparsePolynomial::from_vec(vec![1, 2, 0, 0, 0, 0, 0]);
-        a >>= 7;
-        assert_eq!(a, SparsePolynomial::zero());
-    }
-
-    #[test]
     fn test_shr_neg() {
         let a = SparsePolynomial::from_vec(vec![1, 2]);
         let c = SparsePolynomial::from_vec(vec![1, 2, 0, 0, 0, 0, 0]);
@@ -1250,6 +1243,19 @@ mod tests {
         a >>= -5;
         let c = SparsePolynomial::from_vec(vec![1, 2, 0, 0, 0, 0, 0]);
         assert_eq!(a, c);
+    }
+
+    #[test]
+    fn test_shr_to_zero() {
+        let a = SparsePolynomial::from_vec(vec![1, 2]);
+        assert_eq!(a >> 5, SparsePolynomial::zero());
+    }
+
+    #[test]
+    fn test_shr_assign_to_zero() {
+        let mut a = SparsePolynomial::from_vec(vec![1, 2]);
+        a >>= 5;
+        assert_eq!(a, SparsePolynomial::zero());
     }
 
     #[test]

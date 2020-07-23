@@ -223,6 +223,11 @@ mod test {
     }
 
     #[test]
+    fn term_from_zero() {
+        assert_eq!(Ok(Term::ZeroTerm), Term::<i32>::from_str("000"));
+    }
+
+    #[test]
     fn sign_only() {
         assert!(Term::<i32>::from_str("+").is_err());
         assert!(Term::<i32>::from_str("-").is_err());

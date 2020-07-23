@@ -840,9 +840,14 @@ impl<N: Zero + Copy> ops::Shr<i32> for Polynomial<N> {
         if _rhs < 0 {
             self << -_rhs
         } else {
+            let _rhs = _rhs as usize;
             let index = first_nonzero_index(&self.terms);
             Polynomial {
-                terms: self.terms[index..self.terms.len() - (_rhs as usize)].to_vec(),
+                terms: if _rhs > self.terms.len() {
+                    vec![]
+                } else {
+                    self.terms[index..self.terms.len() - _rhs].to_vec()
+                }
             }
         }
     }
@@ -853,7 +858,12 @@ impl<N: Zero + Copy> ops::ShrAssign<i32> for Polynomial<N> {
         if _rhs < 0 {
             *self <<= -_rhs;
         } else {
-            self.terms = self.terms[..self.terms.len() - (_rhs as usize)].to_vec();
+            let _rhs = _rhs as usize;
+            if _rhs > self.terms.len() {
+                self.terms = vec![];
+            } else {
+                self.terms = self.terms[..self.terms.len() - _rhs].to_vec();
+            }
         }
     }
 }
@@ -1097,6 +1107,19 @@ mod tests {
         a >>= -5;
         let c = Polynomial::new(vec![1, 2, 0, 0, 0, 0, 0]);
         assert_eq!(a, c);
+    }
+
+    #[test]
+    fn test_shr_to_zero() {
+        let a = Polynomial::new(vec![1, 2]);
+        assert_eq!(a >> 5, Polynomial::zero());
+    }
+
+    #[test]
+    fn test_shr_assign_to_zero() {
+        let mut a = Polynomial::new(vec![1, 2]);
+        a >>= 5;
+        assert_eq!(a, Polynomial::zero());
     }
 
     #[test]
