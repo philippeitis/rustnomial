@@ -349,6 +349,12 @@ impl<N> SparsePolynomial<N>
     }
 }
 
+impl<N> SparsePolynomial<N> {
+    pub fn zero() -> SparsePolynomial<N> {
+        SparsePolynomial{terms: HashMap::new()}
+    }
+}
+
 impl<N> SparsePolynomial<N>
     where N: PartialEq + HasZero + Copy {
     /// Returns a `Polynomial` with the corresponding terms,
@@ -1005,6 +1011,16 @@ mod tests {
         match SparsePolynomial::<i32>::from_str("5+x") {
             Ok(a) => {
                 let b = SparsePolynomial::from_vec(vec![1, 5]);
+                assert_eq!(a, b);
+            }
+            Err(e) => {
+                assert!(false, e);
+            }
+        }
+
+        match SparsePolynomial::<i32>::from_str("5x+11x") {
+            Ok(a) => {
+                let b = SparsePolynomial::from_vec(vec![16, 0]);
                 assert_eq!(a, b);
             }
             Err(e) => {

@@ -9,6 +9,7 @@ use rustnomial::traits::{TermIterator, GenericPolynomial};
 use ::{Integral, Evaluable};
 use rustnomial::degree::{Term, Degree};
 use Derivable;
+use std::str::FromStr;
 
 #[macro_export]
 macro_rules! polynomial {
@@ -125,6 +126,22 @@ fn first_term<N>(poly_vec: &Vec<N>) -> Term<N>
 
     Term::ZeroTerm
 }
+
+impl<N> Polynomial<N> {
+    /// Returns a `Polynomial` with no terms.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use rustnomial::Polynomial;
+    /// // Corresponds to 1.0x^2 + 4.0x + 4.0
+    /// let polynomial = Polynomial::new(vec![1.0, 4.0, 4.0]);
+    /// ```
+    pub fn zero() -> Polynomial<N> {
+        Polynomial { terms: vec![] }
+    }
+}
+
 
 impl<N> Polynomial<N>
     where N: PartialEq + HasZero + Copy {
@@ -573,7 +590,6 @@ impl<N> fmt::Display for Polynomial<N>
             }
         }
 
-
         for (coeff, degree) in iter {
             if coeff > zero {
                 write!(f, " + ")?;
@@ -595,6 +611,61 @@ impl<N> fmt::Display for Polynomial<N>
         }
 
         write!(f, "")
+    }
+}
+
+impl<N> FromStr for Polynomial<N>
+    where N: PartialEq + HasZero + HasOne + Copy + AddAssign + FromStr + Display {
+    type Err = String;
+
+    /// Returns a `Polynomial` with the corresponding terms,
+    /// in order of ax^n + bx^(n-1) + ... + cx + d
+    ///
+    /// # Arguments
+    ///
+    /// * ` terms ` - A vector of constants, in decreasing order of degree.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use rustnomial::SparsePolynomial;
+    /// use std::str::FromStr;
+    /// // Corresponds to 1.0x^2 + 4.0x + 4.0
+    /// let polynomial = SparsePolynomial::from_str("5x^2 + 11x + 2").unwrap();
+    /// assert_eq!(SparsePolynomial::from_vec(vec![5, 11, 2]), polynomial);
+    /// ```
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let mut polynomial = Polynomial::zero();
+        let chars: Vec<char> = s.chars().collect();
+        let mut start_index = match chars.iter().position(|&x| x != ' ') {
+            Some(pos) => pos,
+            None => {return Err("No non-whitespace chars found.".to_string());}
+        };
+        let mut end_index = start_index + 1;
+        while end_index < chars.len() {
+            if chars[end_index] == '+' || chars[end_index] == '-' {
+                let xs: String = chars[start_index..end_index].iter().collect();
+                match Term::<N>::from_str(xs.as_str()) {
+                    Err(msg) => {return Err(msg);}
+                    Ok(Term::ZeroTerm) => {}
+                    Ok(Term::Term(coeff, deg)) => {
+                        polynomial.add_term(coeff, deg);
+                    }
+                }
+                start_index = end_index;
+            }
+            end_index += 1;
+        }
+        let xs: String = chars[start_index..end_index].iter().collect();
+        match Term::<N>::from_str(xs.as_str()) {
+            Err(msg) => {return Err(msg);}
+            Ok(Term::ZeroTerm) => {}
+            Ok(Term::Term(coeff, deg)) => {
+                polynomial.add_term(coeff, deg);
+            }
+        }
+
+        Ok(polynomial)
     }
 }
 
