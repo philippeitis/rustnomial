@@ -451,7 +451,7 @@ where
         let zero = N::zero();
         let (_rhs_first, _rhs_deg) = match first_term(&_rhs.terms) {
             Term::ZeroTerm => {
-                panic!("Division by 0.");
+                panic!("Can't divide polynomial by 0.");
             }
             Term::Term(coeff, deg) => (coeff, deg),
         };
@@ -505,22 +505,11 @@ where
 {
     type Output = Polynomial<N>;
 
-    /// Divides self by the given `Polynomial`, and returns the quotient and remainder.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use rustnomial::Polynomial;
-    /// let polynomial = Polynomial::new(vec![1.0, 2.0]);
-    /// let polynomial_sqr = polynomial.pow(2);
-    /// let polynomial_cub = polynomial.pow(3);
-    /// assert_eq!(polynomial.clone() * polynomial.clone(), polynomial_sqr);
-    /// assert_eq!(polynomial_sqr.clone() * polynomial.clone(), polynomial_cub);
-    /// ```
+    /// Returns the remainder of dividing `self` by `_rhs`.
     fn rem(self, _rhs: Polynomial<N>) -> Polynomial<N> {
         let (_rhs_first, _rhs_deg) = match first_term(&_rhs.terms) {
             Term::ZeroTerm => {
-                panic!("Can't divide by 0.");
+                panic!("Can't divide polynomial by 0.");
             }
             Term::Term(coeff, deg) => (coeff, deg),
         };
@@ -560,22 +549,11 @@ impl<N> RemAssign<Polynomial<N>> for Polynomial<N>
 where
     N: Copy + Zero + SubAssign + Mul<Output = N> + Div<Output = N>,
 {
-    /// Divides self by the given `Polynomial`, and returns the quotient and remainder.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use rustnomial::Polynomial;
-    /// let polynomial = Polynomial::new(vec![1.0, 2.0]);
-    /// let polynomial_sqr = polynomial.pow(2);
-    /// let polynomial_cub = polynomial.pow(3);
-    /// assert_eq!(polynomial.clone() * polynomial.clone(), polynomial_sqr);
-    /// assert_eq!(polynomial_sqr.clone() * polynomial.clone(), polynomial_cub);
-    /// ```
+    /// Assign the remainder of dividing `self` by `_rhs` to `self`.
     fn rem_assign(&mut self, _rhs: Polynomial<N>) {
         let (_rhs_first, _rhs_deg) = match first_term(&_rhs.terms) {
             Term::ZeroTerm => {
-                panic!("Can't divide by 0.");
+                panic!("Can't divide polynomial by 0.");
             }
             Term::Term(coeff, deg) => (coeff, deg),
         };
@@ -640,7 +618,7 @@ where
             for (coeff, degree) in iter {
                 write_trailing_term(f, coeff, degree);
             }
-            write!(f, "")
+            Ok(())
         } else {
             write!(f, "0")
         }
