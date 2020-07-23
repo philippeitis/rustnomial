@@ -1,13 +1,13 @@
 use rustnomial::traits::{TermIterator, GenericPolynomial};
-use rustnomial::numerics::{HasZero, HasOne, IsNegativeOne, Abs, PowUsize};
+use rustnomial::numerics::{HasZero, IsNegativeOne, Abs, PowUsize, IsZero, IsOne};
 use ::{Integrable, Integral};
 use ::{Evaluable};
-use std::ops::{Div, AddAssign, Mul, MulAssign, DivAssign, SubAssign, Neg};
+use std::ops::{Div, AddAssign, Mul, MulAssign, DivAssign, Neg};
 use std::fmt;
 use std::fmt::Display;
 use rustnomial::degree::{Degree, Term};
 use ::{Derivable, Polynomial};
-use core::ops;
+use std::ops;
 
 #[derive(Debug, Clone)]
 pub struct Monomial<N> {
@@ -21,7 +21,7 @@ impl<N> Monomial<N> {
     }
 }
 
-impl<N: Copy + HasZero + PartialEq> Monomial<N> {
+impl<N: Copy + IsZero> Monomial<N> {
     /// Returns the degree of the `Monomial`.
     ///
     /// # Example
@@ -36,7 +36,7 @@ impl<N: Copy + HasZero + PartialEq> Monomial<N> {
     /// assert_eq!(Degree::Num(0), nonzero_with_zero_degree.degree());
     /// ```
     pub fn degree(&self) -> Degree {
-        if self.coefficient == N::zero() {
+        if self.coefficient.is_zero() {
             Degree::NegInf
         } else {
             Degree::Num(self.deg)
@@ -55,11 +55,11 @@ impl<N: Copy + HasZero + PartialEq> Monomial<N> {
     /// assert!(!non_zero.is_zero());
     /// ```
     pub fn is_zero(&self) -> bool {
-self.degree() == Degree::NegInf
-}
+        self.degree() == Degree::NegInf
+    }
 }
 
-impl<N: Copy + HasZero + PartialEq> GenericPolynomial<N> for Monomial<N> {
+impl<N: Copy + IsZero> GenericPolynomial<N> for Monomial<N> {
     fn len(&self) -> usize {
         if self.is_zero() {
             0
@@ -82,14 +82,7 @@ impl<N: Copy + HasZero + PartialEq> GenericPolynomial<N> for Monomial<N> {
         if index != 0 {
             Term::ZeroTerm
         } else {
-            match self.degree() {
-                Degree::NegInf => {
-                    Term::ZeroTerm
-                },
-                Degree::Num(x) => {
-                    Term::Term(self.coefficient, x)
-                }
-            }
+            Term::new(self.coefficient, self.deg)
         }
     }
 
@@ -125,7 +118,7 @@ impl<N> Evaluable<N> for Monomial<N>
 }
 
 impl<N> Derivable<N> for Monomial<N>
-    where N: PartialEq + HasZero + Copy + Mul<Output=N> + From<u8> {
+    where N: IsZero + HasZero + Copy + Mul<Output=N> + From<u8> {
     /// Returns the integral of the `Monomial`.
     ///
     /// # Example
@@ -144,7 +137,7 @@ impl<N> Derivable<N> for Monomial<N>
 }
 
 impl<N> Integrable<N> for Monomial<N>
-    where N: PartialEq + HasZero + Copy + AddAssign + Div<Output=N> + From<u8> {
+    where N: IsZero + HasZero + Copy + AddAssign + Div<Output=N> + From<u8> {
     /// Returns the integral of the `Monomial`.
     ///
     /// # Example
@@ -192,7 +185,7 @@ impl<N> Monomial<N>
 // TODO: Divmod implementation.
 
 impl<N> PartialEq for Monomial<N>
-    where N: PartialEq + HasZero + Copy {
+    where N: IsZero + PartialEq + Copy {
     /// Returns true if self has the same terms as other.
     ///
     /// # Example
@@ -211,7 +204,7 @@ impl<N> PartialEq for Monomial<N>
 }
 
  impl<N> fmt::Display for Monomial<N>
-    where N: HasZero + HasOne + Copy + IsNegativeOne + PartialEq + PartialOrd + Display + Abs {
+    where N: IsZero + IsOne + Copy + IsNegativeOne + PartialEq + PartialOrd + Display + Abs {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let mut iter = self.term_iter();
         return match iter.next() {
@@ -221,7 +214,7 @@ impl<N> PartialEq for Monomial<N>
             Some((coeff, degree)) => {
                 if coeff.is_negative_one() {
                     write!(f, "-")?;
-                } else if (coeff != N::one()) || (degree == 0) {
+                } else if (!coeff.is_one()) || (degree == 0) {
                     write!(f, "{}", coeff)?;
                 }
 

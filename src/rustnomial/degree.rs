@@ -1,5 +1,5 @@
 use std::str::FromStr;
-use rustnomial::numerics::{HasOne, HasZero};
+use rustnomial::numerics::{HasOne, IsZero};
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Degree {
@@ -13,9 +13,9 @@ pub enum Term<N> {
     Term(N, usize)
 }
 
-impl<N: HasZero + PartialEq> Term<N> {
-    fn new(coeff: N, deg: usize) -> Term<N> {
-        if coeff == N::zero() {
+impl<N: IsZero> Term<N> {
+    pub fn new(coeff: N, deg: usize) -> Term<N> {
+        if coeff.is_zero() {
             Term::ZeroTerm
         } else {
             Term::Term(coeff, deg)
@@ -23,7 +23,7 @@ impl<N: HasZero + PartialEq> Term<N> {
     }
 }
 
-impl<N> FromStr for Term<N> where N: HasOne + FromStr + Copy + HasZero + PartialEq {
+impl<N> FromStr for Term<N> where N: HasOne + FromStr + Copy + IsZero {
     type Err = String;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
@@ -48,7 +48,7 @@ impl<N> FromStr for Term<N> where N: HasOne + FromStr + Copy + HasZero + Partial
                         num_vec.clear();
                         coeff = match N::from_str(&str) {
                             Ok(val) => val,
-                            Err(val) => {
+                            Err(_) => {
                                 let err_str = format!("Coeff {} could not be parsed.", str);
                                 return Err(err_str);
                             }
@@ -83,11 +83,11 @@ impl<N> FromStr for Term<N> where N: HasOne + FromStr + Copy + HasZero + Partial
             }
         } else {
             let str: String = num_vec.iter().collect();
-            match N::from_str(&str) {
-                Ok(val) => return Ok(Term::new(val, 0)),
-                Err(val) => {
+            return match N::from_str(&str) {
+                Ok(val) => Ok(Term::new(val, 0)),
+                Err(_) => {
                     let err_str = format!("Coeff {} could not be parsed.", str);
-                    return Err(err_str);
+                    Err(err_str)
                 }
             };
         };

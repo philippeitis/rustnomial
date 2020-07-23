@@ -429,3 +429,264 @@ impl PowUsize for f64 {
         self.powi(exp as i32)
     }
 }
+
+pub trait IsPositive {
+    fn is_positive(&self) -> bool;
+}
+
+
+impl IsPositive for u8 {
+    fn is_positive(&self) -> bool {
+        self > &0
+    }
+}
+
+impl IsPositive for u16 {
+    fn is_positive(&self) -> bool {
+        self > &0
+    }
+}
+
+impl IsPositive for u32 {
+    fn is_positive(&self) -> bool {
+        self > &0
+    }
+}
+
+impl IsPositive for u64 {
+    fn is_positive(&self) -> bool {
+        self > &0
+    }
+}
+
+impl IsPositive for u128 {
+    fn is_positive(&self) -> bool {
+        self > &0
+    }
+}
+
+impl IsPositive for usize {
+    fn is_positive(&self) -> bool {
+        self > &0
+    }
+}
+
+impl IsPositive for i8 {
+    fn is_positive(&self) -> bool {
+        self > &0
+    }
+}
+
+impl IsPositive for i16 {
+    fn is_positive(&self) -> bool {
+        self > &0
+    }
+}
+
+impl IsPositive for i32 {
+    fn is_positive(&self) -> bool {
+        self > &0
+    }
+}
+
+impl IsPositive for i64 {
+    fn is_positive(&self) -> bool {
+        self > &0
+    }
+}
+
+impl IsPositive for i128 {
+    fn is_positive(&self) -> bool {
+        self > &0
+    }
+}
+
+impl IsPositive for f32 {
+    fn is_positive(&self) -> bool {
+        self > &0.0
+    }
+}
+
+impl IsPositive for f64 {
+    fn is_positive(&self) -> bool {
+        self > &0.0
+    }
+}
+
+pub trait IsOne {
+    fn is_one(&self) -> bool;
+}
+
+
+impl IsOne for u8 {
+    fn is_one(&self) -> bool {
+        self.eq(&1)
+    }
+}
+
+impl IsOne for u16 {
+    fn is_one(&self) -> bool {
+        self.eq(&1)
+    }
+}
+
+impl IsOne for u32 {
+    fn is_one(&self) -> bool {
+        self.eq(&1)
+    }
+}
+
+impl IsOne for u64 {
+    fn is_one(&self) -> bool {
+        self.eq(&1)
+    }
+}
+
+impl IsOne for u128 {
+    fn is_one(&self) -> bool {
+        self.eq(&1)
+    }
+}
+
+impl IsOne for usize {
+    fn is_one(&self) -> bool {
+        self.eq(&1)
+    }
+}
+
+impl IsOne for i8 {
+    fn is_one(&self) -> bool {
+        self.eq(&1)
+    }
+}
+
+impl IsOne for i16 {
+    fn is_one(&self) -> bool {
+        self.eq(&1)
+    }
+}
+
+impl IsOne for i32 {
+    fn is_one(&self) -> bool {
+        self.eq(&1)
+    }
+}
+
+impl IsOne for i64 {
+    fn is_one(&self) -> bool {
+        self.eq(&1)
+    }
+}
+
+impl IsOne for i128 {
+    fn is_one(&self) -> bool {
+        self.eq(&1)
+    }
+}
+
+impl IsOne for isize {
+    fn is_one(&self) -> bool {
+        self.eq(&1)
+    }
+}
+
+impl IsOne for f32 {
+    fn is_one(&self) -> bool {
+        self.eq(&1.0)
+    }
+}
+
+impl IsOne for f64 {
+    fn is_one(&self) -> bool {
+        self.eq(&1.0)
+    }
+}
+
+pub trait IsZero {
+    fn is_zero(&self) -> bool;
+}
+
+
+impl IsZero for u8 {
+    fn is_zero(&self) -> bool {
+        self.eq(&0)
+    }
+}
+
+impl IsZero for u16 {
+    fn is_zero(&self) -> bool {
+        self.eq(&0)
+    }
+}
+
+impl IsZero for u32 {
+    fn is_zero(&self) -> bool {
+        self.eq(&0)
+    }
+}
+
+impl IsZero for u64 {
+    fn is_zero(&self) -> bool {
+        self.eq(&0)
+    }
+}
+
+impl IsZero for u128 {
+    fn is_zero(&self) -> bool {
+        self.eq(&0)
+    }
+}
+
+impl IsZero for usize {
+    fn is_zero(&self) -> bool {
+        self.eq(&0)
+    }
+}
+
+impl IsZero for i8 {
+    fn is_zero(&self) -> bool {
+        self.eq(&0)
+    }
+}
+
+impl IsZero for i16 {
+    fn is_zero(&self) -> bool {
+        self.eq(&0)
+    }
+}
+
+impl IsZero for i32 {
+    fn is_zero(&self) -> bool {
+        self.eq(&0)
+    }
+}
+
+impl IsZero for i64 {
+    fn is_zero(&self) -> bool {
+        self.eq(&0)
+    }
+}
+
+impl IsZero for i128 {
+    fn is_zero(&self) -> bool {
+        self.eq(&0)
+    }
+}
+
+impl IsZero for isize {
+    fn is_zero(&self) -> bool {
+        self.eq(&0)
+    }
+}
+
+impl IsZero for f32 {
+    fn is_zero(&self) -> bool {
+        self.eq(&0.0)
+    }
+}
+
+impl IsZero for f64 {
+    fn is_zero(&self) -> bool {
+        self.eq(&0.0)
+    }
+}
