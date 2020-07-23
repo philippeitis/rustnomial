@@ -1,9 +1,9 @@
 use std::ops;
 use std::fmt;
 use std::ops::{Mul, AddAssign, MulAssign, DivAssign, Div, SubAssign, Neg, Sub};
-use std::fmt::{Display};
+use std::fmt::{Display, Write};
 
-use rustnomial::numerics::{HasZero, HasOne, IsNegativeOne, Abs, PowUsize, IsZero, IsPositive, IsOne};
+use rustnomial::numerics::{IsNegativeOne, Abs, PowUsize, IsPositive};
 use rustnomial::traits::{TermIterator, GenericPolynomial};
 use ::{Evaluable};
 use rustnomial::degree::{Term, Degree};
@@ -11,6 +11,7 @@ use std::collections::{HashMap};
 use rustnomial::degree::Term::ZeroTerm;
 use ::{Derivable, Polynomial};
 use std::str::FromStr;
+use num::{Zero, One};
 
 #[derive(Debug, Clone)]
 pub struct SparsePolynomial<N> {
@@ -18,7 +19,7 @@ pub struct SparsePolynomial<N> {
 }
 
 fn map_mul<N>(_lhs: &HashMap<usize, N>, _rhs: &HashMap<usize, N>) -> HashMap<usize, N>
-    where N: Mul<Output=N> + AddAssign + Copy + IsZero {
+    where N: Mul<Output=N> + AddAssign + Copy + Zero {
     let mut terms = HashMap::new();
     for (&rhs_deg, &rterm) in _rhs {
         if rterm.is_zero() {
@@ -39,7 +40,7 @@ fn map_mul<N>(_lhs: &HashMap<usize, N>, _rhs: &HashMap<usize, N>) -> HashMap<usi
     terms
 }
 
-fn degree<N: IsZero + Copy>(terms: &HashMap<usize, N>) -> Degree {
+fn degree<N: Zero + Copy>(terms: &HashMap<usize, N>) -> Degree {
     let mut term_iter = terms.iter();
     let (mut max_term, mut max_degree) = match term_iter.next() {
         None => {return Degree::NegInf;}
@@ -60,7 +61,7 @@ fn degree<N: IsZero + Copy>(terms: &HashMap<usize, N>) -> Degree {
     }
 }
 
-fn first_term<N: IsZero + Copy>(terms: &HashMap<usize, N>) -> Term<N> {
+fn first_term<N: Zero + Copy>(terms: &HashMap<usize, N>) -> Term<N> {
     let degree = match degree(terms) {
         Degree::NegInf => {return ZeroTerm;},
         Degree::Num(x) => {x},
@@ -71,7 +72,7 @@ fn first_term<N: IsZero + Copy>(terms: &HashMap<usize, N>) -> Term<N> {
     }
 }
 
-impl<N: IsZero + Copy> GenericPolynomial<N> for SparsePolynomial<N> {
+impl<N: Zero + Copy> GenericPolynomial<N> for SparsePolynomial<N> {
     fn len(&self) -> usize {
         match self.degree() {
             Degree::NegInf => 0,
@@ -111,7 +112,7 @@ impl<N: IsZero + Copy> GenericPolynomial<N> for SparsePolynomial<N> {
 }
 
 // impl<N> FromStr for SparsePolynomial<N>
-//     where N: PartialEq + HasZero + HasOne + Copy + AddAssign + FromStr + Display {
+//     where N: PartialEq + Zero + One + Copy + AddAssign + FromStr + Display {
 //     type Err = String;
 //
 //     /// Returns a `Polynomial` with the corresponding terms,
@@ -234,7 +235,7 @@ impl<N: IsZero + Copy> GenericPolynomial<N> for SparsePolynomial<N> {
 // }
 
 impl<N> FromStr for SparsePolynomial<N>
-    where N: IsZero + HasOne + Copy + AddAssign + FromStr + Display {
+    where N: Zero + One + Copy + AddAssign + FromStr {
     type Err = String;
 
     /// Returns a `Polynomial` with the corresponding terms,
@@ -297,7 +298,7 @@ impl<N> FromStr for SparsePolynomial<N>
 }
 
 impl<N> SparsePolynomial<N>
-    where N: IsZero + Copy + AddAssign {
+    where N: Zero + Copy + AddAssign {
     /// Returns a `Polynomial` with the corresponding terms,
     /// in order of ax^n + bx^(n-1) + ... + cx + d
     ///
@@ -348,7 +349,7 @@ impl<N> SparsePolynomial<N> {
     }
 }
 impl<N> SparsePolynomial<N>
-    where N: IsZero + Copy {
+    where N: Zero + Copy {
     /// Returns a `SparsePolynomial` with the corresponding terms,
     /// in order of ax^n + bx^(n-1) + ... + cx + d
     ///
@@ -419,7 +420,7 @@ impl<N> SparsePolynomial<N>
 
 
 impl<N> Evaluable<N> for SparsePolynomial<N>
-    where N: IsZero + HasZero + PowUsize + Copy + AddAssign + Mul<Output=N> {
+    where N: Zero + PowUsize + Copy + AddAssign + Mul<Output=N> {
     fn eval(&self, point: N) -> N {
         let mut sum = N::zero();
         for (val, degree) in self.term_iter() {
@@ -430,7 +431,7 @@ impl<N> Evaluable<N> for SparsePolynomial<N>
 }
 
 impl<N> Derivable<N> for SparsePolynomial<N>
-    where N: IsZero + From<u8> + Copy + Mul<Output=N> {
+    where N: Zero + From<u8> + Copy + Mul<Output=N> {
     /// Returns the derivative of the `Polynomial`.
     ///
     /// # Example
@@ -454,7 +455,7 @@ impl<N> Derivable<N> for SparsePolynomial<N>
 
 // TODO: Make Integral generic over Polynomial, SparsePolynomial
 // impl<N> Integrable<N> for SparsePolynomial<N>
-//     where N: PartialEq + HasZero + From<u8> + Copy + DivAssign + fmt::Display {
+//     where N: PartialEq + Zero + From<u8> + Copy + DivAssign + fmt::Display {
 //     /// Returns the integral of the `Polynomial`.
 //     ///
 //     /// # Example
@@ -482,7 +483,7 @@ impl<N> Derivable<N> for SparsePolynomial<N>
 // }
 
 impl<N> SparsePolynomial<N>
-    where N: Mul<Output=N> + AddAssign + Copy + HasOne + IsZero {
+    where N: Mul<Output=N> + AddAssign + Copy + Zero + One {
     pub fn borrow_mul(&self, _rhs: &SparsePolynomial<N>) -> SparsePolynomial<N> {
         SparsePolynomial{terms: map_mul(&self.terms, &_rhs.terms)}
     }
@@ -522,7 +523,7 @@ impl<N> SparsePolynomial<N>
 
 // TODO: Implement this.
 impl<N> SparsePolynomial<N>
-    where N: Copy + IsZero + Neg<Output=N> + Sub<Output=N> + SubAssign + Mul<Output=N> + Div<Output=N> + AddAssign {
+    where N: Copy + Zero + Neg<Output=N> + Sub<Output=N> + SubAssign + Mul<Output=N> + Div<Output=N> + AddAssign {
     /// Divides self by the given `Polynomial`, and returns the quotient and remainder.
     ///
     /// # Example
@@ -592,7 +593,7 @@ impl<N> SparsePolynomial<N>
 }
 
 impl<N> PartialEq for SparsePolynomial<N>
-    where N: IsZero + PartialEq + Copy {
+    where N: Zero + PartialEq + Copy {
     /// Returns true if self has the same terms as other.
     ///
     /// # Example
@@ -626,7 +627,7 @@ impl<N> PartialEq for SparsePolynomial<N>
 }
 
 impl<N> fmt::Display for SparsePolynomial<N>
-    where N: IsZero + IsPositive + IsOne + Copy + IsNegativeOne + PartialEq + PartialOrd + Display + Abs {
+    where N: Zero + One + IsPositive + Copy + IsNegativeOne + PartialEq + PartialOrd + Display + Abs {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let mut iter = self.term_iter();
         match iter.next() {
@@ -674,7 +675,7 @@ impl<N> fmt::Display for SparsePolynomial<N>
 }
 
 impl<N> ops::Neg for SparsePolynomial<N>
-    where N: IsZero + Copy + Neg<Output=N>{
+    where N: Zero + Copy + Neg<Output=N>{
     type Output = SparsePolynomial<N>;
 
     fn neg(self) -> SparsePolynomial<N> {
@@ -687,7 +688,7 @@ impl<N> ops::Neg for SparsePolynomial<N>
 }
 
 impl<N> ops::Sub<SparsePolynomial<N>> for SparsePolynomial<N>
-    where N: IsZero + Copy + Sub<Output=N> + SubAssign + Neg<Output=N>{
+    where N: Zero + Copy + Sub<Output=N> + SubAssign + Neg<Output=N>{
     type Output = SparsePolynomial<N>;
 
     fn sub(self, _rhs: SparsePolynomial<N>) -> SparsePolynomial<N> {
@@ -707,7 +708,7 @@ impl<N> ops::Sub<SparsePolynomial<N>> for SparsePolynomial<N>
 }
 
 impl<N> ops::Sub<Polynomial<N>> for SparsePolynomial<N>
-    where N: IsZero + Copy + Sub<Output=N> + SubAssign + Neg<Output=N>{
+    where N: Zero + Copy + Sub<Output=N> + SubAssign + Neg<Output=N>{
     type Output = SparsePolynomial<N>;
 
     fn sub(self, _rhs: Polynomial<N>) -> SparsePolynomial<N> {
@@ -781,7 +782,7 @@ impl<N: Copy + AddAssign> ops::AddAssign<SparsePolynomial<N>> for SparsePolynomi
 }
 
 impl<N> ops::Mul<SparsePolynomial<N>> for SparsePolynomial<N>
-    where N: Mul<Output=N> + AddAssign + Copy + IsZero {
+    where N: Mul<Output=N> + AddAssign + Copy + Zero {
     type Output = SparsePolynomial<N>;
 
     fn mul(self, _rhs: SparsePolynomial<N>) -> SparsePolynomial<N> {
@@ -790,14 +791,14 @@ impl<N> ops::Mul<SparsePolynomial<N>> for SparsePolynomial<N>
 }
 
 impl<N> ops::MulAssign<SparsePolynomial<N>> for SparsePolynomial<N>
-    where N: Mul<Output=N> + AddAssign + Copy + IsZero {
+    where N: Mul<Output=N> + AddAssign + Copy + Zero {
     fn mul_assign(&mut self, _rhs: SparsePolynomial<N>) {
         self.terms = map_mul(&self.terms, &_rhs.terms);
     }
 }
 
 impl<N> ops::Mul<&SparsePolynomial<N>> for SparsePolynomial<N>
-    where N: Mul<Output=N> + AddAssign + Copy + IsZero {
+    where N: Mul<Output=N> + AddAssign + Copy + Zero {
     type Output = SparsePolynomial<N>;
 
     fn mul(self, _rhs: &SparsePolynomial<N>) -> SparsePolynomial<N> {
@@ -806,7 +807,7 @@ impl<N> ops::Mul<&SparsePolynomial<N>> for SparsePolynomial<N>
 }
 
 impl<N> ops::MulAssign<&SparsePolynomial<N>> for SparsePolynomial<N>
-    where N: Mul<Output=N> + AddAssign + Copy + IsZero {
+    where N: Mul<Output=N> + AddAssign + Copy + Zero {
     fn mul_assign(&mut self, _rhs: &SparsePolynomial<N>) {
         self.terms = map_mul(&self.terms, &_rhs.terms);
     }
@@ -1244,65 +1245,43 @@ mod tests {
     #[test]
     fn test_polynomial_str_all_zeroes() {
         let a = SparsePolynomial::from_vec(vec![0]);
-        let mut a_str = String::new();
-        write!(&mut a_str, "{}", a).unwrap();
-        assert_eq!(a_str, "0");
+        assert_eq!(a.to_string(), "0");
 
         let a: SparsePolynomial<i8> = SparsePolynomial::from_vec(vec![]);
-        let mut a_str = String::new();
-        write!(&mut a_str, "{}", a).unwrap();
-        assert_eq!(a_str, "0");
+        assert_eq!(a.to_string(), "0");
 
         let a = SparsePolynomial::from_vec(vec![0, 0]);
-        let mut a_str = String::new();
-        write!(&mut a_str, "{}", a).unwrap();
-        assert_eq!(a_str, "0");
-
-        let a = SparsePolynomial::from_vec(vec![0]);
-        let mut a_str = String::new();
-        write!(&mut a_str, "{}", a).unwrap();
-        assert_eq!(a_str, "0");
-
+        assert_eq!(a.to_string(), "0");
     }
 
     #[test]
     fn test_polynomial_str() {
         let a = SparsePolynomial::from_vec(vec![-1, -2, 3]);
-        let mut a_str = String::new();
-        write!(&mut a_str, "{}", a).unwrap();
-        assert_eq!(a_str, "-x^2 - 2x + 3");
+        assert_eq!(a.to_string(), "-x^2 - 2x + 3");
     }
 
     #[test]
     fn test_polynomial_str_has_zeroes() {
         let a = SparsePolynomial::from_vec(vec![-1, -2, 0, 0, 3]);
-        let mut a_str = String::new();
-        write!(&mut a_str, "{}", a).unwrap();
-        assert_eq!(a_str, "-x^4 - 2x^3 + 3");
+        assert_eq!(a.to_string(), "-x^4 - 2x^3 + 3");
     }
 
     #[test]
     fn test_polynomial_str_has_ones() {
         let a = SparsePolynomial::from_vec(vec![-1, -1, -1, 0]);
-        let mut a_str = String::new();
-        write!(&mut a_str, "{}", a).unwrap();
-        assert_eq!(a_str, "-x^3 - x^2 - x");
+        assert_eq!(a.to_string(), "-x^3 - x^2 - x");
     }
 
     #[test]
     fn test_polynomial_str_has_negative() {
         let a = SparsePolynomial::from_vec(vec![-2, -1, -1, 0]);
-        let mut a_str = String::new();
-        write!(&mut a_str, "{}", a).unwrap();
-        assert_eq!(a_str, "-2x^3 - x^2 - x");
+        assert_eq!(a.to_string(), "-2x^3 - x^2 - x");
     }
 
     // #[test]
     // fn test_integral_str() {
     //     let a = SparsePolynomial::from_vec(vec![-3, -2, 1]).integral();
-    //     let mut a_str = String::new();
-    //     write!(&mut a_str, "{}", a).unwrap();
-    //     assert_eq!(a_str, "-x^3 - x^2 + x + C");
+    //     assert_eq!(a.to_string(), "-x^3 - x^2 + x + C");
     // }
 
     #[test]

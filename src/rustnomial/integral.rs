@@ -1,8 +1,9 @@
 use ::{GenericPolynomial, Polynomial, Evaluable};
 use std::fmt;
-use rustnomial::numerics::{HasZero, HasOne, IsNegativeOne, Abs, IsZero, IsPositive, IsOne};
+use rustnomial::numerics::{IsNegativeOne, Abs, IsPositive};
 use std::fmt::{Display, Debug};
 use std::ops::{AddAssign, Sub, MulAssign, Mul};
+use num::{One, Zero};
 
 #[macro_export]
 macro_rules! integral {
@@ -27,7 +28,7 @@ pub trait Integrable<N> {
 }
 
 impl<N> fmt::Display for Integral<N>
-    where N: IsPositive + IsOne + IsZero + Copy + IsNegativeOne + PartialEq + PartialOrd + Display + Abs {
+    where N: IsPositive + Zero + One + Copy + IsNegativeOne + PartialEq + PartialOrd + Display + Abs {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         if self.polynomial.len() == 0 {
             return write!(f, "C");
@@ -43,7 +44,7 @@ impl<N> fmt::Display for Integral<N>
 }
 
 impl<N> Integral<N>
-    where N: HasZero + IsZero + Copy + AddAssign {
+    where N: Zero + Copy + AddAssign {
     pub fn replace_c(&self, c: N) -> Polynomial<N> where N: Copy {
         let mut terms: Vec<(N, usize)> = self.polynomial.term_iter().collect();
         terms.push((c, 0));
@@ -52,7 +53,7 @@ impl<N> Integral<N>
 }
 
 impl<N> Integral<N>
-    where N: HasZero + HasOne + Copy + AddAssign + MulAssign + Mul<Output=N> + Sub<Output=N> {
+    where N: Zero + One + Copy + AddAssign + MulAssign + Mul<Output=N> + Sub<Output=N> {
     /// Returns the area of the underlying `Polynomial` from the first point to the second point.
     ///
     /// # Example

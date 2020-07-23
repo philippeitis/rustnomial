@@ -1,5 +1,5 @@
 use std::str::FromStr;
-use rustnomial::numerics::{HasOne, IsZero};
+use num::{One, Zero};
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Degree {
@@ -13,7 +13,7 @@ pub enum Term<N> {
     Term(N, usize)
 }
 
-impl<N: IsZero> Term<N> {
+impl<N: Zero> Term<N> {
     pub fn new(coeff: N, deg: usize) -> Term<N> {
         if coeff.is_zero() {
             Term::ZeroTerm
@@ -23,7 +23,7 @@ impl<N: IsZero> Term<N> {
     }
 }
 
-impl<N> FromStr for Term<N> where N: HasOne + FromStr + Copy + IsZero {
+impl<N> FromStr for Term<N> where N: Zero + One + FromStr + Copy {
     type Err = String;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {

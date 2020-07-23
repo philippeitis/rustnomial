@@ -1,3 +1,5 @@
+extern crate num;
+
 mod rustnomial;
 pub use rustnomial::polynomial::Polynomial;
 pub use rustnomial::sparsepolynomial::SparsePolynomial;

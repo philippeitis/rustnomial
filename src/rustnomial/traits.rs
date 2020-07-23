@@ -1,5 +1,5 @@
-use rustnomial::numerics::{IsZero};
 use rustnomial::degree::Term;
+use num::Zero;
 
 pub trait GenericPolynomial<N> {
     fn len(&self) -> usize;
@@ -26,7 +26,7 @@ impl<N> TermIterator<'_, N> {
         }
     }
 }
-impl<N: IsZero + Copy> Iterator for TermIterator<'_, N> {
+impl<N: Zero + Copy> Iterator for TermIterator<'_, N> {
     type Item = (N, usize);
 
     fn next(&mut self) -> Option<Self::Item> {

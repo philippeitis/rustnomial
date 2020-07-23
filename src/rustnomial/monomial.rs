@@ -1,5 +1,5 @@
 use rustnomial::traits::{TermIterator, GenericPolynomial};
-use rustnomial::numerics::{HasZero, IsNegativeOne, Abs, PowUsize, IsZero, IsOne};
+use rustnomial::numerics::{IsNegativeOne, Abs, PowUsize};
 use ::{Integrable, Integral};
 use ::{Evaluable};
 use std::ops::{Div, AddAssign, Mul, MulAssign, DivAssign, Neg};
@@ -8,6 +8,7 @@ use std::fmt::Display;
 use rustnomial::degree::{Degree, Term};
 use ::{Derivable, Polynomial};
 use std::ops;
+use num::{Zero, One};
 
 #[derive(Debug, Clone)]
 pub struct Monomial<N> {
@@ -21,7 +22,7 @@ impl<N> Monomial<N> {
     }
 }
 
-impl<N: Copy + IsZero> Monomial<N> {
+impl<N: Copy + Zero> Monomial<N> {
     /// Returns the degree of the `Monomial`.
     ///
     /// # Example
@@ -59,13 +60,9 @@ impl<N: Copy + IsZero> Monomial<N> {
     }
 }
 
-impl<N: Copy + IsZero> GenericPolynomial<N> for Monomial<N> {
+impl<N: Copy + Zero> GenericPolynomial<N> for Monomial<N> {
     fn len(&self) -> usize {
-        if self.is_zero() {
-            0
-        } else {
-            1
-        }
+        if self.is_zero() { 0 } else { 1 }
     }
 
     /// Returns the nth term of the `Monomial`.
@@ -118,7 +115,7 @@ impl<N> Evaluable<N> for Monomial<N>
 }
 
 impl<N> Derivable<N> for Monomial<N>
-    where N: IsZero + HasZero + Copy + Mul<Output=N> + From<u8> {
+    where N: Zero + Copy + Mul<Output=N> + From<u8> {
     /// Returns the integral of the `Monomial`.
     ///
     /// # Example
@@ -137,7 +134,7 @@ impl<N> Derivable<N> for Monomial<N>
 }
 
 impl<N> Integrable<N> for Monomial<N>
-    where N: IsZero + HasZero + Copy + AddAssign + Div<Output=N> + From<u8> {
+    where N: Zero + Copy + AddAssign + Div<Output=N> + From<u8> {
     /// Returns the integral of the `Monomial`.
     ///
     /// # Example
@@ -162,8 +159,7 @@ impl<N> Integrable<N> for Monomial<N>
     }
 }
 
-impl<N> Monomial<N>
-    where N: PowUsize + Copy {
+impl<N: PowUsize + Copy> Monomial<N> {
 
     /// Raises the `Monomial` to the power of exp.
     ///
@@ -185,7 +181,7 @@ impl<N> Monomial<N>
 // TODO: Divmod implementation.
 
 impl<N> PartialEq for Monomial<N>
-    where N: IsZero + PartialEq + Copy {
+    where N: Zero + PartialEq + Copy {
     /// Returns true if self has the same terms as other.
     ///
     /// # Example
@@ -204,7 +200,7 @@ impl<N> PartialEq for Monomial<N>
 }
 
  impl<N> fmt::Display for Monomial<N>
-    where N: IsZero + IsOne + Copy + IsNegativeOne + PartialEq + PartialOrd + Display + Abs {
+    where N: Zero + One + Copy + IsNegativeOne + PartialEq + PartialOrd + Display + Abs {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let mut iter = self.term_iter();
         return match iter.next() {
@@ -228,8 +224,7 @@ impl<N> PartialEq for Monomial<N>
     }
 }
 
-impl<N> ops::Neg for Monomial<N>
-    where N: Copy + Neg<Output=N>{
+impl<N: Copy + Neg<Output=N>> ops::Neg for Monomial<N> {
     type Output = Monomial<N>;
 
     fn neg(self) -> Monomial<N> {
@@ -238,7 +233,7 @@ impl<N> ops::Neg for Monomial<N>
 }
 
 // impl<N> ops::Sub<Polynomial<N>> for Polynomial<N>
-//     where N: PartialEq + HasZero + Copy + Sub<Output=N> + SubAssign + Neg<Output=N>{
+//     where N: PartialEq + Zero + Copy + Sub<Output=N> + SubAssign + Neg<Output=N>{
 //     type Output = Polynomial<N>;
 //
 //     fn sub(self, _rhs: Polynomial<N>) -> Polynomial<N> {
@@ -266,7 +261,7 @@ impl<N> ops::Neg for Monomial<N>
 // }
 
 // impl<N> ops::SubAssign<Polynomial<N>> for Polynomial<N>
-//     where N: Neg<Output=N> + Sub<Output=N> + SubAssign + Copy + HasZero + PartialEq {
+//     where N: Neg<Output=N> + Sub<Output=N> + SubAssign + Copy + Zero + PartialEq {
 //     fn sub_assign(&mut self, _rhs: Polynomial<N>) {
 //         if _rhs.len() > self.len() {
 //             let mut terms = _rhs.terms.clone();
@@ -290,7 +285,7 @@ impl<N> ops::Neg for Monomial<N>
 // }
 
 // impl<N> ops::Add<Polynomial<N>> for Polynomial<N>
-//     where N: PartialEq + HasZero + Copy + AddAssign {
+//     where N: PartialEq + Zero + Copy + AddAssign {
 //     type Output = Polynomial<N>;
 //
 //     fn add(self, _rhs: Polynomial<N>) -> Polynomial<N> {
@@ -310,7 +305,7 @@ impl<N> ops::Neg for Monomial<N>
 //     }
 // }
 
-// impl<N: Copy + HasZero + PartialEq + AddAssign> ops::AddAssign<Polynomial<N>> for Polynomial<N> {
+// impl<N: Copy + Zero + PartialEq + AddAssign> ops::AddAssign<Polynomial<N>> for Polynomial<N> {
 //     fn add_assign(&mut self, _rhs: Polynomial<N>) {
 //         if _rhs.len() > self.len() {
 //             let offset = _rhs.len() - self.len();
@@ -456,8 +451,6 @@ mod tests {
     #[test]
     fn test_str() {
         let a = Monomial::new(5, 2);
-        let mut a_str = String::new();
-        write!(&mut a_str, "{}", a).unwrap();
-        assert_eq!(a_str, "5x^2");
+        assert_eq!(a.to_string(), "5x^2");
     }
 }
