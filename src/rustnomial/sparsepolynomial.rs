@@ -1,15 +1,16 @@
 use std::ops;
 use std::fmt;
 use std::ops::{Mul, AddAssign, MulAssign, DivAssign, Div, SubAssign, Neg, Sub};
-use std::fmt::{Display};
+use std::fmt::{Display, Error, format};
 
 use rustnomial::numerics::{HasZero, HasOne, IsNegativeOne, Abs, PowUsize};
 use rustnomial::traits::{TermIterator, GenericPolynomial};
 use ::{Evaluable};
 use rustnomial::degree::{Term, Degree};
-use std::collections::HashMap;
+use std::collections::{HashMap, VecDeque};
 use rustnomial::degree::Term::ZeroTerm;
-use Derivable;
+use ::{Derivable, Polynomial};
+use std::str::FromStr;
 
 #[derive(Debug, Clone)]
 pub struct SparsePolynomial<N> {
@@ -122,6 +123,192 @@ impl<N: Copy + HasZero + PartialEq> GenericPolynomial<N> for SparsePolynomial<N>
     }
 }
 
+// impl<N> FromStr for SparsePolynomial<N>
+//     where N: PartialEq + HasZero + HasOne + Copy + AddAssign + FromStr + Display {
+//     type Err = String;
+//
+//     /// Returns a `Polynomial` with the corresponding terms,
+//     /// in order of ax^n + bx^(n-1) + ... + cx + d
+//     ///
+//     /// # Arguments
+//     ///
+//     /// * ` terms ` - A vector of constants, in decreasing order of degree.
+//     ///
+//     /// # Example
+//     ///
+//     /// ```
+//     /// use rustnomial::SparsePolynomial;
+//     /// // Corresponds to 1.0x^2 + 4.0x + 4.0
+//     /// let polynomial = SparsePolynomial::from_vec(vec![1.0, 4.0, 4.0]);
+//     /// ```
+//     fn from_str(s: &str) -> Result<Self, Self::Err> {
+//         let mut polynomial = HashMap::new();
+//         let mut str_vec: Vec<char> = Vec::new();
+//         let mut coeff = N::one();
+//         let mut char_iter = s.chars();
+//         let mut parsing_degree = false;
+//         let mut last_char = ' ';
+//         while let Some(c) = char_iter.next() {
+//             match c {
+//                 '+' | '-' => {
+//                     if parsing_degree {
+//                         let str: String = str_vec.iter().collect();
+//                         str_vec.clear();
+//                         if let Ok(degree) = usize::from_str(&str) {
+//                             polynomial.insert(degree, coeff);
+//                             parsing_degree = false;
+//                         } else {
+//                             return Err("degree could not be parsed".to_string());
+//                         }
+//                     } else if !str_vec.is_empty() {
+//                         let str: String = str_vec.iter().collect();
+//                         str_vec.clear();
+//                         coeff = match N::from_str(&str) {
+//                             Ok(val) => val,
+//                             Err(val) => {
+//                                 let err_str = format!("0 coeff {} could not be parsed.", str);
+//                                 return Err(err_str);
+//                             }
+//                         };
+//                         polynomial.insert(0, coeff);
+//                     };
+//                     str_vec.push(c);
+//                 }
+//                 '.' | '0'..='9' => { str_vec.push(c); }
+//                 ' ' | ',' => {}
+//                 'x' => {
+//                     coeff = if str_vec.len() == 0 {
+//                         N::one()
+//                     } else {
+//                         if str_vec.len() == 1 && (str_vec[0] == '-' || str_vec[0] == '+') {
+//                             str_vec.push('1');
+//                         }
+//                         let str: String = str_vec.iter().collect();
+//                         str_vec.clear();
+//                         match N::from_str(&str) {
+//                             Ok(val) => val,
+//                             Err(val) => {
+//                                 let err_str = format!("Coeff {} could not be parsed.", str);
+//                                 return Err(err_str);
+//                             }
+//                         }
+//                     };
+//
+//                     if let Some(x) = char_iter.next() {
+//                         match x {
+//                             '^' => { parsing_degree = true; }
+//                             '+' | '-' => {polynomial.insert(1, coeff);}
+//                             '0'..='9' => {str_vec.push(x);}
+//                             ' ' => {}
+//                             x => {return Err("Unexpected char after token.".to_string());}
+//                         }
+//                     } else {
+//                         polynomial.insert(1, coeff);
+//                     }
+//                 }
+//                 '^' => {
+//                     if parsing_degree {
+//                         return Err("More than one ^ in degree portion.".to_string())
+//                     } else if last_char != 'x' {
+//                         return Err("No x in front of ^".to_string())
+//                     }
+//                     parsing_degree = true;
+//                 }
+//                 x => {
+//                     let err_str = format!("Unexpected char ({}) (legal characters include +, -, ., x, ^, 0..9).", x);
+//                     return Err(err_str);
+//                 }
+//             };
+//             if c != ' ' {
+//                 last_char = c;
+//             };
+//         }
+//         if parsing_degree {
+//             let str: String = str_vec.iter().collect();
+//             if let Ok(degree) = usize::from_str(&str) {
+//                 polynomial.insert(degree, coeff);
+//             } else {
+//                 return Err("degree could not be parsed".to_string());
+//             }
+//         } else if !str_vec.is_empty() {
+//             let str: String = str_vec.iter().collect();
+//             coeff = match N::from_str(&str) {
+//                 Ok(val) => val,
+//                 Err(val) => {
+//                     let err_str = format!("Coeff {} could not be parsed.", str);
+//                     return Err(err_str);
+//                 }
+//             };
+//             polynomial.insert(0, coeff);
+//         }
+//
+//         Ok(SparsePolynomial::new(polynomial))
+//     }
+// }
+
+impl<N> FromStr for SparsePolynomial<N>
+    where N: PartialEq + HasZero + HasOne + Copy + AddAssign + FromStr + Display {
+    type Err = String;
+
+    /// Returns a `Polynomial` with the corresponding terms,
+    /// in order of ax^n + bx^(n-1) + ... + cx + d
+    ///
+    /// # Arguments
+    ///
+    /// * ` terms ` - A vector of constants, in decreasing order of degree.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use rustnomial::SparsePolynomial;
+    /// use std::str::FromStr;
+    /// // Corresponds to 1.0x^2 + 4.0x + 4.0
+    /// let polynomial = SparsePolynomial::from_str("5x^2 + 11x + 2").unwrap();
+    /// assert_eq!(SparsePolynomial::from_vec(vec![5, 11, 2]), polynomial);
+    /// ```
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let mut polynomial = HashMap::new();
+        let chars: Vec<char> = s.chars().collect();
+        let mut start_index = match chars.iter().position(|&x| x != ' ') {
+            Some(pos) => pos,
+            None => {return Err("No non-whitespace chars found.".to_string());}
+        };
+        let mut end_index = start_index + 1;
+        while end_index < chars.len() {
+            if chars[end_index] == '+' || chars[end_index] == '-' {
+                let xs: String = chars[start_index..end_index].iter().collect();
+                match Term::<N>::from_str(xs.as_str()) {
+                    Err(msg) => {return Err(msg);}
+                    Ok(Term::ZeroTerm) => {}
+                    Ok(Term::Term(coeff, deg)) => {
+                        if let Some(val) = polynomial.get_mut(&deg) {
+                            *val += coeff;
+                        } else {
+                            polynomial.insert(deg, coeff);
+                        }
+                    }
+                }
+                start_index = end_index;
+            }
+            end_index += 1;
+        }
+        let xs: String = chars[start_index..end_index].iter().collect();
+        match Term::<N>::from_str(xs.as_str()) {
+            Err(msg) => {return Err(msg);}
+            Ok(Term::ZeroTerm) => {}
+            Ok(Term::Term(coeff, deg)) => {
+                if let Some(val) = polynomial.get_mut(&deg) {
+                    *val += coeff;
+                } else {
+                    polynomial.insert(deg, coeff);
+                }
+            }
+        }
+
+        Ok(SparsePolynomial::new(polynomial))
+    }
+}
+
 impl<N> SparsePolynomial<N>
     where N: PartialEq + HasZero + Copy + AddAssign {
     /// Returns a `Polynomial` with the corresponding terms,
@@ -183,17 +370,17 @@ impl<N> SparsePolynomial<N>
     }
 
     pub fn from_vec(term_vec: Vec<N>) -> SparsePolynomial<N> {
-    let mut terms: HashMap<usize, N> = HashMap::new();
-    if term_vec.len() != 0 {
-        let degree = term_vec.len() - 1;
-        for (index, &val) in term_vec.iter().enumerate() {
-            if val != N::zero() {
-                terms.insert(degree - index, val);
+        let mut terms: HashMap<usize, N> = HashMap::new();
+        if term_vec.len() != 0 {
+            let degree = term_vec.len() - 1;
+            for (index, &val) in term_vec.iter().enumerate() {
+                if val != N::zero() {
+                    terms.insert(degree - index, val);
+                }
             }
         }
+        SparsePolynomial { terms }
     }
-    SparsePolynomial { terms }
-}
 
     /// Returns the degree of the `Polynomial` it is called on, corresponding to the
     /// largest non-zero term.
@@ -445,10 +632,6 @@ impl<N> PartialEq for SparsePolynomial<N>
     /// assert_eq!(a, b - c);
     /// ```
     fn eq(&self, other: &Self) -> bool {
-        if self.degree() != other.degree() {
-            return false;
-        }
-
         let mut self_iter = self.term_iter();
         let mut other_iter = other.term_iter();
 
@@ -538,6 +721,26 @@ impl<N> ops::Sub<SparsePolynomial<N>> for SparsePolynomial<N>
     fn sub(self, _rhs: SparsePolynomial<N>) -> SparsePolynomial<N> {
         let mut terms = self.terms.clone();
         for (deg, coeff) in _rhs.terms {
+            match terms.get_mut(&deg) {
+                None => {
+                    terms.insert(deg, -coeff);
+                }
+                Some(val) => {
+                    *val -= coeff;
+                }
+            }
+        }
+        SparsePolynomial{terms}
+    }
+}
+
+impl<N> ops::Sub<Polynomial<N>> for SparsePolynomial<N>
+    where N: PartialEq + HasZero + Copy + Sub<Output=N> + SubAssign + Neg<Output=N>{
+    type Output = SparsePolynomial<N>;
+
+    fn sub(self, _rhs: Polynomial<N>) -> SparsePolynomial<N> {
+        let mut terms = self.terms.clone();
+        for (coeff, deg) in _rhs.term_iter() {
             match terms.get_mut(&deg) {
                 None => {
                     terms.insert(deg, -coeff);
@@ -753,6 +956,64 @@ mod tests {
     use super::SparsePolynomial;
     use ::{Integrable, Degree, Evaluable, Derivable};
     use Polynomial;
+    use std::ops::Sub;
+    use std::str::FromStr;
+
+
+    #[test]
+    fn test_from_str() {
+        match SparsePolynomial::<i32>::from_str("5x^2") {
+            Ok(a) => {
+                let b = SparsePolynomial::from_vec(vec![5, 0, 0]);
+                assert_eq!(a, b);
+            }
+            Err(e) => {
+                assert!(false, e);
+            }
+        }
+
+        match SparsePolynomial::<i32>::from_str("255x^2+15x+3") {
+            Ok(a) => {
+                let b = SparsePolynomial::from_vec(vec![255, 15, 3]);
+                assert_eq!(a, b);
+            }
+            Err(e) => {
+                assert!(false, e);
+            }
+        }
+
+        match SparsePolynomial::<i32>::from_str("255x^2-15x^1+3x^0") {
+            Ok(a) => {
+                let b = SparsePolynomial::from_vec(vec![255, -15, 3]);
+                assert_eq!(a, b);
+            }
+            Err(e) => {
+                assert!(false, e);
+            }
+        }
+
+        match SparsePolynomial::<i32>::from_str("-x^1") {
+            Ok(a) => {
+                let b = SparsePolynomial::from_vec(vec![-1, 0]);
+                assert_eq!(a, b);
+            }
+            Err(e) => {
+                assert!(false, e);
+            }
+        }
+
+        match SparsePolynomial::<i32>::from_str("5+x") {
+            Ok(a) => {
+                let b = SparsePolynomial::from_vec(vec![1, 5]);
+                assert_eq!(a, b);
+            }
+            Err(e) => {
+                assert!(false, e);
+            }
+        }
+
+        assert!(SparsePolynomial::<i32>::from_str("5+x^").is_err(), "Should err on dangling ^");
+    }
 
     #[test]
     fn test_eval() {
@@ -1050,7 +1311,6 @@ mod tests {
     #[test]
     fn test_polynomial_str_has_negative() {
         let a = SparsePolynomial::from_vec(vec![-2, -1, -1, 0]);
-        println!("a.terms: {:?}", a.terms);
         let mut a_str = String::new();
         write!(&mut a_str, "{}", a).unwrap();
         assert_eq!(a_str, "-2x^3 - x^2 - x");
@@ -1070,18 +1330,13 @@ mod tests {
         assert_eq!(Degree::Num(2), a.degree());
     }
 
-    // #[test]
-    // fn test_iter() {
-    //     let mut num_iters = 0;
-    //     let a = SparsePolynomial::from_vec(vec![0, 0, 0, -1, -2, 3]);
-    //     let b=  vec![-1, -2, 3];
-    //     for (a_val, b_val) in a.iter().zip(b) {
-    //         num_iters += 1;
-    //         assert_eq!(a_val, b_val);
-    //     }
-    //
-    //     assert_eq!(num_iters, 3);
-    // }
+    #[test]
+    fn test_generic_sub() {
+        let a = SparsePolynomial::from_vec(vec![0, 0, 0, -1, -2, 3]);
+        let b=  Polynomial::new(vec![-1, -2, 3]);
+        let c = a - b;
+        assert_eq!(SparsePolynomial::from_vec(vec![0]), c);
+    }
 
     #[test]
     fn test_pow() {
