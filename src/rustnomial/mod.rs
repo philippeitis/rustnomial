@@ -1,8 +1,8 @@
-pub mod polynomial;
+pub mod degree;
+pub mod derivative;
+pub mod integral;
 pub mod monomial;
 pub mod numerics;
-pub mod traits;
-pub mod integral;
-pub mod degree;
+pub mod polynomial;
 pub mod sparsepolynomial;
-pub mod derivative;
+pub mod traits;

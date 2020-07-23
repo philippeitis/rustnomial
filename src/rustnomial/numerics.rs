@@ -90,7 +90,6 @@ pub trait Abs {
     fn abs(self) -> Self;
 }
 
-
 impl Abs for u8 {
     fn abs(self) -> Self {
         self
@@ -254,7 +253,6 @@ impl PowUsize for f64 {
 pub trait IsPositive {
     fn is_positive(&self) -> bool;
 }
-
 
 impl IsPositive for u8 {
     fn is_positive(&self) -> bool {

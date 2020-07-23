@@ -1,5 +1,5 @@
-use rustnomial::degree::Term;
 use num::Zero;
+use Term;
 
 pub trait GenericPolynomial<N> {
     fn len(&self) -> usize;
@@ -19,7 +19,7 @@ pub struct TermIterator<'a, N> {
 }
 
 impl<N> TermIterator<'_, N> {
-   pub fn new(polynomial: & dyn GenericPolynomial<N>) -> TermIterator<N> {
+    pub fn new(polynomial: &dyn GenericPolynomial<N>) -> TermIterator<N> {
         TermIterator {
             polynomial,
             index: 0,

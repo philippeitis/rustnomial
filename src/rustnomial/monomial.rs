@@ -1,15 +1,14 @@
-use rustnomial::traits::{TermIterator, GenericPolynomial};
-use rustnomial::numerics::{IsNegativeOne, Abs, PowUsize};
-use ::{Integrable, Integral};
-use ::{Evaluable};
-use std::ops::{Div, AddAssign, Mul, MulAssign, DivAssign, Neg};
 use std::fmt;
 use std::fmt::Display;
-use rustnomial::degree::{Degree, Term};
-use ::{Derivable, Polynomial};
 use std::ops;
-use num::{Zero, One};
+use std::ops::{AddAssign, Div, DivAssign, Mul, MulAssign, Neg};
 use std::str::FromStr;
+
+use num::{One, Zero};
+
+use rustnomial::numerics::{Abs, IsNegativeOne, PowUsize};
+use rustnomial::traits::TermIterator;
+use {Degree, Derivable, Evaluable, GenericPolynomial, Integrable, Integral, Polynomial, Term};
 
 #[derive(Debug, Clone)]
 pub struct Monomial<N> {
@@ -29,7 +28,10 @@ impl<N> Monomial<N> {
     /// assert_eq!(Degree::Num(2), monomial.degree());
     /// ```
     pub fn new(coefficient: N, degree: usize) -> Monomial<N> {
-        Monomial{coefficient, deg: degree}
+        Monomial {
+            coefficient,
+            deg: degree,
+        }
     }
 }
 
@@ -86,7 +88,11 @@ impl<N: Copy + Zero> GenericPolynomial<N> for Monomial<N> {
     /// assert_eq!(0, Monomial::<i32>::zero().len());
     /// ```
     fn len(&self) -> usize {
-        if self.is_zero() { 0 } else { 1 }
+        if self.is_zero() {
+            0
+        } else {
+            1
+        }
     }
 
     /// Returns the nth term of the `Monomial`.
@@ -125,7 +131,9 @@ impl<N: Copy + Zero> GenericPolynomial<N> for Monomial<N> {
 }
 
 impl<N> Evaluable<N> for Monomial<N>
-    where N: PowUsize + Mul<Output=N> + Copy {
+where
+    N: PowUsize + Mul<Output = N> + Copy,
+{
     /// Returns the value of the `Monomial` at the given point.
     ///
     /// # Example
@@ -142,7 +150,9 @@ impl<N> Evaluable<N> for Monomial<N>
 }
 
 impl<N> Derivable<N> for Monomial<N>
-    where N: Zero + Copy + Mul<Output=N> + From<u8> {
+where
+    N: Zero + Copy + Mul<Output = N> + From<u8>,
+{
     /// Returns the derivative of the `Monomial`.
     ///
     /// # Example
@@ -155,13 +165,15 @@ impl<N> Derivable<N> for Monomial<N>
     fn derivative(&self) -> Monomial<N> {
         match self.degree() {
             Degree::NegInf | Degree::Num(0) => Monomial::zero(),
-            Degree::Num(x) => Monomial::new(self.coefficient * N::from(x as u8), x - 1)
+            Degree::Num(x) => Monomial::new(self.coefficient * N::from(x as u8), x - 1),
         }
     }
 }
 
 impl<N> Integrable<N> for Monomial<N>
-    where N: Zero + Copy + AddAssign + Div<Output=N> + From<u8> {
+where
+    N: Zero + Copy + AddAssign + Div<Output = N> + From<u8>,
+{
     /// Returns the integral of the `Monomial`.
     ///
     /// # Example
@@ -175,13 +187,14 @@ impl<N> Integrable<N> for Monomial<N>
     fn integral(&self) -> Integral<N> {
         match self.degree() {
             Degree::NegInf => Integral {
-                polynomial: Polynomial::new(vec![N::zero()])
+                polynomial: Polynomial::new(vec![N::zero()]),
             },
             Degree::Num(x) => Integral {
-                polynomial: Polynomial::from_terms(
-                    vec![(self.coefficient / N::from((x + 1) as u8), x + 1)]
-                )
-            }
+                polynomial: Polynomial::from_terms(vec![(
+                    self.coefficient / N::from((x + 1) as u8),
+                    x + 1,
+                )]),
+            },
         }
     }
 }
@@ -207,7 +220,9 @@ impl<N: PowUsize + Copy> Monomial<N> {
 // TODO: Divmod implementation.
 
 impl<N> PartialEq for Monomial<N>
-    where N: Zero + PartialEq + Copy {
+where
+    N: Zero + PartialEq + Copy,
+{
     /// Returns true if this `Monomial` is equal to other.
     ///
     /// # Example
@@ -226,7 +241,9 @@ impl<N> PartialEq for Monomial<N>
 }
 
 impl<N> FromStr for Monomial<N>
-    where N: Zero + One + Copy + AddAssign + FromStr {
+where
+    N: Zero + One + Copy + AddAssign + FromStr,
+{
     type Err = String;
 
     /// Returns a `Polynomial` with the corresponding terms,
@@ -249,19 +266,19 @@ impl<N> FromStr for Monomial<N>
         match Term::from_str(s) {
             Ok(Term::ZeroTerm) => Ok(Monomial::zero()),
             Ok(Term::Term(coeff, deg)) => Ok(Monomial::new(coeff, deg)),
-            Err(e) => Err(e)
+            Err(e) => Err(e),
         }
     }
 }
 
 impl<N> fmt::Display for Monomial<N>
-    where N: Zero + One + Copy + IsNegativeOne + PartialEq + PartialOrd + Display + Abs {
+where
+    N: Zero + One + Copy + IsNegativeOne + PartialEq + PartialOrd + Display + Abs,
+{
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let mut iter = self.term_iter();
         return match iter.next() {
-            None => {
-                write!(f, "0")
-            }
+            None => write!(f, "0"),
             Some((coeff, degree)) => {
                 if coeff.is_negative_one() {
                     write!(f, "-")?;
@@ -270,16 +287,16 @@ impl<N> fmt::Display for Monomial<N>
                 }
 
                 match degree {
-                    0 => {write!(f, "")}
-                    1 => {write!(f, "x")},
-                    _ => {write!(f, "x^{}", degree)}
+                    0 => write!(f, ""),
+                    1 => write!(f, "x"),
+                    _ => write!(f, "x^{}", degree),
                 }
             }
         };
     }
 }
 
-impl<N: Copy + Neg<Output=N>> ops::Neg for Monomial<N> {
+impl<N: Copy + Neg<Output = N>> ops::Neg for Monomial<N> {
     type Output = Monomial<N>;
 
     fn neg(self) -> Monomial<N> {
@@ -378,8 +395,7 @@ impl<N: Copy + Neg<Output=N>> ops::Neg for Monomial<N> {
 //     }
 // }
 
-impl<N> ops::Mul<Monomial<N>> for Monomial<N>
-    where N: Mul<Output=N> + Copy {
+impl<N: Copy + Mul<Output = N>> ops::Mul<Monomial<N>> for Monomial<N> {
     type Output = Monomial<N>;
 
     fn mul(self, _rhs: Monomial<N>) -> Monomial<N> {
@@ -387,16 +403,14 @@ impl<N> ops::Mul<Monomial<N>> for Monomial<N>
     }
 }
 
-impl<N> ops::MulAssign<Monomial<N>> for Monomial<N>
-    where N: MulAssign + AddAssign {
+impl<N: MulAssign + AddAssign> ops::MulAssign<Monomial<N>> for Monomial<N> {
     fn mul_assign(&mut self, _rhs: Monomial<N>) {
         self.coefficient *= _rhs.coefficient;
         self.deg += _rhs.deg;
     }
 }
 
-impl<N> ops::Mul<&Monomial<N>> for Monomial<N>
-    where N: Mul<Output=N> + Copy {
+impl<N: Copy + Mul<Output = N>> ops::Mul<&Monomial<N>> for Monomial<N> {
     type Output = Monomial<N>;
 
     fn mul(self, _rhs: &Monomial<N>) -> Monomial<N> {
@@ -405,14 +419,16 @@ impl<N> ops::Mul<&Monomial<N>> for Monomial<N>
 }
 
 impl<N> ops::MulAssign<&Monomial<N>> for Monomial<N>
-    where N: MulAssign + AddAssign + Copy {
+where
+    N: MulAssign + AddAssign + Copy,
+{
     fn mul_assign(&mut self, _rhs: &Monomial<N>) {
         self.coefficient *= _rhs.coefficient;
         self.deg += _rhs.deg;
     }
 }
 
-impl<N: Mul<Output=N>> ops::Mul<N> for Monomial<N> {
+impl<N: Mul<Output = N>> ops::Mul<N> for Monomial<N> {
     type Output = Monomial<N>;
 
     fn mul(self, _rhs: N) -> Monomial<N> {
@@ -426,7 +442,7 @@ impl<N: MulAssign> ops::MulAssign<N> for Monomial<N> {
     }
 }
 
-impl<N: Div<Output=N>> ops::Div<N> for Monomial<N> {
+impl<N: Div<Output = N>> ops::Div<N> for Monomial<N> {
     type Output = Monomial<N>;
 
     fn div(self, _rhs: N) -> Monomial<N> {
@@ -479,16 +495,14 @@ impl<N> ops::ShrAssign<i32> for Monomial<N> {
         if _rhs < 0 {
             *self <<= -_rhs;
         } else {
-            self.deg -=_rhs as usize;
+            self.deg -= _rhs as usize;
         }
     }
 }
 
-
 mod tests {
-    use std::fmt::{Write};
-    use ::{Monomial, Integrable, Evaluable};
-    use ::{Polynomial, Derivable};
+    use std::fmt::Write;
+    use {Derivable, Evaluable, Integrable, Monomial, Polynomial};
 
     #[test]
     fn test_eval() {
@@ -510,7 +524,7 @@ mod tests {
 
     #[test]
     fn test_derivative() {
-        let a= Monomial::new(5, 3);
+        let a = Monomial::new(5, 3);
         assert_eq!(Monomial::new(15, 2), a.derivative());
     }
 
@@ -518,7 +532,10 @@ mod tests {
     fn test_integral() {
         let a = Monomial::new(5, 2);
         let integral = a.integral();
-        assert_eq!(Polynomial::from_terms(vec![(5/3, 3)]), integral.polynomial);
+        assert_eq!(
+            Polynomial::from_terms(vec![(5 / 3, 3)]),
+            integral.polynomial
+        );
     }
 
     #[test]

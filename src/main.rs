@@ -1,5 +1,4 @@
 extern crate rustnomial;
-extern crate core;
 
 use rustnomial::{polynomial, Polynomial};
 
@@ -13,5 +12,4 @@ fn main() {
     println!("{}", c);
     println!("{}", a.clone() * b);
     println!("{}", a.clone() * c);
-
 }

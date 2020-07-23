@@ -1,16 +1,16 @@
-use std::str::FromStr;
 use num::{One, Zero};
+use std::str::FromStr;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Degree {
     NegInf,
-    Num(usize)
+    Num(usize),
 }
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Term<N> {
     ZeroTerm,
-    Term(N, usize)
+    Term(N, usize),
 }
 
 impl<N: Zero> Term<N> {
@@ -23,7 +23,10 @@ impl<N: Zero> Term<N> {
     }
 }
 
-impl<N> FromStr for Term<N> where N: Zero + One + FromStr + Copy {
+impl<N> FromStr for Term<N>
+where
+    N: Zero + One + FromStr + Copy,
+{
     type Err = String;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
@@ -35,7 +38,7 @@ impl<N> FromStr for Term<N> where N: Zero + One + FromStr + Copy {
         while let Some(c) = char_iter.next() {
             match c {
                 ' ' | ',' | '_' => {}
-                '+' | '-' | '.' | '0'..='9' => {num_vec.push(c)}
+                '+' | '-' | '.' | '0'..='9' => num_vec.push(c),
                 'x' => {
                     if seen_x {
                         return Err("More than one occurance of 'x' in str".to_string());
@@ -63,7 +66,10 @@ impl<N> FromStr for Term<N> where N: Zero + One + FromStr + Copy {
                     seen_caret = true;
                 }
                 _ => {
-                    let err_str = format!("Unexpected char ({}) (legal characters include +, -, ., x, ^, 0..9).", c);
+                    let err_str = format!(
+                        "Unexpected char ({}) (legal characters include +, -, ., x, ^, 0..9).",
+                        c
+                    );
                     return Err(err_str);
                 }
             }
@@ -95,8 +101,8 @@ impl<N> FromStr for Term<N> where N: Zero + One + FromStr + Copy {
 }
 
 mod test {
-    use Term;
     use std::str::FromStr;
+    use Term;
 
     #[test]
     fn test_to_str_easy() {
@@ -185,5 +191,4 @@ mod test {
         assert!(Term::<i32>::from_str("").is_err());
         assert!(Term::<i32>::from_str("    ").is_err());
     }
-
 }
