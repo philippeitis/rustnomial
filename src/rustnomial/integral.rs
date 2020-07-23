@@ -34,14 +34,10 @@ where
     N: IsPositive + Zero + One + Copy + IsNegativeOne + PartialEq + PartialOrd + Display + Abs,
 {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        if self.polynomial.len() == 0 {
+        if self.polynomial.is_zero() {
             return write!(f, "C");
         }
-
-        match self.polynomial.fmt(f) {
-            Ok(_) => write!(f, " + C"),
-            Err(e) => Err(e),
-        }
+        write!(f, "{} + C", self.polynomial)
     }
 }
 
@@ -72,4 +68,29 @@ where
     pub fn eval(&self, start: N, end: N) -> N {
         self.polynomial.eval(end) - self.polynomial.eval(start)
     }
+}
+
+mod test {
+    use ::{Integral, Polynomial};
+    use std::str::FromStr;
+    use Integrable;
+
+    #[test]
+    fn test_integral_empty_polynomial() {
+        let integral = Polynomial::new(vec![0]).integral();
+        assert_eq!(integral.to_string(), "C");
+    }
+
+    #[test]
+    fn test_integral_str() {
+        let integral = Polynomial::new(vec![6, 4, 2]).integral();
+        assert_eq!(integral.to_string(), "2x^3 + 2x^2 + 2x + C");
+    }
+
+    #[test]
+    fn test_integral_str_negatives() {
+        let a = Polynomial::new(vec![-3, -2, 1]).integral();
+        assert_eq!(a.to_string(), "-x^3 - x^2 + x + C");
+    }
+
 }

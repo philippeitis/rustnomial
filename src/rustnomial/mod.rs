@@ -6,3 +6,4 @@ pub mod numerics;
 pub mod polynomial;
 pub mod sparsepolynomial;
 pub mod traits;
+mod strings;

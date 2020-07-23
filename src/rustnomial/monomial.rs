@@ -9,6 +9,7 @@ use num::{One, Zero};
 use rustnomial::numerics::{Abs, IsNegativeOne, PowUsize};
 use rustnomial::traits::TermIterator;
 use {Degree, Derivable, Evaluable, GenericPolynomial, Integrable, Integral, Polynomial, Term};
+use rustnomial::strings::write_leading_term;
 
 #[derive(Debug, Clone)]
 pub struct Monomial<N> {
@@ -273,26 +274,14 @@ where
 
 impl<N> fmt::Display for Monomial<N>
 where
-    N: Zero + One + Copy + IsNegativeOne + PartialEq + PartialOrd + Display + Abs,
+    N: Zero + One + PartialEq + Copy + IsNegativeOne + Display,
 {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let mut iter = self.term_iter();
-        return match iter.next() {
-            None => write!(f, "0"),
-            Some((coeff, degree)) => {
-                if coeff.is_negative_one() {
-                    write!(f, "-")?;
-                } else if (!coeff.is_one()) || (degree == 0) {
-                    write!(f, "{}", coeff)?;
-                }
-
-                match degree {
-                    0 => write!(f, ""),
-                    1 => write!(f, "x"),
-                    _ => write!(f, "x^{}", degree),
-                }
-            }
-        };
+        if let Some((coeff, degree)) = self.term_iter().next() {
+            write_leading_term(f, coeff, degree)
+        } else {
+            write!(f, "0")
+        }
     }
 }
 

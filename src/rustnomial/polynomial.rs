@@ -9,6 +9,7 @@ use num::{One, Zero};
 use rustnomial::numerics::{Abs, IsNegativeOne, IsPositive};
 use rustnomial::traits::TermIterator;
 use {Degree, Derivable, Evaluable, GenericPolynomial, Integrable, Integral, Term};
+use rustnomial::strings::{write_leading_term, write_trailing_term};
 
 #[macro_export]
 macro_rules! polynomial {
@@ -571,69 +572,25 @@ where
     /// assert_eq!(a, b - c);
     /// ```
     fn eq(&self, other: &Self) -> bool {
-        if self.degree() != other.degree() {
-            return false;
-        }
-
         self.term_iter().eq(other.term_iter())
     }
 }
 
 impl<N> fmt::Display for Polynomial<N>
 where
-    N: IsPositive + Zero + One + Copy + IsNegativeOne + PartialEq + PartialOrd + Display + Abs,
+    N: IsPositive + Zero + One + Copy + IsNegativeOne + PartialEq + Display + Abs,
 {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let mut iter = self.term_iter();
-        match iter.next() {
-            None => {
-                return write!(f, "0");
+        if let Some((coeff, degree)) = iter.next() {
+            write_leading_term(f, coeff, degree);
+            for (coeff, degree) in iter {
+                write_trailing_term(f, coeff, degree);
             }
-
-            Some((coeff, degree)) => {
-                if coeff.is_negative_one() {
-                    write!(f, "-")?;
-                } else if (!coeff.is_one()) || (degree == 0) {
-                    write!(f, "{}", coeff)?;
-                }
-
-                match degree {
-                    0 => {}
-                    1 => {
-                        write!(f, "x")?;
-                    }
-                    _ => {
-                        write!(f, "x^{}", degree)?;
-                    }
-                }
-            }
+            write!(f, "")
+        } else {
+            write!(f, "0")
         }
-
-        for (coeff, degree) in iter {
-            if coeff.is_positive() {
-                write!(f, " + ")?;
-            } else {
-                write!(f, " - ")?;
-            }
-
-            let coeff = coeff.abs();
-
-            if (!coeff.is_one()) || (degree == 0) {
-                write!(f, "{}", coeff)?;
-            }
-
-            match degree {
-                0 => {}
-                1 => {
-                    write!(f, "x")?;
-                }
-                _ => {
-                    write!(f, "x^{}", degree)?;
-                }
-            }
-        }
-
-        write!(f, "")
     }
 }
 
@@ -1217,9 +1174,9 @@ mod tests {
     }
 
     #[test]
-    fn test_integral_str() {
-        let a = Polynomial::new(vec![-3, -2, 1]).integral();
-        assert_eq!(a.to_string(), "-x^3 - x^2 + x + C");
+    fn test_polynomial_str_negative_one() {
+        let a = Polynomial::new(vec![-1]);
+        assert_eq!(a.to_string(), "-1");
     }
 
     #[test]

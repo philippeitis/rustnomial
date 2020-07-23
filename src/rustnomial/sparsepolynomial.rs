@@ -10,6 +10,7 @@ use num::{One, Zero};
 use rustnomial::numerics::{Abs, IsNegativeOne, IsPositive, PowUsize};
 use rustnomial::traits::TermIterator;
 use {Degree, Derivable, Evaluable, GenericPolynomial, Polynomial, Term};
+use rustnomial::strings::{write_leading_term, write_trailing_term};
 
 #[derive(Debug, Clone)]
 pub struct SparsePolynomial<N> {
@@ -662,59 +663,19 @@ where
 
 impl<N> fmt::Display for SparsePolynomial<N>
 where
-    N: Zero + One + IsPositive + Copy + IsNegativeOne + PartialEq + PartialOrd + Display + Abs,
+    N: Zero + One + IsPositive + Copy + IsNegativeOne + PartialEq + Display + Abs,
 {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let mut iter = self.term_iter();
-        match iter.next() {
-            None => {
-                return write!(f, "0");
+        if let Some((coeff, degree)) = iter.next() {
+            write_leading_term(f, coeff, degree);
+            for (coeff, degree) in iter {
+                write_trailing_term(f, coeff, degree);
             }
-
-            Some((coeff, degree)) => {
-                if coeff.is_negative_one() {
-                    write!(f, "-")?;
-                } else if (!coeff.is_one()) || (degree == 0) {
-                    write!(f, "{}", coeff)?;
-                }
-
-                match degree {
-                    0 => {}
-                    1 => {
-                        write!(f, "x")?;
-                    }
-                    _ => {
-                        write!(f, "x^{}", degree)?;
-                    }
-                }
-            }
+            write!(f, "")
+        } else {
+            write!(f, "0")
         }
-
-        for (coeff, degree) in iter {
-            if coeff.is_positive() {
-                write!(f, " + ")?;
-            } else {
-                write!(f, " - ")?;
-            }
-
-            let coeff = coeff.abs();
-
-            if (!coeff.is_one()) || (degree == 0) {
-                write!(f, "{}", coeff)?;
-            }
-
-            match degree {
-                0 => {}
-                1 => {
-                    write!(f, "x")?;
-                }
-                _ => {
-                    write!(f, "x^{}", degree)?;
-                }
-            }
-        }
-
-        write!(f, "")
     }
 }
 
