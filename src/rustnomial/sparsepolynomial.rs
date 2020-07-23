@@ -341,13 +341,12 @@ impl<N> SparsePolynomial<N> {
     pub fn zero() -> SparsePolynomial<N> {
         SparsePolynomial{terms: HashMap::new()}
     }
-}
 
-impl<N> SparsePolynomial<N> {
     pub fn new(terms: HashMap<usize, N>) -> SparsePolynomial<N> {
         SparsePolynomial{terms}
     }
 }
+
 impl<N> SparsePolynomial<N>
     where N: Zero + Copy {
     /// Returns a `SparsePolynomial` with the corresponding terms,
@@ -608,21 +607,7 @@ impl<N> PartialEq for SparsePolynomial<N>
     /// assert_eq!(a, b - c);
     /// ```
     fn eq(&self, other: &Self) -> bool {
-        let mut self_iter = self.term_iter();
-        let mut other_iter = other.term_iter();
-
-        loop {
-            let self_term = self_iter.next();
-            let other_term = other_iter.next();
-            if self_term != other_term {
-                return false;
-            }
-
-            // Can only get here if self_term and other_term are both None
-            if self_term == None {
-                return true;
-            }
-        }
+        self.term_iter().eq(other.term_iter())
     }
 }
 

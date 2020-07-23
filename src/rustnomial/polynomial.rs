@@ -261,7 +261,7 @@ impl<N> Polynomial<N>
     /// let polynomial = Polynomial::new(vec![1.0, 4.0, 4.0]);
     /// ```
     pub fn from_terms(terms: Vec<(N, usize)>) -> Polynomial<N> {
-        let mut a = Polynomial::new(vec![]);
+        let mut a = Polynomial::zero();
         for (term, degree) in terms {
             a.add_term(term, degree);
         }
@@ -539,21 +539,7 @@ impl<N> PartialEq for Polynomial<N>
             return false;
         }
 
-        let mut self_iter = self.term_iter();
-        let mut other_iter = other.term_iter();
-
-        loop {
-            let self_term = self_iter.next();
-            let other_term = other_iter.next();
-            if self_term != other_term {
-                return false;
-            }
-
-            // Can only get here if self_term and other_term are both None
-            if self_term == None {
-                return true;
-            }
-        }
+        self.term_iter().eq(other.term_iter())
     }
 }
 
@@ -1117,7 +1103,7 @@ mod tests {
         let a = Polynomial::new(vec![0]);
         assert_eq!(a.to_string(), "0");
 
-        let a: Polynomial<i8> = Polynomial::new(vec![]);
+        let a: Polynomial<i8> = Polynomial::zero();
         assert_eq!(a.to_string(), "0");
 
         let a = Polynomial::new(vec![0, 0]);
