@@ -2,16 +2,19 @@ use std::collections::HashMap;
 use std::fmt;
 use std::fmt::{Display, Write};
 use std::ops;
-use std::ops::{AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign};
+use std::ops::{
+    Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Rem, RemAssign, Shl, ShlAssign, Shr,
+    ShrAssign, Sub, SubAssign,
+};
 use std::str::FromStr;
 
 use num::{One, Zero};
 
+use rustnomial::degree::TermTokenizer;
 use rustnomial::numerics::{Abs, IsNegativeOne, IsPositive, PowUsize};
+use rustnomial::strings::{write_leading_term, write_trailing_term};
 use rustnomial::traits::TermIterator;
 use {Degree, Derivable, Evaluable, GenericPolynomial, Polynomial, Term};
-use rustnomial::strings::{write_leading_term, write_trailing_term};
-use rustnomial::degree::TermTokenizer;
 
 #[derive(Debug, Clone)]
 pub struct SparsePolynomial<N> {
@@ -40,6 +43,22 @@ where
         }
     }
     terms
+}
+
+fn map_sub_w_scale<N>(_lhs: &mut HashMap<usize, N>, _rhs: &HashMap<usize, N>, _rhs_scale: N)
+where
+    N: Copy + Neg<Output = N> + Sub<Output = N> + Mul<Output = N> + SubAssign,
+{
+    for (rdeg, &rcoeff) in _rhs.iter() {
+        match _lhs.get_mut(rdeg) {
+            None => {
+                _lhs.insert(*rdeg, -rcoeff * _rhs_scale);
+            }
+            Some(lcoeff) => {
+                *lcoeff -= rcoeff * _rhs_scale;
+            }
+        }
+    }
 }
 
 fn degree<N: Zero + Copy>(terms: &HashMap<usize, N>) -> Degree {
@@ -119,129 +138,6 @@ impl<N: Zero + Copy> GenericPolynomial<N> for SparsePolynomial<N> {
     }
 }
 
-// impl<N> FromStr for SparsePolynomial<N>
-//     where N: PartialEq + Zero + One + Copy + AddAssign + FromStr + Display {
-//     type Err = String;
-//
-//     /// Returns a `Polynomial` with the corresponding terms,
-//     /// in order of ax^n + bx^(n-1) + ... + cx + d
-//     ///
-//     /// # Arguments
-//     ///
-//     /// * ` terms ` - A vector of constants, in decreasing order of degree.
-//     ///
-//     /// # Example
-//     ///
-//     /// ```
-//     /// use rustnomial::SparsePolynomial;
-//     /// // Corresponds to 1.0x^2 + 4.0x + 4.0
-//     /// let polynomial = SparsePolynomial::from_vec(vec![1.0, 4.0, 4.0]);
-//     /// ```
-//     fn from_str(s: &str) -> Result<Self, Self::Err> {
-//         let mut polynomial = HashMap::new();
-//         let mut str_vec: Vec<char> = Vec::new();
-//         let mut coeff = N::one();
-//         let mut char_iter = s.chars();
-//         let mut parsing_degree = false;
-//         let mut last_char = ' ';
-//         while let Some(c) = char_iter.next() {
-//             match c {
-//                 '+' | '-' => {
-//                     if parsing_degree {
-//                         let str: String = str_vec.iter().collect();
-//                         str_vec.clear();
-//                         if let Ok(degree) = usize::from_str(&str) {
-//                             polynomial.insert(degree, coeff);
-//                             parsing_degree = false;
-//                         } else {
-//                             return Err("degree could not be parsed".to_string());
-//                         }
-//                     } else if !str_vec.is_empty() {
-//                         let str: String = str_vec.iter().collect();
-//                         str_vec.clear();
-//                         coeff = match N::from_str(&str) {
-//                             Ok(val) => val,
-//                             Err(val) => {
-//                                 let err_str = format!("0 coeff {} could not be parsed.", str);
-//                                 return Err(err_str);
-//                             }
-//                         };
-//                         polynomial.insert(0, coeff);
-//                     };
-//                     str_vec.push(c);
-//                 }
-//                 '.' | '0'..='9' => { str_vec.push(c); }
-//                 ' ' | ',' => {}
-//                 'x' => {
-//                     coeff = if str_vec.len() == 0 {
-//                         N::one()
-//                     } else {
-//                         if str_vec.len() == 1 && (str_vec[0] == '-' || str_vec[0] == '+') {
-//                             str_vec.push('1');
-//                         }
-//                         let str: String = str_vec.iter().collect();
-//                         str_vec.clear();
-//                         match N::from_str(&str) {
-//                             Ok(val) => val,
-//                             Err(val) => {
-//                                 let err_str = format!("Coeff {} could not be parsed.", str);
-//                                 return Err(err_str);
-//                             }
-//                         }
-//                     };
-//
-//                     if let Some(x) = char_iter.next() {
-//                         match x {
-//                             '^' => { parsing_degree = true; }
-//                             '+' | '-' => {polynomial.insert(1, coeff);}
-//                             '0'..='9' => {str_vec.push(x);}
-//                             ' ' => {}
-//                             x => {return Err("Unexpected char after token.".to_string());}
-//                         }
-//                     } else {
-//                         polynomial.insert(1, coeff);
-//                     }
-//                 }
-//                 '^' => {
-//                     if parsing_degree {
-//                         return Err("More than one ^ in degree portion.".to_string())
-//                     } else if last_char != 'x' {
-//                         return Err("No x in front of ^".to_string())
-//                     }
-//                     parsing_degree = true;
-//                 }
-//                 x => {
-//                     let err_str = format!("Unexpected char ({}) (legal characters include +, -, ., x, ^, 0..9).", x);
-//                     return Err(err_str);
-//                 }
-//             };
-//             if c != ' ' {
-//                 last_char = c;
-//             };
-//         }
-//         if parsing_degree {
-//             let str: String = str_vec.iter().collect();
-//             if let Ok(degree) = usize::from_str(&str) {
-//                 polynomial.insert(degree, coeff);
-//             } else {
-//                 return Err("degree could not be parsed".to_string());
-//             }
-//         } else if !str_vec.is_empty() {
-//             let str: String = str_vec.iter().collect();
-//             coeff = match N::from_str(&str) {
-//                 Ok(val) => val,
-//                 Err(val) => {
-//                     let err_str = format!("Coeff {} could not be parsed.", str);
-//                     return Err(err_str);
-//                 }
-//             };
-//             polynomial.insert(0, coeff);
-//         }
-//
-//         Ok(SparsePolynomial::new(polynomial))
-//     }
-// }
-
 impl<N> FromStr for SparsePolynomial<N>
 where
     N: Zero + One + Copy + AddAssign + FromStr,
@@ -271,8 +167,10 @@ where
             has_iterated = true;
             match term {
                 Err(msg) => return Err(msg),
-                Ok(Term::ZeroTerm) => {},
-                Ok(Term::Term(coeff, deg)) => { polynomial.add_term(coeff, deg); }
+                Ok(Term::ZeroTerm) => {}
+                Ok(Term::Term(coeff, deg)) => {
+                    polynomial.add_term(coeff, deg);
+                }
             }
         }
 
@@ -520,7 +418,6 @@ where
     }
 }
 
-// TODO: Implement this.
 impl<N> SparsePolynomial<N>
 where
     N: Copy
@@ -548,22 +445,6 @@ where
         &self,
         _rhs: &SparsePolynomial<N>,
     ) -> (SparsePolynomial<N>, SparsePolynomial<N>) {
-        fn map_sub_w_scale<N>(_lhs: &mut HashMap<usize, N>, _rhs: &HashMap<usize, N>, _rhs_scale: N)
-        where
-            N: Copy + Neg<Output = N> + Sub<Output = N> + Mul<Output = N> + SubAssign,
-        {
-            for (rdeg, &rcoeff) in _rhs.iter() {
-                match _lhs.get_mut(rdeg) {
-                    None => {
-                        _lhs.insert(*rdeg, -rcoeff * _rhs_scale);
-                    }
-                    Some(lcoeff) => {
-                        *lcoeff -= rcoeff * _rhs_scale;
-                    }
-                }
-            }
-        }
-
         let (_rhs_first, _rhs_deg) = match first_term(&_rhs.terms) {
             Term::ZeroTerm => {
                 panic!("Can't divide by 0.");
@@ -611,6 +492,127 @@ where
     }
 }
 
+impl<N> Rem<SparsePolynomial<N>> for SparsePolynomial<N>
+where
+    N: Copy
+        + Zero
+        + Neg<Output = N>
+        + Sub<Output = N>
+        + SubAssign
+        + Mul<Output = N>
+        + Div<Output = N>
+        + AddAssign,
+{
+    type Output = SparsePolynomial<N>;
+    /// Divides self by the given `Polynomial`, and returns the quotient and remainder.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use rustnomial::Polynomial;
+    /// let polynomial = Polynomial::new(vec![1.0, 2.0]);
+    /// let polynomial_sqr = polynomial.pow(2);
+    /// let polynomial_cub = polynomial.pow(3);
+    /// assert_eq!(polynomial.clone() * polynomial.clone(), polynomial_sqr);
+    /// assert_eq!(polynomial_sqr.clone() * polynomial.clone(), polynomial_cub);
+    /// ```
+    fn rem(self, _rhs: SparsePolynomial<N>) -> SparsePolynomial<N> {
+        let (_rhs_first, _rhs_deg) = match first_term(&_rhs.terms) {
+            Term::ZeroTerm => {
+                panic!("Can't divide by 0.");
+            }
+            Term::Term(coeff, deg) => (coeff, deg),
+        };
+
+        let (mut scale, mut self_degree) = match first_term(&self.terms) {
+            Term::ZeroTerm => {
+                return SparsePolynomial::new(self.terms.clone());
+            }
+            Term::Term(term, degree) => {
+                if degree < _rhs_deg {
+                    return SparsePolynomial::new(self.terms.clone());
+                }
+                (term / _rhs_first, degree)
+            }
+        };
+
+        let mut remainder = self.terms.clone();
+
+        while self_degree >= _rhs_deg {
+            map_sub_w_scale(&mut remainder, &_rhs.terms, scale);
+            match first_term(&remainder) {
+                Term::ZeroTerm => {
+                    break;
+                }
+                Term::Term(coeff, degree) => {
+                    scale = coeff / _rhs_first;
+                    self_degree = degree;
+                }
+            }
+        }
+
+        SparsePolynomial::new(remainder)
+    }
+}
+
+impl<N> RemAssign<SparsePolynomial<N>> for SparsePolynomial<N>
+where
+    N: Copy
+        + Zero
+        + Neg<Output = N>
+        + Sub<Output = N>
+        + SubAssign
+        + Mul<Output = N>
+        + Div<Output = N>
+        + AddAssign,
+{
+    /// Divides self by the given `Polynomial`, and returns the quotient and remainder.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use rustnomial::Polynomial;
+    /// let polynomial = Polynomial::new(vec![1.0, 2.0]);
+    /// let polynomial_sqr = polynomial.pow(2);
+    /// let polynomial_cub = polynomial.pow(3);
+    /// assert_eq!(polynomial.clone() * polynomial.clone(), polynomial_sqr);
+    /// assert_eq!(polynomial_sqr.clone() * polynomial.clone(), polynomial_cub);
+    /// ```
+    fn rem_assign(&mut self, _rhs: SparsePolynomial<N>) {
+        let (_rhs_first, _rhs_deg) = match first_term(&_rhs.terms) {
+            Term::ZeroTerm => {
+                panic!("Can't divide by 0.");
+            }
+            Term::Term(coeff, deg) => (coeff, deg),
+        };
+
+        let (mut scale, mut self_degree) = match first_term(&self.terms) {
+            Term::ZeroTerm => {
+                return;
+            }
+            Term::Term(coeff, degree) => {
+                if degree < _rhs_deg {
+                    return;
+                }
+                (coeff / _rhs_first, degree)
+            }
+        };
+
+        while self_degree >= _rhs_deg {
+            map_sub_w_scale(&mut self.terms, &_rhs.terms, scale);
+            match first_term(&self.terms) {
+                Term::ZeroTerm => {
+                    break;
+                }
+                Term::Term(coeff, degree) => {
+                    scale = coeff / _rhs_first;
+                    self_degree = degree;
+                }
+            }
+        }
+    }
+}
+
 impl<N> PartialEq for SparsePolynomial<N>
 where
     N: Zero + PartialEq + Copy,
@@ -629,18 +631,16 @@ where
     /// assert_eq!(a, b - c);
     /// ```
     fn eq(&self, other: &Self) -> bool {
-        self.terms
-            .iter()
-            .all(|(key, value)| {
-                other.terms.get(key).map_or(value.is_zero(), |v| *value == *v)
-            }
-            ) &&
-        other.terms
-            .iter()
-            .all(|(key, value)| {
-                self.terms.get(key).map_or(value.is_zero(), |v| *value == *v)
-            }
-            )
+        self.terms.iter().all(|(key, value)| {
+            other
+                .terms
+                .get(key)
+                .map_or(value.is_zero(), |v| *value == *v)
+        }) && other.terms.iter().all(|(key, value)| {
+            self.terms
+                .get(key)
+                .map_or(value.is_zero(), |v| *value == *v)
+        })
     }
 }
 
@@ -662,7 +662,7 @@ where
     }
 }
 
-impl<N> ops::Neg for SparsePolynomial<N>
+impl<N> Neg for SparsePolynomial<N>
 where
     N: Zero + Copy + Neg<Output = N>,
 {
@@ -677,7 +677,7 @@ where
     }
 }
 
-impl<N> ops::Sub<SparsePolynomial<N>> for SparsePolynomial<N>
+impl<N> Sub<SparsePolynomial<N>> for SparsePolynomial<N>
 where
     N: Zero + Copy + Sub<Output = N> + SubAssign + Neg<Output = N>,
 {
@@ -699,7 +699,7 @@ where
     }
 }
 
-impl<N> ops::Sub<Polynomial<N>> for SparsePolynomial<N>
+impl<N> Sub<Polynomial<N>> for SparsePolynomial<N>
 where
     N: Zero + Copy + Sub<Output = N> + SubAssign + Neg<Output = N>,
 {
@@ -721,7 +721,7 @@ where
     }
 }
 
-impl<N> ops::SubAssign<SparsePolynomial<N>> for SparsePolynomial<N>
+impl<N> SubAssign<SparsePolynomial<N>> for SparsePolynomial<N>
 where
     N: Neg<Output = N> + Sub<Output = N> + SubAssign + Copy,
 {
@@ -739,7 +739,7 @@ where
     }
 }
 
-impl<N> ops::Add<SparsePolynomial<N>> for SparsePolynomial<N>
+impl<N> Add<SparsePolynomial<N>> for SparsePolynomial<N>
 where
     N: Copy + AddAssign,
 {
@@ -764,7 +764,7 @@ where
     }
 }
 
-impl<N: Copy + AddAssign> ops::AddAssign<SparsePolynomial<N>> for SparsePolynomial<N> {
+impl<N: Copy + AddAssign> AddAssign<SparsePolynomial<N>> for SparsePolynomial<N> {
     fn add_assign(&mut self, _rhs: SparsePolynomial<N>) {
         for (&deg, &coeff) in _rhs.terms.iter() {
             match self.terms.get_mut(&deg) {
@@ -779,7 +779,7 @@ impl<N: Copy + AddAssign> ops::AddAssign<SparsePolynomial<N>> for SparsePolynomi
     }
 }
 
-impl<N> ops::Mul<SparsePolynomial<N>> for SparsePolynomial<N>
+impl<N> Mul<SparsePolynomial<N>> for SparsePolynomial<N>
 where
     N: Mul<Output = N> + AddAssign + Copy + Zero,
 {
@@ -792,7 +792,7 @@ where
     }
 }
 
-impl<N> ops::MulAssign<SparsePolynomial<N>> for SparsePolynomial<N>
+impl<N> MulAssign<SparsePolynomial<N>> for SparsePolynomial<N>
 where
     N: Mul<Output = N> + AddAssign + Copy + Zero,
 {
@@ -801,7 +801,7 @@ where
     }
 }
 
-impl<N> ops::Mul<&SparsePolynomial<N>> for SparsePolynomial<N>
+impl<N> Mul<&SparsePolynomial<N>> for SparsePolynomial<N>
 where
     N: Mul<Output = N> + AddAssign + Copy + Zero,
 {
@@ -812,7 +812,7 @@ where
     }
 }
 
-impl<N> ops::MulAssign<&SparsePolynomial<N>> for SparsePolynomial<N>
+impl<N> MulAssign<&SparsePolynomial<N>> for SparsePolynomial<N>
 where
     N: Mul<Output = N> + AddAssign + Copy + Zero,
 {
@@ -821,7 +821,7 @@ where
     }
 }
 
-impl<N: Copy + Mul<Output = N>> ops::Mul<N> for SparsePolynomial<N> {
+impl<N: Copy + Mul<Output = N>> Mul<N> for SparsePolynomial<N> {
     type Output = SparsePolynomial<N>;
 
     fn mul(self, _rhs: N) -> SparsePolynomial<N> {
@@ -834,7 +834,7 @@ impl<N: Copy + Mul<Output = N>> ops::Mul<N> for SparsePolynomial<N> {
     }
 }
 
-impl<N: Copy + MulAssign> ops::MulAssign<N> for SparsePolynomial<N> {
+impl<N: Copy + MulAssign> MulAssign<N> for SparsePolynomial<N> {
     fn mul_assign(&mut self, _rhs: N) {
         for (_, coeff) in self.terms.iter_mut() {
             *coeff *= _rhs;
@@ -842,7 +842,7 @@ impl<N: Copy + MulAssign> ops::MulAssign<N> for SparsePolynomial<N> {
     }
 }
 
-impl<N> ops::Div<N> for SparsePolynomial<N>
+impl<N> Div<N> for SparsePolynomial<N>
 where
     N: Copy + Div<Output = N>,
 {
@@ -858,7 +858,7 @@ where
     }
 }
 
-impl<N> ops::DivAssign<N> for SparsePolynomial<N>
+impl<N> DivAssign<N> for SparsePolynomial<N>
 where
     N: Copy + DivAssign,
 {
@@ -869,7 +869,7 @@ where
     }
 }
 
-impl<N: Copy> ops::Shl<i32> for SparsePolynomial<N> {
+impl<N: Copy> Shl<i32> for SparsePolynomial<N> {
     type Output = SparsePolynomial<N>;
 
     fn shl(self, _rhs: i32) -> SparsePolynomial<N> {
@@ -886,7 +886,7 @@ impl<N: Copy> ops::Shl<i32> for SparsePolynomial<N> {
     }
 }
 
-impl<N: Copy> ops::ShlAssign<i32> for SparsePolynomial<N> {
+impl<N: Copy> ShlAssign<i32> for SparsePolynomial<N> {
     fn shl_assign(&mut self, _rhs: i32) {
         if _rhs < 0 {
             *self >>= -_rhs;
@@ -901,7 +901,7 @@ impl<N: Copy> ops::ShlAssign<i32> for SparsePolynomial<N> {
     }
 }
 
-impl<N: Copy> ops::Shr<i32> for SparsePolynomial<N> {
+impl<N: Copy> Shr<i32> for SparsePolynomial<N> {
     type Output = SparsePolynomial<N>;
 
     fn shr(self, _rhs: i32) -> SparsePolynomial<N> {
@@ -920,7 +920,7 @@ impl<N: Copy> ops::Shr<i32> for SparsePolynomial<N> {
     }
 }
 
-impl<N: Copy> ops::ShrAssign<i32> for SparsePolynomial<N> {
+impl<N: Copy> ShrAssign<i32> for SparsePolynomial<N> {
     fn shr_assign(&mut self, _rhs: i32) {
         if _rhs < 0 {
             *self <<= -_rhs;
