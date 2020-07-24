@@ -1,7 +1,6 @@
 use std::collections::HashMap;
 use std::fmt;
-use std::fmt::{Display, Write};
-use std::ops;
+use std::fmt::Display;
 use std::ops::{
     Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Rem, RemAssign, Shl, ShlAssign, Shr,
     ShrAssign, Sub, SubAssign,
@@ -630,9 +629,9 @@ where
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let mut iter = self.term_iter();
         if let Some((coeff, degree)) = iter.next() {
-            write_leading_term(f, coeff, degree);
+            write_leading_term(f, coeff, degree)?;
             for (coeff, degree) in iter {
-                write_trailing_term(f, coeff, degree);
+                write_trailing_term(f, coeff, degree)?;
             }
             Ok(())
         } else {
@@ -920,7 +919,6 @@ impl<N: Copy> ShrAssign<i32> for SparsePolynomial<N> {
 /// modulo floordiv
 #[cfg(test)]
 mod tests {
-    use std::fmt::Write;
     use std::str::FromStr;
     use {Degree, Derivable, Evaluable, Polynomial, SparsePolynomial};
 

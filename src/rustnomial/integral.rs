@@ -74,10 +74,9 @@ where
     }
 }
 
+#[cfg(test)]
 mod test {
-    use std::str::FromStr;
-    use Integrable;
-    use {Integral, Polynomial};
+    use {Integrable, Polynomial};
 
     #[test]
     fn test_integral_empty_polynomial() {

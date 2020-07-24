@@ -5,7 +5,7 @@ use std::str::FromStr;
 
 use num::{One, Zero};
 
-use rustnomial::numerics::{Abs, IsNegativeOne, PowUsize};
+use rustnomial::numerics::{IsNegativeOne, PowUsize};
 use rustnomial::strings::write_leading_term;
 use rustnomial::traits::TermIterator;
 use {Degree, Derivable, Evaluable, GenericPolynomial, Integrable, Integral, Polynomial, Term};
@@ -499,8 +499,8 @@ impl<N: Zero + Copy> ShrAssign<i32> for Monomial<N> {
     }
 }
 
+#[cfg(test)]
 mod tests {
-    use std::fmt::Write;
     use {Derivable, Evaluable, Integrable, Monomial, Polynomial};
 
     #[test]

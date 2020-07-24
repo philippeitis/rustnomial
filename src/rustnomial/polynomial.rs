@@ -614,9 +614,9 @@ where
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let mut iter = self.term_iter();
         if let Some((coeff, degree)) = iter.next() {
-            write_leading_term(f, coeff, degree);
+            write_leading_term(f, coeff, degree)?;
             for (coeff, degree) in iter {
-                write_trailing_term(f, coeff, degree);
+                write_trailing_term(f, coeff, degree)?;
             }
             Ok(())
         } else {
@@ -901,7 +901,6 @@ impl<N: Zero + Copy> ShrAssign<i32> for Polynomial<N> {
 /// modulo floordiv
 #[cfg(test)]
 mod tests {
-    use std::fmt::Write;
     use {Degree, Derivable, Evaluable, Integrable, Polynomial};
 
     #[test]

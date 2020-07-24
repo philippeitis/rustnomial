@@ -1,6 +1,5 @@
 use num::{One, Zero};
 use std::str::FromStr;
-use GenericPolynomial;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Degree {
@@ -146,6 +145,7 @@ impl Iterator for TermTokenizer {
     }
 }
 
+#[cfg(test)]
 mod test {
     use std::str::FromStr;
     use Term;
