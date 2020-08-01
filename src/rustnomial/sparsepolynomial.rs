@@ -12,7 +12,7 @@ use num::{One, Zero};
 use rustnomial::degree::TermTokenizer;
 use rustnomial::numerics::{Abs, IsNegativeOne, IsPositive, PowUsize};
 use rustnomial::strings::{write_leading_term, write_trailing_term};
-use rustnomial::traits::TermIterator;
+use rustnomial::traits::{FreeSizePolynomial, TermIterator};
 use {Degree, Derivable, Evaluable, GenericPolynomial, Polynomial, Term};
 
 #[derive(Debug, Clone)]
@@ -181,7 +181,7 @@ where
     }
 }
 
-impl<N> SparsePolynomial<N>
+impl<N> FreeSizePolynomial<N> for SparsePolynomial<N>
 where
     N: Zero + Copy + AddAssign,
 {
@@ -199,7 +199,7 @@ where
     /// // Corresponds to 1.0x^2 + 4.0x + 4.0
     /// let polynomial = SparsePolynomial::from_vec(vec![1.0, 4.0, 4.0]);
     /// ```
-    pub fn from_terms(terms: Vec<(N, usize)>) -> SparsePolynomial<N> {
+    fn from_terms(terms: Vec<(N, usize)>) -> Self {
         let mut a = SparsePolynomial::new(HashMap::with_capacity(terms.len()));
         for (term, degree) in terms {
             a.add_term(term, degree);

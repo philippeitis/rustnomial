@@ -11,7 +11,7 @@ use num::{One, Zero};
 use rustnomial::degree::TermTokenizer;
 use rustnomial::numerics::{Abs, IsNegativeOne, IsPositive};
 use rustnomial::strings::{write_leading_term, write_trailing_term};
-use rustnomial::traits::TermIterator;
+use rustnomial::traits::{FreeSizePolynomial, TermIterator};
 use {Degree, Derivable, Evaluable, GenericPolynomial, Integrable, Integral, Term};
 
 #[macro_export]
@@ -30,25 +30,6 @@ macro_rules! polynomial {
 #[derive(Debug, Clone)]
 pub struct Polynomial<N> {
     pub terms: Vec<N>,
-}
-
-pub struct PolynomialIterator<'a, N> {
-    polynomial: &'a Polynomial<N>,
-    index: usize,
-}
-
-impl<N: Copy + Zero> Iterator for PolynomialIterator<'_, N> {
-    type Item = N;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        if self.index < self.polynomial.len() {
-            let ret_val = self.polynomial.terms[self.index];
-            self.index += 1;
-            Some(ret_val)
-        } else {
-            None
-        }
-    }
 }
 
 fn first_nonzero_index<N>(terms: &Vec<N>) -> usize
@@ -262,7 +243,7 @@ impl<N: Copy + Zero> GenericPolynomial<N> for Polynomial<N> {
     }
 }
 
-impl<N> Polynomial<N>
+impl<N> FreeSizePolynomial<N> for Polynomial<N>
 where
     N: Zero + Copy + AddAssign,
 {
@@ -280,7 +261,7 @@ where
     /// // Corresponds to 1.0x^2 + 4.0x + 4.0
     /// let polynomial = Polynomial::new(vec![1.0, 4.0, 4.0]);
     /// ```
-    pub fn from_terms(terms: Vec<(N, usize)>) -> Polynomial<N> {
+    fn from_terms(terms: Vec<(N, usize)>) -> Self {
         let mut a = Polynomial::zero();
         for (term, degree) in terms {
             a.add_term(term, degree);
@@ -298,21 +279,6 @@ where
         self.terms[index] += term;
     }
 }
-
-// impl<N> Polynomial<N> {
-//     /// Returns the value of the `Polynomial` at the given point.
-//     /// Intended usage is large polynomials with very few terms.
-//     pub fn eval_sparse(&self, point: N) -> N {
-//         let mut sum = N::zero();
-//         let mut pow = 1;
-//         for (val, degree) in self.degree_iter() {
-//             sum += val * point.upow(degree);
-//             pow += 1;
-//         }
-//         sum
-//     }
-// }
-//
 
 impl<N> Evaluable<N> for Polynomial<N>
 where
@@ -364,7 +330,7 @@ where
 
 impl<N> Integrable<N> for Polynomial<N>
 where
-    N: Zero + From<u8> + Copy + DivAssign + fmt::Display,
+    N: Zero + From<u8> + Copy + DivAssign,
 {
     /// Returns the integral of the `Polynomial`.
     ///
@@ -449,45 +415,34 @@ where
     /// ```
     pub fn div_mod(&self, _rhs: &Polynomial<N>) -> (Polynomial<N>, Polynomial<N>) {
         let zero = N::zero();
+
         let (_rhs_first, _rhs_deg) = match first_term(&_rhs.terms) {
-            Term::ZeroTerm => {
-                panic!("Can't divide polynomial by 0.");
-            }
+            Term::ZeroTerm => panic!("Can't divide polynomial by 0."),
             Term::Term(coeff, deg) => (coeff, deg),
         };
 
         let (mut coeff, mut self_degree) = match first_term(&self.terms) {
             Term::ZeroTerm => {
-                let zero_vec = vec![zero; 1];
-                return (
-                    Polynomial::new(zero_vec),
-                    Polynomial::new(self.terms.clone()),
-                );
+                return (Polynomial::zero(), self.clone());
             }
             Term::Term(coeff, degree) => {
                 if degree < _rhs_deg {
-                    let zero_vec = vec![zero; 1];
-                    return (
-                        Polynomial::new(zero_vec),
-                        Polynomial::new(self.terms.clone()),
-                    );
+                    return (Polynomial::zero(), self.clone());
                 }
                 (coeff, degree)
             }
         };
 
         let mut remainder = self.terms.clone();
-        let offset = self_degree - _rhs_deg;
-        let mut div = vec![zero; offset + 1];
+        let mut div = vec![zero; self_degree - _rhs_deg + 1];
+        let offset = self_degree;
 
         while self_degree >= _rhs_deg {
             let scale = coeff / _rhs_first;
             vec_sub_w_scale(&mut remainder, self_degree, &_rhs.terms, _rhs_deg, scale);
-            div[offset - (self_degree - _rhs_deg)] = scale;
+            div[offset - self_degree] = scale;
             match first_term(&remainder) {
-                Term::ZeroTerm => {
-                    break;
-                }
+                Term::ZeroTerm => break,
                 Term::Term(coeffx, degree) => {
                     coeff = coeffx;
                     self_degree = degree;
@@ -508,19 +463,15 @@ where
     /// Returns the remainder of dividing `self` by `_rhs`.
     fn rem(self, _rhs: Polynomial<N>) -> Polynomial<N> {
         let (_rhs_first, _rhs_deg) = match first_term(&_rhs.terms) {
-            Term::ZeroTerm => {
-                panic!("Can't divide polynomial by 0.");
-            }
+            Term::ZeroTerm => panic!("Can't divide polynomial by 0."),
             Term::Term(coeff, deg) => (coeff, deg),
         };
 
         let (mut scale, mut self_degree) = match first_term(&self.terms) {
-            Term::ZeroTerm => {
-                return Polynomial::new(self.terms.clone());
-            }
+            Term::ZeroTerm => return self.clone(),
             Term::Term(coeff, degree) => {
                 if degree < _rhs_deg {
-                    return Polynomial::new(self.terms.clone());
+                    return self.clone();
                 }
                 (coeff / _rhs_first, degree)
             }
@@ -530,10 +481,8 @@ where
 
         while self_degree >= _rhs_deg {
             vec_sub_w_scale(&mut remainder, self_degree, &_rhs.terms, _rhs_deg, scale);
-            match first_term(&remainder) {
-                Term::ZeroTerm => {
-                    break;
-                }
+            match first_term(&self.terms) {
+                Term::ZeroTerm => break,
                 Term::Term(coeff, degree) => {
                     scale = coeff / _rhs_first;
                     self_degree = degree;
@@ -552,16 +501,12 @@ where
     /// Assign the remainder of dividing `self` by `_rhs` to `self`.
     fn rem_assign(&mut self, _rhs: Polynomial<N>) {
         let (_rhs_first, _rhs_deg) = match first_term(&_rhs.terms) {
-            Term::ZeroTerm => {
-                panic!("Can't divide polynomial by 0.");
-            }
+            Term::ZeroTerm => panic!("Can't divide polynomial by 0."),
             Term::Term(coeff, deg) => (coeff, deg),
         };
 
         let (mut scale, mut self_degree) = match first_term(&self.terms) {
-            Term::ZeroTerm => {
-                return;
-            }
+            Term::ZeroTerm => return,
             Term::Term(coeff, degree) => {
                 if degree < _rhs_deg {
                     return;
@@ -573,9 +518,7 @@ where
         while self_degree >= _rhs_deg {
             vec_sub_w_scale(&mut self.terms, self_degree, &_rhs.terms, _rhs_deg, scale);
             match first_term(&self.terms) {
-                Term::ZeroTerm => {
-                    break;
-                }
+                Term::ZeroTerm => break,
                 Term::Term(coeff, degree) => {
                     scale = coeff / _rhs_first;
                     self_degree = degree;
