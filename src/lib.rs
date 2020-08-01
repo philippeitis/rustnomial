@@ -1,3 +1,4 @@
+extern crate core;
 extern crate num;
 
 mod rustnomial;
@@ -7,4 +8,4 @@ pub use rustnomial::integral::{Integrable, Integral};
 pub use rustnomial::monomial::Monomial;
 pub use rustnomial::polynomial::Polynomial;
 pub use rustnomial::sparsepolynomial::SparsePolynomial;
-pub use rustnomial::traits::{Evaluable, GenericPolynomial};
+pub use rustnomial::traits::{Evaluable, FreeSizePolynomial, GenericPolynomial};
