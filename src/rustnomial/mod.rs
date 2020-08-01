@@ -1,3 +1,4 @@
+mod binomial;
 pub mod degree;
 pub mod derivative;
 pub mod integral;
@@ -8,3 +9,4 @@ pub mod polynomial;
 pub mod sparsepolynomial;
 mod strings;
 pub mod traits;
+pub mod trinomial;
