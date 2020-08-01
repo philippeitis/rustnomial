@@ -3,6 +3,7 @@ pub mod derivative;
 pub mod integral;
 pub mod monomial;
 pub mod numerics;
+pub mod poly_math;
 pub mod polynomial;
 pub mod sparsepolynomial;
 mod strings;
