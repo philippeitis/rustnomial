@@ -8,6 +8,7 @@ use num::{One, Zero};
 use rustnomial::numerics::{IsNegativeOne, PowUsize};
 use rustnomial::strings::write_leading_term;
 use rustnomial::traits::TermIterator;
+use FreeSizePolynomial;
 use {Degree, Derivable, Evaluable, GenericPolynomial, Integrable, Integral, Polynomial, Term};
 
 #[derive(Debug, Clone)]
@@ -263,10 +264,9 @@ where
     /// assert_eq!(Monomial::new(5, 2), monomial);
     /// ```
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match Term::from_str(s) {
-            Ok(Term::ZeroTerm) => Ok(Monomial::zero()),
-            Ok(Term::Term(coeff, deg)) => Ok(Monomial::new(coeff, deg)),
-            Err(e) => Err(e),
+        match Term::from_str(s)? {
+            Term::ZeroTerm => Ok(Monomial::zero()),
+            Term::Term(coeff, deg) => Ok(Monomial::new(coeff, deg)),
         }
     }
 }
@@ -391,7 +391,7 @@ impl<N: Copy + Mul<Output = N>> Mul<Monomial<N>> for Monomial<N> {
     }
 }
 
-impl<N: MulAssign + AddAssign> MulAssign<Monomial<N>> for Monomial<N> {
+impl<N: MulAssign> MulAssign<Monomial<N>> for Monomial<N> {
     fn mul_assign(&mut self, _rhs: Monomial<N>) {
         self.coefficient *= _rhs.coefficient;
         self.deg += _rhs.deg;
@@ -501,6 +501,7 @@ impl<N: Zero + Copy> ShrAssign<i32> for Monomial<N> {
 
 #[cfg(test)]
 mod tests {
+    use FreeSizePolynomial;
     use {Derivable, Evaluable, Integrable, Monomial, Polynomial};
 
     #[test]

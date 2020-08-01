@@ -5,6 +5,7 @@ use std::{fmt, iter};
 use num::{One, Zero};
 
 use rustnomial::numerics::{Abs, IsNegativeOne, IsPositive};
+use FreeSizePolynomial;
 use {Evaluable, GenericPolynomial, Polynomial};
 
 #[macro_export]
