@@ -28,25 +28,21 @@ pub(crate) fn write_trailing_term<N>(f: &mut fmt::Formatter, coeff: N, degree: u
 where
     N: Display + One + IsPositive + PartialEq + Copy + Abs,
 {
-    if coeff.is_positive() {
-        write!(f, " + ")?;
-    } else {
-        write!(f, " - ")?;
-    }
+    write!(f, " {} ", if coeff.is_positive() { "+" } else { "-" })?;
 
     let coeff = coeff.abs();
 
     if degree == 0 {
-        write!(f, "{}", coeff)
-    } else {
-        if !coeff.is_one() {
-            write!(f, "{}", coeff)?;
-        }
+        return write!(f, "{}", coeff);
+    }
 
-        if degree > 1 {
-            write!(f, "x^{}", degree)
-        } else {
-            write!(f, "x")
-        }
+    if !coeff.is_one() {
+        write!(f, "{}", coeff)?;
+    }
+
+    if degree > 1 {
+        write!(f, "x^{}", degree)
+    } else {
+        write!(f, "x")
     }
 }
