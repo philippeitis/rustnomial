@@ -1,4 +1,5 @@
 use num::Zero;
+use std::ops::AddAssign;
 use Term;
 
 pub trait GenericPolynomial<N> {
@@ -7,6 +8,15 @@ pub trait GenericPolynomial<N> {
     fn nth_term(&self, index: usize) -> Term<N>;
 
     fn term_iter(&self) -> TermIterator<N>;
+}
+
+pub trait FreeSizePolynomial<N>
+where
+    N: Zero + Copy + AddAssign,
+{
+    fn from_terms(terms: Vec<(N, usize)>) -> Self;
+
+    fn add_term(&mut self, term: N, degree: usize);
 }
 
 pub trait Evaluable<N> {
