@@ -2,6 +2,7 @@
 macro_rules! poly_add {
     ($lhs:expr, $rhs:expr) => {
         {
+            use $crate::Polynomial;
             let mut sink = Polynomial::zero();
             poly_add!($lhs, $rhs, sink)
         }
@@ -9,6 +10,7 @@ macro_rules! poly_add {
 
     ($lhs:expr, $rhs:expr, $sink:expr) => {
         {
+        use $crate::{GenericPolynomial, FreeSizePolynomial};
         for (coeff, deg) in $lhs.term_iter() {
             $sink.add_term(coeff, deg);
         }
@@ -23,9 +25,32 @@ macro_rules! poly_add {
 }
 
 #[macro_export]
+macro_rules! poly_scale {
+    ($lhs:expr, $rhs:expr) => {
+        {
+            use $crate::Polynomial;
+            let mut sink = Polynomial::zero();
+            poly_scale!($lhs, $rhs, sink)
+        }
+    };
+
+    ($lhs:expr, $rhs:expr, $sink:expr) => {
+        {
+        use $crate::{GenericPolynomial, FreeSizePolynomial};
+        for (coeff, deg) in $lhs.term_iter() {
+            $sink.add_term(coeff * $rhs, deg)
+        }
+
+        $sink
+        }
+    };
+}
+
+#[macro_export]
 macro_rules! poly_mul {
     ($lhs:expr, $rhs:expr) => {
         {
+            use $crate::Polynomial;
             let mut sink = Polynomial::zero();
             poly_mul!($lhs, $rhs, sink)
         }
@@ -33,6 +58,7 @@ macro_rules! poly_mul {
 
     ($lhs:expr, $rhs:expr, $sink:expr) => {
         {
+        use $crate::{GenericPolynomial, FreeSizePolynomial};
         for (coeff_a, deg_a) in $lhs.term_iter() {
             for (coeff_b, deg_b) in $rhs.term_iter() {
                 $sink.add_term(coeff_a * coeff_b, deg_a + deg_b);
@@ -48,6 +74,7 @@ macro_rules! poly_mul {
 macro_rules! poly_sub {
     ($lhs:expr, $rhs:expr) => {
         {
+            use $crate::Polynomial;
             let mut sink = Polynomial::zero();
             poly_sub!($lhs, $rhs, sink)
         }
@@ -55,6 +82,7 @@ macro_rules! poly_sub {
 
     ($lhs:expr, $rhs:expr, $sink:expr) => {
         {
+        use $crate::{GenericPolynomial, FreeSizePolynomial};
         for (coeff, deg) in $lhs.term_iter() {
             $sink.add_term(coeff, deg);
         }
