@@ -12,6 +12,7 @@ use {Evaluable, GenericPolynomial, Polynomial};
 macro_rules! integral {
     ( $( $x:expr ),* ) => {
         {
+            use $crate::{Polynomial, Integrable};
             let mut temp_vec = Vec::new();
             $(
                 temp_vec.push($x);

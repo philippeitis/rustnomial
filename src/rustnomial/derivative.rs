@@ -2,6 +2,7 @@
 macro_rules! derivative {
     ( $( $x:expr ),* ) => {
         {
+            use $crate::{Polynomial, Derivable};
             let mut temp_vec = Vec::new();
             $(
                 temp_vec.push($x);

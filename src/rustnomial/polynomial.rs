@@ -20,6 +20,7 @@ use {Degree, Derivable, Evaluable, GenericPolynomial, Integrable, Integral, Term
 macro_rules! polynomial {
     ( $( $x:expr ),* ) => {
         {
+            use rustnomial::Polynomial;
             let mut temp_vec = Vec::new();
             $(
                 temp_vec.push($x);
