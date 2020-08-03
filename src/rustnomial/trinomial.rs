@@ -11,10 +11,12 @@ use rustnomial::binomial::LinearBinomial;
 use rustnomial::degree::TermTokenizer;
 use rustnomial::numerics::{Abs, AbsSqrt, IsNegativeOne, IsPositive};
 use rustnomial::strings::{write_leading_term, write_trailing_term};
-use rustnomial::traits::TermIterator;
+use rustnomial::traits::{MutablePolynomial, TermIterator};
 use {Degree, Derivable, Evaluable, GenericPolynomial, Term};
 
-#[macro_use] use ::fmt_poly;
+#[macro_use]
+use fmt_poly;
+use rustnomial::err::TryAddError;
 
 #[derive(Debug, Clone)]
 pub struct QuadraticTrinomial<N> {
@@ -195,6 +197,24 @@ impl<N: Copy + Zero> GenericPolynomial<N> for QuadraticTrinomial<N> {
     /// ```
     fn term_iter(&self) -> TermIterator<N> {
         TermIterator::new(self)
+    }
+}
+
+impl<N> MutablePolynomial<N> for QuadraticTrinomial<N>
+where
+    N: Zero + AddAssign + Copy,
+{
+    fn try_add_term(&mut self, term: N, degree: usize) -> Result<(), TryAddError> {
+        if degree <= 2 {
+            self.coefficients[2 - degree] += term;
+            Ok(())
+        } else {
+            Err(TryAddError::DegreeOutOfBounds)
+        }
+    }
+
+    fn set_to_zero(&mut self) {
+        self.coefficients = [N::zero(); 3];
     }
 }
 

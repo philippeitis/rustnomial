@@ -10,10 +10,12 @@ use num::{One, Zero};
 use rustnomial::degree::TermTokenizer;
 use rustnomial::numerics::{Abs, IsNegativeOne, IsPositive};
 use rustnomial::strings::{write_leading_term, write_trailing_term};
-use rustnomial::traits::TermIterator;
+use rustnomial::traits::{MutablePolynomial, TermIterator};
 use {Degree, Derivable, Evaluable, GenericPolynomial, Term};
 
-#[macro_use] use ::fmt_poly;
+#[macro_use]
+use fmt_poly;
+use rustnomial::err::TryAddError;
 
 #[derive(Debug, Clone)]
 pub struct LinearBinomial<N> {
@@ -141,6 +143,25 @@ impl<N: Copy + Zero> GenericPolynomial<N> for LinearBinomial<N> {
     }
 }
 
+impl<N> MutablePolynomial<N> for LinearBinomial<N>
+where
+    N: Zero + AddAssign + Copy,
+{
+    fn try_add_term(&mut self, term: N, coeff: usize) -> Result<(), TryAddError> {
+        if coeff <= 1 {
+            self.coefficients[1 - coeff] += term;
+            Ok(())
+        } else {
+            Err(TryAddError::DegreeOutOfBounds)
+        }
+    }
+
+    fn set_to_zero(&mut self) {
+        self.coefficients = [N::zero(); 2];
+    }
+
+}
+
 impl<N> Evaluable<N> for LinearBinomial<N>
 where
     N: Add<Output = N> + Mul<Output = N> + Copy,
@@ -226,7 +247,6 @@ where
 // }
 
 // TODO: Divmod implementation.
-
 impl<N> PartialEq for LinearBinomial<N>
 where
     N: Zero + PartialEq + Copy,

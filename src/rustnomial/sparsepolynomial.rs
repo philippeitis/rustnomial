@@ -12,10 +12,12 @@ use num::{One, Zero};
 use rustnomial::degree::TermTokenizer;
 use rustnomial::numerics::{Abs, IsNegativeOne, IsPositive, PowUsize};
 use rustnomial::strings::{write_leading_term, write_trailing_term};
-use rustnomial::traits::{FreeSizePolynomial, TermIterator};
+use rustnomial::traits::{FreeSizePolynomial, MutablePolynomial, TermIterator};
 use {Degree, Derivable, Evaluable, GenericPolynomial, Polynomial, Term};
 
-#[macro_use] use ::{poly_from_str, fmt_poly};
+#[macro_use]
+use {poly_from_str, fmt_poly};
+use rustnomial::err::TryAddError;
 
 #[derive(Debug, Clone)]
 pub struct SparsePolynomial<N> {
@@ -206,6 +208,19 @@ where
                 *val += term;
             }
         }
+    }
+}
+
+impl<N> MutablePolynomial<N> for SparsePolynomial<N>
+where
+    N: Zero + Copy + AddAssign,
+{
+    fn try_add_term(&mut self, term: N, degree: usize) -> Result<(), TryAddError> {
+        Ok(self.add_term(term, degree))
+    }
+
+    fn set_to_zero(&mut self) {
+        self.terms.iter_mut().for_each(|(_, c)| *c = N::zero())
     }
 }
 

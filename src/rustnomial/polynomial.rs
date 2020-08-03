@@ -11,10 +11,12 @@ use num::{One, Zero};
 use rustnomial::degree::TermTokenizer;
 use rustnomial::numerics::{Abs, IsNegativeOne, IsPositive};
 use rustnomial::strings::{write_leading_term, write_trailing_term};
-use rustnomial::traits::{FreeSizePolynomial, TermIterator};
+use rustnomial::traits::{FreeSizePolynomial, MutablePolynomial, TermIterator};
 use {Degree, Derivable, Evaluable, GenericPolynomial, Integrable, Integral, Term};
 
-#[macro_use] use ::{fmt_poly, poly_from_str};
+#[macro_use]
+use {fmt_poly, poly_from_str};
+use rustnomial::err::TryAddError;
 
 #[macro_export]
 macro_rules! polynomial {
@@ -280,6 +282,19 @@ where
         }
         let index = self.len() - degree - 1;
         self.terms[index] += term;
+    }
+}
+
+impl<N> MutablePolynomial<N> for Polynomial<N>
+where
+    N: Zero + Copy + AddAssign,
+{
+    fn try_add_term(&mut self, term: N, degree: usize) -> Result<(), TryAddError> {
+        Ok(self.add_term(term, degree))
+    }
+
+    fn set_to_zero(&mut self) {
+        self.terms.iter_mut().for_each(|c| *c = N::zero())
     }
 }
 

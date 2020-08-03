@@ -5,11 +5,14 @@ use std::str::FromStr;
 
 use num::{One, Zero};
 
+use rustnomial::err::TryAddError;
 use rustnomial::numerics::{IsNegativeOne, PowUsize};
 use rustnomial::strings::write_leading_term;
-use rustnomial::traits::TermIterator;
-use FreeSizePolynomial;
-use {Degree, Derivable, Evaluable, GenericPolynomial, Integrable, Integral, Polynomial, Term};
+use rustnomial::traits::{MutablePolynomial, TermIterator};
+use {
+    Degree, Derivable, Evaluable, FreeSizePolynomial, GenericPolynomial, Integrable, Integral,
+    Polynomial, Term,
+};
 
 #[derive(Debug, Clone)]
 pub struct Monomial<N> {
@@ -128,6 +131,28 @@ impl<N: Copy + Zero> GenericPolynomial<N> for Monomial<N> {
     /// ```
     fn term_iter(&self) -> TermIterator<N> {
         TermIterator::new(self)
+    }
+}
+
+impl<N> MutablePolynomial<N> for Monomial<N>
+where
+    N: AddAssign + Copy + Zero,
+{
+    fn try_add_term(&mut self, term: N, degree: usize) -> Result<(), TryAddError> {
+        if self.is_zero() {
+            self.coefficient += term;
+            self.deg = degree;
+            Ok(())
+        } else if degree != self.deg {
+            Err(TryAddError::DegreeOutOfBounds)
+        } else {
+            self.coefficient += term;
+            Ok(())
+        }
+    }
+
+    fn set_to_zero(&mut self) {
+        self.coefficient = N::zero();
     }
 }
 

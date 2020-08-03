@@ -1,4 +1,5 @@
 use num::Zero;
+use rustnomial::err::TryAddError;
 use std::ops::AddAssign;
 use Term;
 
@@ -8,6 +9,12 @@ pub trait GenericPolynomial<N> {
     fn nth_term(&self, index: usize) -> Term<N>;
 
     fn term_iter(&self) -> TermIterator<N>;
+}
+
+pub trait MutablePolynomial<N> {
+    fn try_add_term(&mut self, term: N, degree: usize) -> Result<(), TryAddError>;
+
+    fn set_to_zero(&mut self);
 }
 
 pub trait FreeSizePolynomial<N>
