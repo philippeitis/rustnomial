@@ -201,10 +201,10 @@ extern crate rustnomial;
 //          P!("\n")});sleep_ms(30          // 22/22
 //              );}}//------//              // 14/14
 
-use rustnomial::{poly_add, poly_mul, Monomial, Polynomial, SparsePolynomial, LinearBinomial};
+use rustnomial::{poly_add, poly_mul, poly_sub, Monomial, Polynomial, SparsePolynomial, LinearBinomial};
 
 fn main() {
-    let mut a = Polynomial::new(vec![1]);
-    poly_mul!(Monomial::new(5, 1), Monomial::new(1, 2), Monomial::new(1, 2); a);
+    let mut a = Monomial::new(5i8, 2);
+    poly_add!(a; Monomial::new(1, 2), Monomial::new(1, 2));
     println!("{}", a);
 }

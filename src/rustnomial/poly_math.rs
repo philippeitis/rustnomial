@@ -9,11 +9,11 @@ macro_rules! poly_add {
     ($mand:expr, $( $x:expr ),+) => {{
         use $crate::Polynomial;
         let mut sink = Polynomial::zero();
-        poly_add!($mand $(,$x)*; sink);
+        poly_add!(sink; $mand $(,$x)*);
         sink
     }};
 
-    ($( $x:expr ),+; $sink:expr) => {{
+    ($sink:expr; $( $x:expr ),+) => {{
         use $crate::{FreeSizePolynomial, GenericPolynomial, MutablePolynomial};
         use $crate::poly_math::add_poly;
 
@@ -52,7 +52,7 @@ macro_rules! poly_mul {
         sink
     }};
 
-    ($lhs:expr; $sink:expr) => {{
+    ($sink:expr; $lhs:expr) => {{
         use $crate::{FreeSizePolynomial, GenericPolynomial, MutablePolynomial};
         use $crate::poly_math::{mul_poly, mul_poly_vec};
         let sink_terms = $sink.term_iter().collect();
@@ -64,11 +64,11 @@ macro_rules! poly_mul {
         poly_mul!(poly_mul!($lhs, $rhs) $(,$x)*)
     }};
 
-    ($lhs:expr, $rhs:expr $(,$x:expr )*; $sink:expr) => {{
+    ($sink:expr; $lhs:expr, $rhs:expr $(,$x:expr )*) => {{
         use $crate::{FreeSizePolynomial, GenericPolynomial, MutablePolynomial};
         use $crate::poly_math::mul_poly;
-        poly_mul!($lhs; $sink);
-        poly_mul!($rhs $(,$x)*; $sink)
+        poly_mul!($sink; $lhs);
+        poly_mul!($sink; $rhs $(,$x)*)
     }};
 }
 
@@ -102,22 +102,23 @@ pub fn mul_poly<N>(
 
 #[macro_export]
 macro_rules! poly_sub {
-    ($lhs:expr, $rhs:expr) => {{
+    ($lhs:expr, $( $x:expr ),+) => {{
         use $crate::Polynomial;
         let mut sink = Polynomial::zero();
-        poly_sub!($lhs, $rhs, sink)
+        poly_add!(sink; $lhs);
+        poly_sub!(sink;$($x,)*);
+        sink
     }};
 
-    ($lhs:expr, $rhs:expr, $sink:expr) => {{
+    ($sink:expr; $lhs:expr $(,$x:expr )+) => {{
         use $crate::{FreeSizePolynomial, GenericPolynomial, MutablePolynomial};
         for (coeff, deg) in $lhs.term_iter() {
-            $sink.try_add_term(coeff, deg);
-        }
-
-        for (coeff, deg) in $rhs.term_iter() {
             $sink.try_add_term(-coeff, deg);
         }
-
-        $sink
+        $(
+            for (coeff, deg) in $x.term_iter() {
+                $sink.try_add_term(-coeff, deg);
+            }
+        )*
     }};
 }
