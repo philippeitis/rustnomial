@@ -14,6 +14,8 @@ use rustnomial::strings::{write_leading_term, write_trailing_term};
 use rustnomial::traits::TermIterator;
 use {Degree, Derivable, Evaluable, GenericPolynomial, Term};
 
+#[macro_use] use ::fmt_poly;
+
 #[derive(Debug, Clone)]
 pub struct QuadraticTrinomial<N> {
     pub coefficients: [N; 3],
@@ -360,16 +362,7 @@ where
     N: Zero + One + IsPositive + PartialEq + Abs + Copy + IsNegativeOne + Display,
 {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let mut iter = self.term_iter();
-        if let Some((coeff, degree)) = iter.next() {
-            write_leading_term(f, coeff, degree)?;
-            for (coeff, degree) in iter {
-                write_trailing_term(f, coeff, degree)?;
-            }
-            Ok(())
-        } else {
-            write!(f, "0")
-        }
+        fmt_poly!(f, self)
     }
 }
 

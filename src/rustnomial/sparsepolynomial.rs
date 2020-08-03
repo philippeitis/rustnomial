@@ -15,6 +15,8 @@ use rustnomial::strings::{write_leading_term, write_trailing_term};
 use rustnomial::traits::{FreeSizePolynomial, TermIterator};
 use {Degree, Derivable, Evaluable, GenericPolynomial, Polynomial, Term};
 
+#[macro_use] use ::{poly_from_str, fmt_poly};
+
 #[derive(Debug, Clone)]
 pub struct SparsePolynomial<N> {
     pub terms: HashMap<usize, N>,
@@ -161,23 +163,7 @@ where
     /// ```
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let mut polynomial = SparsePolynomial::zero();
-        let mut has_iterated = false;
-        for term in TermTokenizer::new(s).map(|s| Term::from_str(s.as_str())) {
-            has_iterated = true;
-            match term {
-                Err(msg) => return Err(msg),
-                Ok(Term::ZeroTerm) => {}
-                Ok(Term::Term(coeff, deg)) => {
-                    polynomial.add_term(coeff, deg);
-                }
-            }
-        }
-
-        if has_iterated {
-            Ok(polynomial)
-        } else {
-            Err("Given string did not have any terms.".to_string())
-        }
+        poly_from_str!(s, polynomial)
     }
 }
 
@@ -627,16 +613,7 @@ where
     N: Zero + One + IsPositive + Copy + IsNegativeOne + PartialEq + Display + Abs,
 {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let mut iter = self.term_iter();
-        if let Some((coeff, degree)) = iter.next() {
-            write_leading_term(f, coeff, degree)?;
-            for (coeff, degree) in iter {
-                write_trailing_term(f, coeff, degree)?;
-            }
-            Ok(())
-        } else {
-            write!(f, "0")
-        }
+        fmt_poly!(f, self)
     }
 }
 
