@@ -10,8 +10,8 @@ use rustnomial::strings::{write_leading_term, write_trailing_term};
 use rustnomial::traits::{FreeSizePolynomial, MutablePolynomial, TermIterator};
 use {Degree, Derivable, Evaluable, GenericPolynomial, Integrable, Integral, Term};
 
-use {fmt_poly, poly_from_str};
 use rustnomial::err::TryAddError;
+use {fmt_poly, poly_from_str};
 
 #[macro_export]
 macro_rules! polynomial {

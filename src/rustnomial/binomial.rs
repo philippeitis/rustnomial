@@ -10,8 +10,8 @@ use rustnomial::strings::{write_leading_term, write_trailing_term};
 use rustnomial::traits::{MutablePolynomial, TermIterator};
 use {Degree, Derivable, Evaluable, GenericPolynomial, Term};
 
-use {poly_from_str, fmt_poly};
 use rustnomial::err::TryAddError;
+use {fmt_poly, poly_from_str};
 
 #[derive(Debug, Clone)]
 pub struct LinearBinomial<N> {
@@ -19,15 +19,14 @@ pub struct LinearBinomial<N> {
 }
 
 impl<N: Sized> LinearBinomial<N> {
-    /// Create a `Monomial` with coefficient and degree.
+    /// Create a `LinearBinomial` with coefficient and degree.
     ///
     /// # Example
     ///
     /// ```
-    /// use rustnomial::{Monomial, Degree};
-    /// let monomial = Monomial::new(3.0, 2);
-    /// assert_eq!(3.0, monomial.coefficient);
-    /// assert_eq!(Degree::Num(2), monomial.degree());
+    /// use rustnomial::{LinearBinomial, Degree};
+    /// let binomial = LinearBinomial::new([3, 2]);
+    /// assert_eq!(Degree::Num(1), binomial.degree());
     /// ```
     pub fn new(coefficients: [N; 2]) -> LinearBinomial<N> {
         LinearBinomial { coefficients }
@@ -53,9 +52,9 @@ impl<N: Copy + Zero> LinearBinomial<N> {
     /// ```
     pub fn degree(&self) -> Degree {
         if !self.coefficients[0].is_zero() {
-            Degree::Num(2)
-        } else if !self.coefficients[1].is_zero() {
             Degree::Num(1)
+        } else if !self.coefficients[1].is_zero() {
+            Degree::Num(0)
         } else {
             Degree::NegInf
         }
@@ -81,8 +80,7 @@ impl<N> LinearBinomial<N>
 where
     N: Copy + Neg<Output = N> + Div<Output = N>,
 {
-    /// Return the complex roots of `QuadraticTrinomial` with largest
-    /// first, smallest second.
+    /// Return the root of `LinearBinomial`
     pub fn root(&self) -> N {
         let [a, b] = self.coefficients;
         -b / a
@@ -464,7 +462,31 @@ impl<N: Zero + Copy> ShrAssign<u32> for LinearBinomial<N> {
 #[cfg(test)]
 mod tests {
     use rustnomial::binomial::LinearBinomial;
-    use {Derivable, Evaluable};
+    use {Degree, Derivable, Evaluable};
+
+    #[test]
+    fn test_degree_both_zero() {
+        let a = LinearBinomial::<i32>::zero();
+        assert_eq!(Degree::NegInf, a.degree());
+    }
+
+    #[test]
+    fn test_degree_second_non_zero() {
+        let a = LinearBinomial::new([0, 1u8]);
+        assert_eq!(Degree::Num(0), a.degree());
+    }
+
+    #[test]
+    fn test_degree_first_non_zero() {
+        let a = LinearBinomial::new([1u8, 0]);
+        assert_eq!(Degree::Num(1), a.degree());
+    }
+
+    #[test]
+    fn test_degree_both_non_zero() {
+        let a = LinearBinomial::new([2u8, 1u8]);
+        assert_eq!(Degree::Num(1), a.degree());
+    }
 
     #[test]
     fn test_eval() {

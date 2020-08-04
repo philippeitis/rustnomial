@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::fmt::Display;
 use std::ops::{
     Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Rem, RemAssign, Shl, ShlAssign, Shr,
@@ -12,8 +12,8 @@ use rustnomial::strings::{write_leading_term, write_trailing_term};
 use rustnomial::traits::{FreeSizePolynomial, MutablePolynomial, TermIterator};
 use {Degree, Derivable, Evaluable, GenericPolynomial, Polynomial, Term};
 
-use {poly_from_str, fmt_poly};
 use rustnomial::err::TryAddError;
+use {fmt_poly, poly_from_str};
 
 #[derive(Debug, Clone)]
 pub struct SparsePolynomial<N> {

@@ -176,6 +176,13 @@ where
     }
 }
 
+impl<N: Zero> Monomial<N> {
+    /// Return the root of `Monomial`
+    pub fn root(&self) -> N {
+        N::zero()
+    }
+}
+
 impl<N> Derivable<N> for Monomial<N>
 where
     N: Zero + Copy + Mul<Output = N> + From<u8>,

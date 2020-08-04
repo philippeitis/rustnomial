@@ -1,6 +1,6 @@
 use num::{One, Zero};
-use std::str::FromStr;
 use rustnomial::err::TermFromStringError;
+use std::str::FromStr;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Degree {
@@ -52,7 +52,7 @@ where
                         num_vec.clear();
                         coeff = match N::from_str(&str) {
                             Ok(val) => val,
-                            Err(_)=> {
+                            Err(_) => {
                                 return Err(TermFromStringError::CoeffCouldNotBeParsed);
                             }
                         };

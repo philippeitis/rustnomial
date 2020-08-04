@@ -11,8 +11,8 @@ use rustnomial::strings::{write_leading_term, write_trailing_term};
 use rustnomial::traits::{MutablePolynomial, TermIterator};
 use {Degree, Derivable, Evaluable, GenericPolynomial, Term};
 
-use {poly_from_str, fmt_poly};
 use rustnomial::err::TryAddError;
+use {fmt_poly, poly_from_str};
 
 #[derive(Debug, Clone)]
 pub struct QuadraticTrinomial<N> {

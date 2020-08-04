@@ -1,4 +1,4 @@
-use num::{Zero, One};
+use num::{One, Zero};
 
 pub trait IsNegativeOne {
     fn is_negative_one(&self) -> bool;
@@ -7,7 +7,9 @@ pub trait IsNegativeOne {
 macro_rules! is_neg_one_u {
     ($U:ty) => {
         impl IsNegativeOne for $U {
-            fn is_negative_one(&self) -> bool { false }
+            fn is_negative_one(&self) -> bool {
+                false
+            }
         }
     };
 }
@@ -15,7 +17,9 @@ macro_rules! is_neg_one_u {
 macro_rules! is_neg_one {
     ($U:ty) => {
         impl IsNegativeOne for $U {
-            fn is_negative_one(&self) -> bool { *self == -<$U>::one() }
+            fn is_negative_one(&self) -> bool {
+                *self == -<$U>::one()
+            }
         }
     };
 }
@@ -42,7 +46,9 @@ pub trait Abs {
 macro_rules! abs_u {
     ($U:ty) => {
         impl Abs for $U {
-            fn abs(self) -> Self { self }
+            fn abs(self) -> Self {
+                self
+            }
         }
     };
 }
@@ -50,7 +56,9 @@ macro_rules! abs_u {
 macro_rules! abs {
     ($U:ty) => {
         impl Abs for $U {
-            fn abs(self) -> Self { self.abs() }
+            fn abs(self) -> Self {
+                self.abs()
+            }
         }
     };
 }
@@ -77,7 +85,9 @@ pub trait PowUsize {
 macro_rules! pow_u {
     ($T:ty) => {
         impl PowUsize for $T {
-            fn upow(self, exp: usize) -> Self { self.pow(exp as u32) }
+            fn upow(self, exp: usize) -> Self {
+                self.pow(exp as u32)
+            }
         }
     };
 }

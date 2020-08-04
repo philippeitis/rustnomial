@@ -1,5 +1,4 @@
 pub(crate) mod binomial;
-pub mod terms;
 pub mod derivative;
 pub(crate) mod err;
 pub mod integral;
@@ -9,5 +8,6 @@ pub mod poly_math;
 pub mod polynomial;
 pub mod sparsepolynomial;
 mod strings;
+pub mod terms;
 pub mod traits;
 pub mod trinomial;

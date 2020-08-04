@@ -1,7 +1,6 @@
-use num::{One};
+use num::One;
 use rustnomial::numerics::{Abs, IsNegativeOne, IsPositive};
 use std::fmt;
-
 
 #[macro_export]
 macro_rules! fmt_poly {
@@ -51,7 +50,7 @@ macro_rules! poly_from_str {
                         Ok(Term::ZeroTerm) => {}
                         Ok(Term::Term(coeff, deg)) => {
                             if let Err(e) = polynomial.try_add_term(coeff, deg) {
-                                return Err(PolynomialFromStringError::AddingTerm(e))
+                                return Err(PolynomialFromStringError::AddingTerm(e));
                             }
                         }
                     }
