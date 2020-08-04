@@ -1,15 +1,16 @@
 use num::{One};
 use rustnomial::numerics::{Abs, IsNegativeOne, IsPositive};
 use std::fmt;
-use std::fmt::Display;
 
 
 #[macro_export]
 macro_rules! fmt_poly {
     ($T:ident) => {
+        use std::fmt;
+
         impl<N> fmt::Display for $T<N>
         where
-            N: Zero + One + IsPositive + PartialEq + Abs + Copy + IsNegativeOne + Display,
+            N: Zero + One + IsPositive + PartialEq + Abs + Copy + IsNegativeOne + fmt::Display,
         {
             fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
                 let mut iter = self.term_iter();
@@ -68,7 +69,7 @@ macro_rules! poly_from_str {
 
 pub(crate) fn write_leading_term<N>(f: &mut fmt::Formatter, coeff: N, degree: usize) -> fmt::Result
 where
-    N: Display + One + IsNegativeOne + PartialEq + Copy,
+    N: fmt::Display + One + IsNegativeOne + PartialEq + Copy,
 {
     if degree == 0 {
         return write!(f, "{}", coeff);
@@ -89,7 +90,7 @@ where
 
 pub(crate) fn write_trailing_term<N>(f: &mut fmt::Formatter, coeff: N, degree: usize) -> fmt::Result
 where
-    N: Display + One + IsPositive + PartialEq + Copy + Abs,
+    N: fmt::Display + One + IsPositive + PartialEq + Copy + Abs,
 {
     write!(f, " {} ", if coeff.is_positive() { "+" } else { "-" })?;
 
