@@ -3,19 +3,16 @@ use std::fmt::Display;
 use std::ops::{
     Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Shr, ShrAssign, Sub, SubAssign,
 };
-use std::str::FromStr;
 
 use num::{Complex, One, Zero};
 
 use rustnomial::binomial::LinearBinomial;
-use rustnomial::degree::TermTokenizer;
 use rustnomial::numerics::{Abs, AbsSqrt, IsNegativeOne, IsPositive};
 use rustnomial::strings::{write_leading_term, write_trailing_term};
 use rustnomial::traits::{MutablePolynomial, TermIterator};
 use {Degree, Derivable, Evaluable, GenericPolynomial, Term};
 
-#[macro_use]
-use fmt_poly;
+use {poly_from_str, fmt_poly};
 use rustnomial::err::TryAddError;
 
 #[derive(Debug, Clone)]
@@ -329,62 +326,8 @@ where
     }
 }
 
-impl<N> FromStr for QuadraticTrinomial<N>
-where
-    N: Zero + One + Copy + AddAssign + FromStr,
-{
-    type Err = String;
-
-    /// Returns a `Polynomial` with the corresponding terms,
-    /// in order of ax^n + bx^(n-1) + ... + cx + d
-    ///
-    /// # Arguments
-    ///
-    /// * ` terms ` - A vector of constants, in decreasing order of degree.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use rustnomial::Monomial;
-    /// use std::str::FromStr;
-    /// // Corresponds to 1.0x^2 + 4.0x + 4.0
-    /// let monomial = Monomial::from_str("5x^2").unwrap();
-    /// assert_eq!(Monomial::new(5, 2), monomial);
-    /// ```
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let mut polynomial = QuadraticTrinomial::zero();
-        let mut has_iterated = false;
-        for term in TermTokenizer::new(s).map(|s| Term::from_str(s.as_str())) {
-            has_iterated = true;
-            match term {
-                Err(msg) => return Err(msg),
-                Ok(Term::ZeroTerm) => {}
-                Ok(Term::Term(coeff, deg)) => {
-                    if deg <= 2 {
-                        polynomial.coefficients[2 - deg] += coeff;
-                    } else {
-                        return Err("degree out of bounds".to_string());
-                    }
-                }
-            }
-        }
-
-        if has_iterated {
-            Ok(polynomial)
-        } else {
-            Err("Given string did not have any terms.".to_string())
-        }
-    }
-}
-
-impl<N> fmt::Display for QuadraticTrinomial<N>
-where
-    N: Zero + One + IsPositive + PartialEq + Abs + Copy + IsNegativeOne + Display,
-{
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        fmt_poly!(f, self)
-    }
-}
+poly_from_str!(QuadraticTrinomial);
+fmt_poly!(QuadraticTrinomial);
 
 impl<N: Copy + Neg<Output = N>> Neg for QuadraticTrinomial<N> {
     type Output = QuadraticTrinomial<N>;

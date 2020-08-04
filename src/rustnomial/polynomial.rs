@@ -4,17 +4,14 @@ use std::ops::{
     Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Rem, RemAssign, Shl, ShlAssign, Shr,
     ShrAssign, Sub, SubAssign,
 };
-use std::str::FromStr;
 
 use num::{One, Zero};
 
-use rustnomial::degree::TermTokenizer;
 use rustnomial::numerics::{Abs, IsNegativeOne, IsPositive};
 use rustnomial::strings::{write_leading_term, write_trailing_term};
 use rustnomial::traits::{FreeSizePolynomial, MutablePolynomial, TermIterator};
 use {Degree, Derivable, Evaluable, GenericPolynomial, Integrable, Integral, Term};
 
-#[macro_use]
 use {fmt_poly, poly_from_str};
 use rustnomial::err::TryAddError;
 
@@ -568,26 +565,8 @@ where
     }
 }
 
-impl<N> fmt::Display for Polynomial<N>
-where
-    N: IsPositive + Zero + One + Copy + IsNegativeOne + PartialEq + Display + Abs,
-{
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        fmt_poly!(f, self)
-    }
-}
-
-impl<N> FromStr for Polynomial<N>
-where
-    N: Zero + One + Copy + AddAssign + FromStr,
-{
-    type Err = String;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let mut polynomial = Polynomial::zero();
-        poly_from_str!(s, polynomial)
-    }
-}
+poly_from_str!(Polynomial);
+fmt_poly!(Polynomial);
 
 impl<N> Neg for Polynomial<N>
 where

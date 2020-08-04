@@ -2,7 +2,6 @@ use TryAddError;
 use {GenericPolynomial, MutablePolynomial};
 use std::ops::{AddAssign, Mul};
 use num::Zero;
-use std::process::Output;
 
 #[macro_export]
 macro_rules! poly_add {
@@ -33,7 +32,7 @@ macro_rules! poly_add {
 
 pub fn add_poly<N>(
     poly: &dyn GenericPolynomial<N>,
-    sink: &mut MutablePolynomial<N>,
+    sink: &mut dyn MutablePolynomial<N>,
 ) -> Result<(), TryAddError> where N: Zero + AddAssign + Copy {
     for (coeff, deg) in poly.term_iter() {
         sink.try_add_term(coeff, deg)?;
@@ -75,7 +74,7 @@ macro_rules! poly_mul {
 pub fn mul_poly_vec<N>(
     rhs: &dyn GenericPolynomial<N>,
     lhs: Vec<(N, usize)>,
-    sink: &mut MutablePolynomial<N>,
+    sink: &mut dyn MutablePolynomial<N>,
 ) -> Result<(), TryAddError> where N: Zero + AddAssign + Copy + Mul<Output=N> {
     for (rcoeff, rdeg) in rhs.term_iter() {
         for &(lcoeff, ldeg) in lhs.iter() {
@@ -89,7 +88,7 @@ pub fn mul_poly_vec<N>(
 pub fn mul_poly<N>(
     rhs: &dyn GenericPolynomial<N>,
     lhs: &dyn GenericPolynomial<N>,
-    sink: &mut MutablePolynomial<N>,
+    sink: &mut dyn MutablePolynomial<N>,
 ) -> Result<(), TryAddError> where N: Zero + AddAssign + Copy + Mul<Output=N> {
     for (rcoeff, rdeg) in rhs.term_iter() {
         for (lcoeff, ldeg) in lhs.term_iter() {

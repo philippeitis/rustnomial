@@ -1,7 +1,6 @@
 use std::fmt;
 use std::fmt::Display;
 use std::ops::{AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Shl, ShlAssign, Shr, ShrAssign};
-use std::str::FromStr;
 
 use num::{One, Zero};
 
@@ -13,6 +12,8 @@ use {
     Degree, Derivable, Evaluable, FreeSizePolynomial, GenericPolynomial, Integrable, Integral,
     Polynomial, Term,
 };
+
+use poly_from_str;
 
 #[derive(Debug, Clone)]
 pub struct Monomial<N> {
@@ -144,7 +145,7 @@ where
             self.deg = degree;
             Ok(())
         } else if degree != self.deg {
-            Err(TryAddError::DegreeOutOfBounds)
+            Err(TryAddError::TooManyTerms)
         } else {
             self.coefficient += term;
             Ok(())
@@ -266,35 +267,7 @@ where
     }
 }
 
-impl<N> FromStr for Monomial<N>
-where
-    N: Zero + One + Copy + AddAssign + FromStr,
-{
-    type Err = String;
-
-    /// Returns a `Polynomial` with the corresponding terms,
-    /// in order of ax^n + bx^(n-1) + ... + cx + d
-    ///
-    /// # Arguments
-    ///
-    /// * ` terms ` - A vector of constants, in decreasing order of degree.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use rustnomial::Monomial;
-    /// use std::str::FromStr;
-    /// // Corresponds to 1.0x^2 + 4.0x + 4.0
-    /// let monomial = Monomial::from_str("5x^2").unwrap();
-    /// assert_eq!(Monomial::new(5, 2), monomial);
-    /// ```
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match Term::from_str(s)? {
-            Term::ZeroTerm => Ok(Monomial::zero()),
-            Term::Term(coeff, deg) => Ok(Monomial::new(coeff, deg)),
-        }
-    }
-}
+poly_from_str!(Monomial);
 
 impl<N> fmt::Display for Monomial<N>
 where

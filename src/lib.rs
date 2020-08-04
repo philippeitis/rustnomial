@@ -2,7 +2,7 @@ extern crate core;
 extern crate num;
 
 mod rustnomial;
-pub use rustnomial::degree::{Degree, Term};
+pub use rustnomial::terms::{Degree, Term};
 pub use rustnomial::derivative::Derivable;
 pub use rustnomial::err::TryAddError;
 pub use rustnomial::integral::{Integrable, Integral};

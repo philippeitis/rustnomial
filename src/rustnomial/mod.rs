@@ -1,5 +1,5 @@
 pub(crate) mod binomial;
-pub mod degree;
+pub mod terms;
 pub mod derivative;
 pub(crate) mod err;
 pub mod integral;

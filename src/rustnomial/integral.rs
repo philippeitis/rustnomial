@@ -78,23 +78,23 @@ where
 
 #[cfg(test)]
 mod test {
-    use {Integrable, Polynomial};
+    use integral;
 
     #[test]
     fn test_integral_empty_polynomial() {
-        let integral = Polynomial::new(vec![0]).integral();
+        let integral = integral!(0);
         assert_eq!(integral.to_string(), "C");
     }
 
     #[test]
     fn test_integral_str() {
-        let integral = Polynomial::new(vec![6, 4, 2]).integral();
+        let integral = integral!(6, 4, 2);
         assert_eq!(integral.to_string(), "2x^3 + 2x^2 + 2x + C");
     }
 
     #[test]
     fn test_integral_str_negatives() {
-        let a = Polynomial::new(vec![-3, -2, 1]).integral();
+        let a = integral![-3, -2, 1];
         assert_eq!(a.to_string(), "-x^3 - x^2 + x + C");
     }
 }

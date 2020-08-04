@@ -5,17 +5,14 @@ use std::ops::{
     Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Rem, RemAssign, Shl, ShlAssign, Shr,
     ShrAssign, Sub, SubAssign,
 };
-use std::str::FromStr;
 
 use num::{One, Zero};
 
-use rustnomial::degree::TermTokenizer;
 use rustnomial::numerics::{Abs, IsNegativeOne, IsPositive, PowUsize};
 use rustnomial::strings::{write_leading_term, write_trailing_term};
 use rustnomial::traits::{FreeSizePolynomial, MutablePolynomial, TermIterator};
 use {Degree, Derivable, Evaluable, GenericPolynomial, Polynomial, Term};
 
-#[macro_use]
 use {poly_from_str, fmt_poly};
 use rustnomial::err::TryAddError;
 
@@ -141,33 +138,24 @@ impl<N: Zero + Copy> GenericPolynomial<N> for SparsePolynomial<N> {
     }
 }
 
-impl<N> FromStr for SparsePolynomial<N>
-where
-    N: Zero + One + Copy + AddAssign + FromStr,
-{
-    type Err = String;
-
-    /// Returns a `Polynomial` with the corresponding terms,
-    /// in order of ax^n + bx^(n-1) + ... + cx + d
-    ///
-    /// # Arguments
-    ///
-    /// * ` terms ` - A vector of constants, in decreasing order of degree.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use rustnomial::SparsePolynomial;
-    /// use std::str::FromStr;
-    /// // Corresponds to 1.0x^2 + 4.0x + 4.0
-    /// let polynomial = SparsePolynomial::from_str("5x^2 + 11x + 2").unwrap();
-    /// assert_eq!(SparsePolynomial::from_vec(vec![5, 11, 2]), polynomial);
-    /// ```
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let mut polynomial = SparsePolynomial::zero();
-        poly_from_str!(s, polynomial)
-    }
-}
+// Returns a `Polynomial` with the corresponding terms,
+// in order of ax^n + bx^(n-1) + ... + cx + d
+//
+// # Arguments
+//
+// * ` terms ` - A vector of constants, in decreasing order of degree.
+//
+// # Example
+//
+// ```
+// use rustnomial::SparsePolynomial;
+// use std::str::FromStr;
+// // Corresponds to 1.0x^2 + 4.0x + 4.0
+// let polynomial = SparsePolynomial::from_str("5x^2 + 11x + 2").unwrap();
+// assert_eq!(SparsePolynomial::from_vec(vec![5, 11, 2]), polynomial);
+// ```
+poly_from_str!(SparsePolynomial);
+fmt_poly!(SparsePolynomial);
 
 impl<N> FreeSizePolynomial<N> for SparsePolynomial<N>
 where
@@ -620,15 +608,6 @@ where
                 .get(key)
                 .map_or(value.is_zero(), |v| *value == *v)
         })
-    }
-}
-
-impl<N> fmt::Display for SparsePolynomial<N>
-where
-    N: Zero + One + IsPositive + Copy + IsNegativeOne + PartialEq + Display + Abs,
-{
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        fmt_poly!(f, self)
     }
 }
 

@@ -1,67 +1,69 @@
-use num::{One, Zero};
+use num::{One};
 use rustnomial::numerics::{Abs, IsNegativeOne, IsPositive};
 use std::fmt;
 use std::fmt::Display;
-use {FreeSizePolynomial, GenericPolynomial};
+
 
 #[macro_export]
 macro_rules! fmt_poly {
-    ($f:expr, $self:expr) => {{
-        let mut iter = $self.term_iter();
-        if let Some((coeff, degree)) = iter.next() {
-            write_leading_term($f, coeff, degree)?;
-            for (coeff, degree) in iter {
-                write_trailing_term($f, coeff, degree)?;
+    ($T:ident) => {
+        impl<N> fmt::Display for $T<N>
+        where
+            N: Zero + One + IsPositive + PartialEq + Abs + Copy + IsNegativeOne + Display,
+        {
+            fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+                let mut iter = self.term_iter();
+                if let Some((coeff, degree)) = iter.next() {
+                    write_leading_term(f, coeff, degree)?;
+                    for (coeff, degree) in iter {
+                        write_trailing_term(f, coeff, degree)?;
+                    }
+                    Ok(())
+                } else {
+                    write!(f, "0")
+                }
             }
-            Ok(())
-        } else {
-            write!($f, "0")
         }
-    }};
+    };
 }
 
 #[macro_export]
 macro_rules! poly_from_str {
-    // ($s:expr) => {
-    //     {
-    //         let mut polynomial = Polynomial::<i32>::zero();
-    //         let mut has_iterated = false;
-    //         for term in TermTokenizer::new($s).map(|s| Term::from_str(s.as_str())) {
-    //             has_iterated = true;
-    //             match term {
-    //                 Err(msg) => return Err(msg),
-    //                 Ok(Term::ZeroTerm) => {}
-    //                 Ok(Term::Term(coeff, deg)) => {
-    //                     polynomial.add_term(coeff, deg);
-    //                 }
-    //             }
-    //         }
-    //
-    //         if has_iterated {
-    //             Ok(polynomial)
-    //         } else {
-    //             Err("Given string did not have any terms.".to_string())
-    //         }
-    //     }
-    // };
-    ($s:expr, $polynomial:expr) => {{
-        let mut has_iterated = false;
-        for term in TermTokenizer::new($s).map(|s| Term::from_str(s.as_str())) {
-            has_iterated = true;
-            match term {
-                Err(msg) => return Err(msg),
-                Ok(Term::ZeroTerm) => {}
-                Ok(Term::Term(coeff, deg)) => {
-                    $polynomial.add_term(coeff, deg);
+    ($T:ident) => {
+        use std::str::FromStr;
+        use $crate::rustnomial::err::PolynomialFromStringError;
+        use $crate::rustnomial::terms::TermTokenizer;
+
+        impl<N> FromStr for $T<N>
+        where
+            N: Zero + One + Copy + AddAssign + FromStr,
+        {
+            type Err = PolynomialFromStringError;
+
+            fn from_str(s: &str) -> Result<Self, Self::Err> {
+                let mut polynomial = $T::zero();
+                let mut has_iterated = false;
+                for term in TermTokenizer::new(s).map(|s| Term::from_str(s.as_str())) {
+                    has_iterated = true;
+                    match term {
+                        Err(e) => return Err(PolynomialFromStringError::TermFromString(e)),
+                        Ok(Term::ZeroTerm) => {}
+                        Ok(Term::Term(coeff, deg)) => {
+                            if let Err(e) = polynomial.try_add_term(coeff, deg) {
+                                return Err(PolynomialFromStringError::AddingTerm(e))
+                            }
+                        }
+                    }
+                }
+
+                if has_iterated {
+                    Ok(polynomial)
+                } else {
+                    Err(PolynomialFromStringError::NoTermsFound)
                 }
             }
         }
-        if has_iterated {
-            Ok($polynomial)
-        } else {
-            Err("Given string did not have any terms.".to_string())
-        }
-    }};
+    };
 }
 
 pub(crate) fn write_leading_term<N>(f: &mut fmt::Formatter, coeff: N, degree: usize) -> fmt::Result

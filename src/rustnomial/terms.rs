@@ -1,5 +1,6 @@
 use num::{One, Zero};
 use std::str::FromStr;
+use rustnomial::err::TermFromStringError;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Degree {
@@ -27,7 +28,7 @@ impl<N> FromStr for Term<N>
 where
     N: Zero + One + FromStr + Copy,
 {
-    type Err = String;
+    type Err = TermFromStringError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let mut char_iter = s.chars();
@@ -41,7 +42,7 @@ where
                 '+' | '-' | '.' | '0'..='9' => num_vec.push(c),
                 'x' => {
                     if seen_x {
-                        return Err("More than one occurance of 'x' in str".to_string());
+                        return Err(TermFromStringError::MoreThanOneX);
                     }
                     if !num_vec.is_empty() {
                         if num_vec.len() == 1 && (num_vec[0] == '-' || num_vec[0] == '+') {
@@ -51,9 +52,8 @@ where
                         num_vec.clear();
                         coeff = match N::from_str(&str) {
                             Ok(val) => val,
-                            Err(_) => {
-                                let err_str = format!("Coeff {} could not be parsed.", str);
-                                return Err(err_str);
+                            Err(_)=> {
+                                return Err(TermFromStringError::CoeffCouldNotBeParsed);
                             }
                         };
                     }
@@ -61,23 +61,19 @@ where
                 }
                 '^' => {
                     if !seen_x {
-                        return Err("^ seen without x in front".to_string());
+                        return Err(TermFromStringError::CaretWithoutXInFront);
                     }
                     seen_caret = true;
                 }
                 _ => {
-                    let err_str = format!(
-                        "Unexpected char ({}) (legal characters include +, -, ., x, ^, 0..9).",
-                        c
-                    );
-                    return Err(err_str);
+                    return Err(TermFromStringError::UnexpectedChar(c));
                 }
             }
         }
         return if seen_x {
             if num_vec.is_empty() {
                 if seen_caret {
-                    return Err("^ without ensuing degree!".to_string());
+                    return Err(TermFromStringError::CaretWithoutDegree);
                 }
                 return Ok(Term::new(coeff, 1));
             }
@@ -85,15 +81,14 @@ where
             if let Ok(degree) = usize::from_str(&str) {
                 Ok(Term::new(coeff, degree))
             } else {
-                Err("degree could not be parsed".to_string())
+                Err(TermFromStringError::CoeffCouldNotBeParsed)
             }
         } else {
             let str: String = num_vec.iter().collect();
             return match N::from_str(&str) {
                 Ok(val) => Ok(Term::new(val, 0)),
                 Err(_) => {
-                    let err_str = format!("Coeff {} could not be parsed.", str);
-                    Err(err_str)
+                    return Err(TermFromStringError::CoeffCouldNotBeParsed);
                 }
             };
         };
