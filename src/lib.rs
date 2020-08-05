@@ -13,3 +13,4 @@ pub use rustnomial::sparsepolynomial::SparsePolynomial;
 pub use rustnomial::terms::{Degree, Term};
 pub use rustnomial::traits::{Evaluable, FreeSizePolynomial, GenericPolynomial, MutablePolynomial};
 pub use rustnomial::trinomial::QuadraticTrinomial;
+pub use rustnomial::roots::{Roots, brent_solve};

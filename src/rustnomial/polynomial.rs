@@ -5,12 +5,12 @@ use std::ops::{
 
 use num::{One, Zero};
 
-use rustnomial::numerics::{Abs, IsNegativeOne, IsPositive};
-use rustnomial::strings::{write_leading_term, write_trailing_term};
+use rustnomial::numerics::{Abs, IsNegativeOne, IsPositive, AbsSqrt};
 use rustnomial::traits::{FreeSizePolynomial, MutablePolynomial, TermIterator};
 use {Degree, Derivable, Evaluable, GenericPolynomial, Integrable, Integral, Term};
 
 use rustnomial::err::TryAddError;
+use rustnomial::roots::{Roots, complex_roots_trinomial, find_roots};
 use {fmt_poly, poly_from_str};
 
 #[macro_export]
@@ -243,6 +243,40 @@ impl<N: Copy + Zero> GenericPolynomial<N> for Polynomial<N> {
     }
 }
 
+impl<N> Polynomial<N>
+where
+    N: Copy
+        + Mul<Output = N>
+        + Div<Output = N>
+        + Sub<Output = N>
+        + Add<Output = N>
+        + AbsSqrt
+        + IsPositive
+        + Zero
+        + Neg<Output = N>
+        + From<u8>,
+{
+    /// Returns a `Polynomial` with no terms.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use rustnomial::Polynomial;
+    /// // Corresponds to 1.0x^2 + 4.0x + 4.0
+    /// let polynomial = Polynomial::new(vec![1.0, 4.0, 4.0]);
+    /// ```
+    pub fn roots(self) -> Roots<N> {
+        find_roots(&self)
+    }
+}
+//
+// impl<N> From<&dyn GenericPolynomial<N>> for Polynomial<N>
+//     where N: Zero + Copy + AddAssign {
+//     fn from(poly: &dyn GenericPolynomial<N>) -> Polynomial<N> {
+//         Polynomial::from_terms(poly.term_iter().collect())
+//     }
+// }
+
 impl<N> FreeSizePolynomial<N> for Polynomial<N>
 where
     N: Zero + Copy + AddAssign,
@@ -375,12 +409,6 @@ impl<N> Polynomial<N>
 where
     N: Mul<Output = N> + AddAssign + Copy + Zero + One,
 {
-    pub fn borrow_mul(&self, _rhs: &Polynomial<N>) -> Polynomial<N> {
-        Polynomial {
-            terms: vec_mul(&self.terms, &_rhs.terms),
-        }
-    }
-
     /// Raises the `Polynomial` to the power of exp, using exponentiation by squaring.
     ///
     /// # Example
@@ -401,11 +429,11 @@ where
         } else if exp == 1 {
             Polynomial::new(self.terms.clone())
         } else if exp == 2 {
-            self.borrow_mul(self)
+            self * self
         } else if exp % 2 == 0 {
             self.pow(exp / 2).pow(2)
         } else {
-            self.borrow_mul(&self.pow(exp - 1))
+            self * &self.pow(exp - 1)
         }
     }
 }
@@ -464,6 +492,27 @@ where
         }
 
         (Polynomial::new(div), Polynomial::new(remainder))
+    }
+}
+
+impl<N> Polynomial<N>
+where
+    N: Copy + Zero + SubAssign + Mul<Output = N> + Div<Output = N>,
+{
+    /// Divides self by the given `Polynomial`, and returns the quotient.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use rustnomial::Polynomial;
+    /// let polynomial = Polynomial::new(vec![1.0, 2.0]);
+    /// let polynomial_sqr = polynomial.pow(2);
+    /// let polynomial_cub = polynomial.pow(3);
+    /// assert_eq!(polynomial.clone() * polynomial.clone(), polynomial_sqr);
+    /// assert_eq!(polynomial_sqr.clone() * polynomial.clone(), polynomial_cub);
+    /// ```
+    pub fn floor_div(&self, _rhs: &Polynomial<N>) -> Polynomial<N> {
+        self.div_mod(_rhs).0
     }
 }
 
@@ -686,15 +735,6 @@ where
     }
 }
 
-impl<N> MulAssign<Polynomial<N>> for Polynomial<N>
-where
-    N: Mul<Output = N> + AddAssign + Copy + Zero,
-{
-    fn mul_assign(&mut self, _rhs: Polynomial<N>) {
-        self.terms = vec_mul(&self.terms, &_rhs.terms);
-    }
-}
-
 impl<N> Mul<&Polynomial<N>> for Polynomial<N>
 where
     N: Mul<Output = N> + AddAssign + Copy + Zero,
@@ -703,6 +743,39 @@ where
 
     fn mul(self, _rhs: &Polynomial<N>) -> Polynomial<N> {
         Polynomial::new(vec_mul(&self.terms, &_rhs.terms))
+    }
+}
+
+impl<N> Mul<Polynomial<N>> for &Polynomial<N>
+where
+    N: Mul<Output = N> + AddAssign + Copy + Zero,
+{
+    type Output = Polynomial<N>;
+
+    fn mul(self, _rhs: Polynomial<N>) -> Polynomial<N> {
+        Polynomial {
+            terms: vec_mul(&self.terms, &_rhs.terms),
+        }
+    }
+}
+
+impl<N> Mul<&Polynomial<N>> for &Polynomial<N>
+where
+    N: Mul<Output = N> + AddAssign + Copy + Zero,
+{
+    type Output = Polynomial<N>;
+
+    fn mul(self, _rhs: &Polynomial<N>) -> Polynomial<N> {
+        Polynomial::new(vec_mul(&self.terms, &_rhs.terms))
+    }
+}
+
+impl<N> MulAssign<Polynomial<N>> for Polynomial<N>
+where
+    N: Mul<Output = N> + AddAssign + Copy + Zero,
+{
+    fn mul_assign(&mut self, _rhs: Polynomial<N>) {
+        self.terms = vec_mul(&self.terms, &_rhs.terms);
     }
 }
 
@@ -814,6 +887,7 @@ impl<N: Zero + Copy> ShrAssign<i32> for Polynomial<N> {
 /// modulo floordiv
 #[cfg(test)]
 mod tests {
+    use rustnomial::roots::Roots;
     use {Degree, Derivable, Evaluable, Integrable, Polynomial};
 
     #[test]

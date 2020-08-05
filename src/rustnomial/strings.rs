@@ -1,11 +1,14 @@
-use num::One;
-use rustnomial::numerics::{Abs, IsNegativeOne, IsPositive};
 use std::fmt;
+
+use num::One;
+
+use rustnomial::numerics::{Abs, IsNegativeOne, IsPositive};
 
 #[macro_export]
 macro_rules! fmt_poly {
     ($T:ident) => {
         use std::fmt;
+        use $crate::rustnomial::strings::{write_leading_term, write_trailing_term};
 
         impl<N> fmt::Display for $T<N>
         where

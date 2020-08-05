@@ -1,5 +1,4 @@
-use std::collections::{HashMap, HashSet};
-use std::fmt::Display;
+use std::collections::HashMap;
 use std::ops::{
     Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Rem, RemAssign, Shl, ShlAssign, Shr,
     ShrAssign, Sub, SubAssign,
@@ -7,13 +6,12 @@ use std::ops::{
 
 use num::{One, Zero};
 
-use rustnomial::numerics::{Abs, IsNegativeOne, IsPositive, PowUsize};
-use rustnomial::strings::{write_leading_term, write_trailing_term};
-use rustnomial::traits::{FreeSizePolynomial, MutablePolynomial, TermIterator};
-use {Degree, Derivable, Evaluable, GenericPolynomial, Polynomial, Term};
-
 use rustnomial::err::TryAddError;
-use {fmt_poly, poly_from_str};
+use rustnomial::numerics::{Abs, IsNegativeOne, IsPositive, PowUsize, AbsSqrt};
+use rustnomial::traits::{FreeSizePolynomial, MutablePolynomial, TermIterator};
+use {fmt_poly, poly_from_str, Degree, Derivable, Evaluable, GenericPolynomial, Polynomial, Term};
+use Roots;
+use rustnomial::roots::find_roots;
 
 #[derive(Debug, Clone)]
 pub struct SparsePolynomial<N> {
@@ -134,6 +132,33 @@ impl<N: Zero + Copy> GenericPolynomial<N> for SparsePolynomial<N> {
     /// ```
     fn term_iter(&self) -> TermIterator<N> {
         TermIterator::new(self)
+    }
+}
+
+impl<N> SparsePolynomial<N>
+where
+    N: Copy
+        + Mul<Output = N>
+        + Div<Output = N>
+        + Sub<Output = N>
+        + Add<Output = N>
+        + AbsSqrt
+        + IsPositive
+        + Zero
+        + Neg<Output = N>
+        + From<u8>,
+{
+    /// Returns a `Polynomial` with no terms.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use rustnomial::Polynomial;
+    /// // Corresponds to 1.0x^2 + 4.0x + 4.0
+    /// let polynomial = Polynomial::new(vec![1.0, 4.0, 4.0]);
+    /// ```
+    pub fn roots(self) -> Roots<N> {
+        find_roots(&self)
     }
 }
 
@@ -325,7 +350,7 @@ where
         let mut terms = HashMap::with_capacity(self.terms.len());
         // TODO: Fix for degrees of arbitrary size.
         for (&degree, &coeff) in self.terms.iter() {
-            if degree != 0 && !coeff.is_zero() {
+            if !coeff.is_zero() && degree != 0 {
                 terms.insert(degree - 1, coeff * N::from(degree as u8));
             }
         }

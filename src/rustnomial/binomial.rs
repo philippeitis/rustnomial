@@ -1,17 +1,13 @@
-use std::fmt::Display;
 use std::ops::{
     Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Shr, ShrAssign, Sub, SubAssign,
 };
 
 use num::{One, Zero};
 
-use rustnomial::numerics::{Abs, IsNegativeOne, IsPositive};
-use rustnomial::strings::{write_leading_term, write_trailing_term};
-use rustnomial::traits::{MutablePolynomial, TermIterator};
-use {Degree, Derivable, Evaluable, GenericPolynomial, Term};
-
 use rustnomial::err::TryAddError;
-use {fmt_poly, poly_from_str};
+use rustnomial::numerics::{Abs, IsNegativeOne, IsPositive};
+use rustnomial::traits::{MutablePolynomial, TermIterator};
+use {fmt_poly, poly_from_str, Degree, Derivable, Evaluable, GenericPolynomial, Term};
 
 #[derive(Debug, Clone)]
 pub struct LinearBinomial<N> {

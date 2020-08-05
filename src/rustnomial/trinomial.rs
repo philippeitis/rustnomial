@@ -1,4 +1,3 @@
-use std::fmt::Display;
 use std::ops::{
     Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Shr, ShrAssign, Sub, SubAssign,
 };
@@ -6,13 +5,11 @@ use std::ops::{
 use num::{Complex, One, Zero};
 
 use rustnomial::binomial::LinearBinomial;
-use rustnomial::numerics::{Abs, AbsSqrt, IsNegativeOne, IsPositive};
-use rustnomial::strings::{write_leading_term, write_trailing_term};
-use rustnomial::traits::{MutablePolynomial, TermIterator};
-use {Degree, Derivable, Evaluable, GenericPolynomial, Term};
-
 use rustnomial::err::TryAddError;
-use {fmt_poly, poly_from_str};
+use rustnomial::numerics::{Abs, AbsSqrt, IsNegativeOne, IsPositive};
+use rustnomial::roots::{complex_roots_trinomial, discriminant_trinomial};
+use rustnomial::traits::{MutablePolynomial, TermIterator};
+use {fmt_poly, poly_from_str, Degree, Derivable, Evaluable, GenericPolynomial, Term};
 
 #[derive(Debug, Clone)]
 pub struct QuadraticTrinomial<N> {
@@ -95,24 +92,14 @@ where
 {
     pub fn discriminant(&self) -> N {
         let [a, b, c] = self.coefficients;
-        b * b - a * c * N::from(4)
+        discriminant_trinomial(a, b, c)
     }
 
     /// Return the complex roots of `QuadraticTrinomial` with largest
     /// first, smallest second.
     pub fn complex_roots(&self) -> (Complex<N>, Complex<N>) {
-        let discriminant = self.discriminant();
-        let a = self.coefficients[0] * N::from(2);
-        let b = -self.coefficients[1] / a;
-        let sqrt = discriminant.abs_sqrt() / a;
-        if discriminant.is_positive() {
-            (
-                Complex::new(b + sqrt, N::zero()),
-                Complex::new(b - sqrt, N::zero()),
-            )
-        } else {
-            (Complex::new(b, sqrt), Complex::new(b, -sqrt))
-        }
+        let [a, b, c] = self.coefficients;
+        complex_roots_trinomial(a, b, c)
     }
 
     pub fn real_roots(&self) -> Option<(N, N)> {
@@ -656,7 +643,7 @@ mod tests {
     fn test_complex_roots_pos() {
         let a = QuadraticTrinomial::new([1, 4, 4]);
         let c = (Complex::new(-2i16, 0), Complex::new(-2i16, 0));
-        assert_eq!(a.complex_roots(), c);
+        assert_eq!(c, a.complex_roots());
     }
 
     #[test]
