@@ -259,7 +259,6 @@ where
         + Neg<Output = N>
         + From<u8>
         + Into<f64>
-        + TryFrom<f64>
 {
     /// Returns a `Polynomial` with no terms.
     ///

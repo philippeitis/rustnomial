@@ -118,7 +118,6 @@ pub fn find_roots<N>(poly: &dyn GenericPolynomial<N>) -> Roots<N> where
         + Neg<Output = N>
         + From<u8>
         + Into<f64>
-        + TryFrom<f64>
 {
     match poly.term_iter().collect::<Vec<(N, usize)>>().as_slice() {
         [] => Roots::InfiniteRoots,
