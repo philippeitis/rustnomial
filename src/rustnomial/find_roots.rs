@@ -45,10 +45,13 @@ where
     let discriminant = discriminant_trinomial(a, b, c);
     let a = a * N::from(2);
     let b = -b / a;
-    let sqrt = discriminant.abs_sqrt() / a;
+
     if discriminant.is_zero() {
-        Roots::TwoRealRoots(b, b)
-    } else if discriminant.is_positive() {
+        return Roots::TwoRealRoots(b, b)
+    }
+
+    let sqrt = discriminant.abs_sqrt() / a;
+    if discriminant.is_positive() {
         Roots::TwoRealRoots(b + sqrt, b - sqrt)
     } else {
         Roots::TwoComplexRoots(Complex::new(b, sqrt), Complex::new(b, -sqrt))
