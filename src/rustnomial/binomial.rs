@@ -276,6 +276,17 @@ where
     }
 }
 
+macro_rules! from_binomial_a_to_b {
+    ($A:ty, $B:ty) => {
+        impl From<LinearBinomial<$A>> for LinearBinomial<$B> {
+            fn from(item: LinearBinomial<$A>) -> Self {
+                LinearBinomial::new([item.coefficients[0] as $B, item.coefficients[1] as $B])
+            }
+        }
+    };
+}
+
+upcast!(from_binomial_a_to_b);
 poly_from_str!(LinearBinomial);
 fmt_poly!(LinearBinomial);
 

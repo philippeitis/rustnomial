@@ -295,6 +295,17 @@ where
     }
 }
 
+macro_rules! from_monomial_a_to_b {
+    ($A:ty, $B:ty) => {
+        impl From<Monomial<$A>> for Monomial<$B> {
+            fn from(item: Monomial<$A>) -> Self {
+                Monomial::new(item.coefficient as $B, item.deg)
+            }
+        }
+    };
+}
+
+upcast!(from_monomial_a_to_b);
 poly_from_str!(Monomial);
 
 impl<N> fmt::Display for Monomial<N>

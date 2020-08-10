@@ -269,13 +269,6 @@ impl Polynomial<f64> {
         find_roots(&self)
     }
 }
-//
-// impl<N> From<&dyn GenericPolynomial<N>> for Polynomial<N>
-//     where N: Zero + Copy + AddAssign {
-//     fn from(poly: &dyn GenericPolynomial<N>) -> Polynomial<N> {
-//         Polynomial::from_terms(poly.term_iter().collect())
-//     }
-// }
 
 impl<N> FreeSizePolynomial<N> for Polynomial<N>
 where
@@ -590,6 +583,21 @@ where
     }
 }
 
+macro_rules! from_poly_a_to_b {
+    ($A:ty, $B:ty) => {
+        impl From<Polynomial<$A>> for Polynomial<$B> {
+            fn from(item: Polynomial<$A>) -> Self {
+                let mut vec = vec![<$B>::zero(); item.terms.len()];
+                for (&val, dest) in item.terms.iter().zip(vec.iter_mut()) {
+                    *dest = val as $B;
+                }
+                Polynomial::new(vec)
+            }
+        }
+    };
+}
+
+upcast!(from_poly_a_to_b);
 poly_from_str!(Polynomial);
 fmt_poly!(Polynomial);
 

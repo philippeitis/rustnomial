@@ -1,5 +1,7 @@
 #[macro_use]
 mod strings;
+#[macro_use]
+mod macros;
 
 pub mod binomial;
 pub mod derivative;

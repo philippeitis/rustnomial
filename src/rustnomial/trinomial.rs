@@ -310,6 +310,21 @@ where
     }
 }
 
+macro_rules! from_trinomial_a_to_b {
+    ($A:ty, $B:ty) => {
+        impl From<QuadraticTrinomial<$A>> for QuadraticTrinomial<$B> {
+            fn from(item: QuadraticTrinomial<$A>) -> Self {
+                QuadraticTrinomial::new([
+                    item.coefficients[0] as $B,
+                    item.coefficients[1] as $B,
+                    item.coefficients[2] as $B,
+                ])
+            }
+        }
+    };
+}
+
+upcast!(from_trinomial_a_to_b);
 poly_from_str!(QuadraticTrinomial);
 fmt_poly!(QuadraticTrinomial);
 

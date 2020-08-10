@@ -221,6 +221,22 @@ impl SparsePolynomial<f64> {
 // let polynomial = SparsePolynomial::from_str("5x^2 + 11x + 2").unwrap();
 // assert_eq!(SparsePolynomial::from_vec(vec![5, 11, 2]), polynomial);
 // ```
+
+macro_rules! from_sparse_a_to_b {
+    ($A:ty, $B:ty) => {
+        impl From<SparsePolynomial<$A>> for SparsePolynomial<$B> {
+            fn from(item: SparsePolynomial<$A>) -> Self {
+                let mut hashmap = HashMap::<usize, $B>::new();
+                for (&deg, &val) in item.terms.iter() {
+                    hashmap.insert(deg, val as $B);
+                }
+                SparsePolynomial::new(hashmap)
+            }
+        }
+    };
+}
+
+upcast!(from_sparse_a_to_b);
 poly_from_str!(SparsePolynomial);
 fmt_poly!(SparsePolynomial);
 
@@ -919,6 +935,12 @@ impl<N: Copy> ShrAssign<i32> for SparsePolynomial<N> {
 #[cfg(test)]
 mod tests {
     use {Degree, Derivable, Evaluable, GenericPolynomial, Polynomial, SparsePolynomial};
+
+    #[test]
+    fn test_from() {
+        let a = SparsePolynomial::from_vec(vec![1u8, 2, 3, 4]);
+        let b: SparsePolynomial<u16> = a.into();
+    }
 
     #[test]
     fn test_eval() {

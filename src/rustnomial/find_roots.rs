@@ -307,7 +307,10 @@ mod test {
     #[test]
     fn test_large_polynomials() {
         let p = Polynomial::new(vec![1f64, 2.]).pow(9) * Polynomial::new(vec![1f64, 3.]);
-        assert_eq!(Roots::ManyRealRoots(vec![-3., -2., -2., -2., -2., -2., -2., -2., -2., -2.]), find_roots(&p));
+        assert_eq!(
+            Roots::ManyRealRoots(vec![-3., -2., -2., -2., -2., -2., -2., -2., -2., -2.]),
+            find_roots(&p)
+        );
     }
 
     // #[test]
