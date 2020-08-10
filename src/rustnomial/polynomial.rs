@@ -7,7 +7,7 @@ use num::{One, Zero};
 
 use rustnomial::err::TryAddError;
 use rustnomial::find_roots::{find_roots, Roots};
-use rustnomial::numerics::{Abs, AbsSqrt, Cbrt, IsNegativeOne, IsPositive};
+use rustnomial::numerics::{Abs, IsNegativeOne, IsPositive};
 use rustnomial::traits::{FreeSizePolynomial, MutablePolynomial, TermIterator};
 use {Degree, Derivable, Evaluable, GenericPolynomial, Integrable, Integral, Term};
 
@@ -30,7 +30,7 @@ pub struct Polynomial<N> {
     pub terms: Vec<N>,
 }
 
-fn first_nonzero_index<N>(terms: &Vec<N>) -> usize
+pub(crate) fn first_nonzero_index<N>(terms: &Vec<N>) -> usize
 where
     N: Zero + Copy,
 {
@@ -81,7 +81,10 @@ fn vec_sub_w_scale<N>(
     N: Copy + Mul<Output = N> + SubAssign,
 {
     let loc = _lhs.len() - _lhs_degree - 1;
-    for (_lhs_t, _rhs_t) in _lhs[loc..].iter_mut().zip(_rhs) {
+    for (_lhs_t, _rhs_t) in _lhs[loc..]
+        .iter_mut()
+        .zip(_rhs[_rhs.len() - _rhs_deg - 1..].iter())
+    {
         *_lhs_t -= (*_rhs_t) * _rhs_scale;
     }
 }
@@ -98,7 +101,7 @@ where
     }
 }
 
-fn first_term<N>(poly_vec: &Vec<N>) -> Term<N>
+pub(crate) fn first_term<N>(poly_vec: &Vec<N>) -> Term<N>
 where
     N: Zero + Copy,
 {
@@ -242,29 +245,14 @@ impl<N: Copy + Zero> GenericPolynomial<N> for Polynomial<N> {
     }
 }
 
-impl<N> Polynomial<N>
-where
-    N: Copy
-        + Mul<Output = N>
-        + Div<Output = N>
-        + Sub<Output = N>
-        + Add<Output = N>
-        + Cbrt
-        + AbsSqrt
-        + IsPositive
-        + Zero
-        + One
-        + Neg<Output = N>
-        + From<u8>
-        + Into<f64>,
-{
+impl Polynomial<f64> {
     /// Return the roots of the `Polynomial`.
     ///
     /// # Example
     ///
     /// ```
     /// use rustnomial::{Polynomial, Roots, GenericPolynomial};
-    /// let zero = Polynomial::<f32>::zero();
+    /// let zero = Polynomial::<f64>::zero();
     /// assert_eq!(Roots::InfiniteRoots, zero.roots());
     /// let constant = Polynomial::new(vec![1.]);
     /// assert_eq!(Roots::NoRoots, constant.roots());
@@ -277,7 +265,7 @@ where
     /// let quadnomial = Polynomial::new(vec![1.0, 6.0, 12.0, 8.0]);
     /// assert_eq!(Roots::ManyRealRoots(vec![-2.0, -2.0, -2.0]), quadnomial.roots());
     /// ```
-    pub fn roots(self) -> Roots<N> {
+    pub fn roots(self) -> Roots<f64> {
         find_roots(&self)
     }
 }

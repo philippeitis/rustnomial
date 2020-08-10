@@ -8,7 +8,7 @@ use num::{One, Zero};
 
 use rustnomial::err::TryAddError;
 use rustnomial::find_roots::find_roots;
-use rustnomial::numerics::{Abs, AbsSqrt, Cbrt, IsNegativeOne, IsPositive, PowUsize};
+use rustnomial::numerics::{Abs, IsNegativeOne, IsPositive, PowUsize};
 use rustnomial::traits::{FreeSizePolynomial, MutablePolynomial, TermIterator};
 use {Degree, Derivable, Evaluable, GenericPolynomial, Polynomial, Roots, Term};
 
@@ -180,29 +180,14 @@ impl<N: Zero + Copy> GenericPolynomial<N> for SparsePolynomial<N> {
     }
 }
 
-impl<N> SparsePolynomial<N>
-where
-    N: Copy
-        + Mul<Output = N>
-        + Div<Output = N>
-        + Sub<Output = N>
-        + Add<Output = N>
-        + Cbrt
-        + AbsSqrt
-        + IsPositive
-        + Zero
-        + One
-        + Neg<Output = N>
-        + From<u8>
-        + Into<f64>,
-{
+impl SparsePolynomial<f64> {
     /// Return the roots of the `SparsePolynomial`.
     ///
     /// # Example
     ///
     /// ```
     /// use rustnomial::{SparsePolynomial, Roots, GenericPolynomial};
-    /// let zero = SparsePolynomial::<f32>::zero();
+    /// let zero = SparsePolynomial::<f64>::zero();
     /// assert_eq!(Roots::InfiniteRoots, zero.roots());
     /// let constant = SparsePolynomial::from_vec(vec![1.]);
     /// assert_eq!(Roots::NoRoots, constant.roots());
@@ -215,7 +200,7 @@ where
     /// let quadnomial = SparsePolynomial::from_vec(vec![1.0, 6.0, 12.0, 8.0]);
     /// assert_eq!(Roots::ManyRealRoots(vec![-2.0, -2.0, -2.0]), quadnomial.roots());
     /// ```
-    pub fn roots(self) -> Roots<N> {
+    pub fn roots(self) -> Roots<f64> {
         find_roots(&self)
     }
 }
