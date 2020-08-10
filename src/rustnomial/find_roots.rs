@@ -1,4 +1,3 @@
-use std::mem;
 use std::ops::{Add, Div, Mul, Neg, Sub};
 
 use num::{Complex, One, Zero};
@@ -174,80 +173,6 @@ where
             // Roots::OnlyRealRoots(find_roots_eigen(values).into_iter().collect::<Vec<f64>>())
         }
     }
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum RootFindingErr {
-    NotBracketed,
-}
-
-pub fn brent_solve<F>(f: F, a: f64, b: f64, eps: f64) -> Result<f64, RootFindingErr>
-where
-    F: Fn(f64) -> f64,
-{
-    let fa = f(a);
-    let fb = f(b);
-    if fa * fb > 0. {
-        return Err(RootFindingErr::NotBracketed);
-    }
-
-    if fa.is_zero() {
-        return Ok(a);
-    } else if fb.is_zero() {
-        return Ok(b);
-    }
-
-    let (mut a, mut fa, mut b, mut fb) = if fb.abs() > fa.abs() {
-        (b, fb, a, fa)
-    } else {
-        (a, fa, b, fb)
-    };
-
-    let (mut c, mut fc) = (a, fa);
-    let mut mflag = true;
-    let mut s = a;
-    let mut fs = fa;
-    let mut d = 0.;
-    while !fb.is_zero() && !fs.is_zero() && (b - a).abs() > eps {
-        s = if fa != fc && fb != fc {
-            a * fb * fc / ((fa - fb) * (fa - fc))
-                + b * fa * fc / ((fb - fa) * (fb - fc))
-                + c * fa * fb / ((fc - fa) * (fc - fb))
-        } else {
-            b - fb * (b - a) / (fb - fa)
-        };
-
-        if (s < (3. * a + b) / 4. || s > b)
-            || (mflag && (s - b).abs() >= (b - c).abs() / 2.)
-            || (!mflag && (s - b).abs() >= (c - d).abs() / 2.)
-            || (mflag && (b - c).abs() < eps)
-            || (!mflag && (c - d).abs() < eps)
-        {
-            s = (a + b) / 2.;
-            mflag = true;
-        } else {
-            mflag = false;
-        }
-        fs = f(s);
-
-        d = c;
-        c = b;
-        fc = fb;
-
-        if fa * fs < 0. {
-            b = s;
-            fb = fs;
-        } else {
-            a = s;
-            fa = fs;
-        }
-
-        if fb.abs() > fa.abs() {
-            mem::swap(&mut a, &mut b);
-            mem::swap(&mut fa, &mut fb);
-        }
-    }
-    return Ok(s);
 }
 
 #[cfg(test)]
