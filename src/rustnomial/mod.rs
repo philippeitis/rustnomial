@@ -1,12 +1,12 @@
 pub mod binomial;
 pub mod derivative;
 pub mod err;
+pub(crate) mod find_roots;
 pub mod integral;
 pub mod monomial;
 pub mod numerics;
 pub mod poly_math;
 pub mod polynomial;
-pub(crate) mod find_roots;
 pub mod sparsepolynomial;
 mod strings;
 pub mod terms;

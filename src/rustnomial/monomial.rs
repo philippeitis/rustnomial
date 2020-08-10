@@ -9,11 +9,9 @@ use rustnomial::numerics::{IsNegativeOne, PowUsize};
 use rustnomial::strings::write_leading_term;
 use rustnomial::traits::{MutablePolynomial, TermIterator};
 use {
-    Degree, Derivable, Evaluable, FreeSizePolynomial, GenericPolynomial, Integrable, Integral,
-    Polynomial, Term,
+    poly_from_str, Degree, Derivable, Evaluable, FreeSizePolynomial, GenericPolynomial, Integrable,
+    Integral, Polynomial, Term,
 };
-
-use poly_from_str;
 
 #[derive(Debug, Clone)]
 pub struct Monomial<N> {
@@ -140,7 +138,6 @@ impl<N: Copy + Zero> GenericPolynomial<N> for Monomial<N> {
     fn is_zero(&self) -> bool {
         self.degree() == Degree::NegInf
     }
-
 }
 
 impl<N> MutablePolynomial<N> for Monomial<N>
@@ -514,8 +511,8 @@ impl<N: Zero + Copy> ShrAssign<i32> for Monomial<N> {
 
 #[cfg(test)]
 mod tests {
-    use {FreeSizePolynomial, Derivable, Evaluable, Integrable, Monomial, Polynomial};
     use GenericPolynomial;
+    use {Derivable, Evaluable, FreeSizePolynomial, Integrable, Monomial, Polynomial};
 
     #[test]
     fn test_eval() {

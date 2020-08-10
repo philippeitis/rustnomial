@@ -6,8 +6,8 @@ use num::{Complex, One, Zero};
 
 use rustnomial::binomial::LinearBinomial;
 use rustnomial::err::TryAddError;
-use rustnomial::numerics::{Abs, AbsSqrt, IsNegativeOne, IsPositive};
 use rustnomial::find_roots::{complex_roots_trinomial, discriminant_trinomial};
+use rustnomial::numerics::{Abs, AbsSqrt, IsNegativeOne, IsPositive};
 use rustnomial::traits::{MutablePolynomial, TermIterator};
 use {fmt_poly, poly_from_str, Degree, Derivable, Evaluable, GenericPolynomial, Term};
 
@@ -194,7 +194,6 @@ impl<N: Copy + Zero> GenericPolynomial<N> for QuadraticTrinomial<N> {
     fn is_zero(&self) -> bool {
         self.degree() == Degree::NegInf
     }
-
 }
 
 impl<N> MutablePolynomial<N> for QuadraticTrinomial<N>
@@ -554,8 +553,8 @@ impl<N: Zero + Copy> ShrAssign<u32> for QuadraticTrinomial<N> {
 mod tests {
     use num::Complex;
     use rustnomial::trinomial::QuadraticTrinomial;
-    use {Derivable, Evaluable};
     use GenericPolynomial;
+    use {Derivable, Evaluable};
 
     #[test]
     fn test_eval() {

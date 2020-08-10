@@ -115,9 +115,8 @@ where
 
 #[cfg(test)]
 mod tests {
-    use {GenericPolynomial, Polynomial, Integrable, SparsePolynomial};
     use std::str::FromStr;
-    use Monomial;
+    use {GenericPolynomial, Integrable, Monomial, Polynomial, SparsePolynomial};
 
     #[test]
     fn test_from_str() {
@@ -220,7 +219,7 @@ mod tests {
     #[test]
     fn test_sparse_polynomial_str_has_negative() {
         let a = SparsePolynomial::from_vec(vec![-2, -1, -1, 0]);
-        assert_eq!( "-2x^3 - x^2 - x", a.to_string());
+        assert_eq!("-2x^3 - x^2 - x", a.to_string());
     }
 
     #[test]
@@ -234,7 +233,6 @@ mod tests {
         let a = Monomial::new(5, 2);
         assert_eq!("5x^2", a.to_string());
     }
-
 
     #[test]
     fn test_polynomial_str_all_zeroes() {
@@ -286,5 +284,4 @@ mod tests {
         let a = Polynomial::new(vec![-1]);
         assert_eq!("-1", a.to_string());
     }
-
 }

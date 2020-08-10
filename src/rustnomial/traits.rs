@@ -1,10 +1,14 @@
-use num::Zero;
-use rustnomial::err::TryAddError;
 use std::ops::AddAssign;
-use ::{Term, Degree};
+
+use num::Zero;
+
+use rustnomial::err::TryAddError;
+use {Degree, Term};
 
 pub trait GenericPolynomial<N> {
-    fn zero() -> Self where Self: Sized;
+    fn zero() -> Self
+    where
+        Self: Sized;
 
     fn len(&self) -> usize;
 

@@ -1,10 +1,10 @@
 use std::mem;
 use std::ops::{Add, Div, Mul, Neg, Sub};
 
-use num::{Complex, Zero, One};
+use num::{Complex, One, Zero};
 use roots::find_roots_sturm;
 
-use rustnomial::numerics::{AbsSqrt, IsPositive, Cbrt};
+use rustnomial::numerics::{AbsSqrt, Cbrt, IsPositive};
 use GenericPolynomial;
 
 #[derive(Clone, Debug, PartialEq)]
@@ -64,7 +64,7 @@ where
         + Zero
         + One
         + Neg<Output = N>
-        + From<u8>
+        + From<u8>,
 {
     let sqr = |x: N| x * x;
     let cub = |x: N| x * x * x;
@@ -103,7 +103,8 @@ where
 /// x^4 + 8 x^3 + 24 x^2 + 32 x + 16
 /// Finds the roots of the polynomial with terms defined by the given vector, where each element
 /// is a tuple consisting of the coefficient and degree. Order is not guaranteed.
-pub fn find_roots<N>(poly: &dyn GenericPolynomial<N>) -> Roots<N> where
+pub fn find_roots<N>(poly: &dyn GenericPolynomial<N>) -> Roots<N>
+where
     N: Copy
         + Mul<Output = N>
         + Div<Output = N>
@@ -116,7 +117,7 @@ pub fn find_roots<N>(poly: &dyn GenericPolynomial<N>) -> Roots<N> where
         + One
         + Neg<Output = N>
         + From<u8>
-        + Into<f64>
+        + Into<f64>,
 {
     match poly.term_iter().collect::<Vec<(N, usize)>>().as_slice() {
         [] => Roots::InfiniteRoots,
@@ -137,7 +138,7 @@ pub fn find_roots<N>(poly: &dyn GenericPolynomial<N>) -> Roots<N> where
             } else {
                 Roots::ComplexRoots(vec![root_a, root_b])
             }
-        },
+        }
         [(a, 3), one_or_more @ ..] => {
             let (b, c, d) = match one_or_more {
                 [] => (N::zero(), N::zero(), N::zero()),
@@ -156,7 +157,7 @@ pub fn find_roots<N>(poly: &dyn GenericPolynomial<N>) -> Roots<N> where
             } else {
                 Roots::ComplexRoots(vec![root_a, root_b, root_c])
             }
-        },
+        }
         [vals @ ..] => {
             let (leading, degree) = vals[0];
             let leading = leading.into();
@@ -164,12 +165,16 @@ pub fn find_roots<N>(poly: &dyn GenericPolynomial<N>) -> Roots<N> where
             for (val, val_deg) in vals[1..].iter() {
                 values[degree - val_deg - 1] = (*val).into() / leading;
             }
-            Roots::OnlyRealRoots(find_roots_sturm(values.as_slice(), &mut 1e-8f64).into_iter().filter_map(Result::ok).collect::<Vec<f64>>())
+            Roots::OnlyRealRoots(
+                find_roots_sturm(values.as_slice(), &mut 1e-8f64)
+                    .into_iter()
+                    .filter_map(Result::ok)
+                    .collect::<Vec<f64>>(),
+            )
             // Roots::OnlyRealRoots(find_roots_eigen(values).into_iter().collect::<Vec<f64>>())
-        },
+        }
     }
 }
-
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum RootFindingErr {
@@ -177,7 +182,9 @@ pub enum RootFindingErr {
 }
 
 pub fn brent_solve<F>(f: F, a: f64, b: f64, eps: f64) -> Result<f64, RootFindingErr>
-    where F: Fn(f64) -> f64 {
+where
+    F: Fn(f64) -> f64,
+{
     let fa = f(a);
     let fb = f(b);
     if fa * fb > 0. {
@@ -204,17 +211,17 @@ pub fn brent_solve<F>(f: F, a: f64, b: f64, eps: f64) -> Result<f64, RootFinding
     while !fb.is_zero() && !fs.is_zero() && (b - a).abs() > eps {
         s = if fa != fc && fb != fc {
             a * fb * fc / ((fa - fb) * (fa - fc))
-            + b * fa * fc / ((fb - fa) * (fb - fc))
-            + c * fa * fb / ((fc - fa) * (fc - fb))
+                + b * fa * fc / ((fb - fa) * (fb - fc))
+                + c * fa * fb / ((fc - fa) * (fc - fb))
         } else {
             b - fb * (b - a) / (fb - fa)
         };
 
-        if (s < (3. * a + b) / 4. || s > b) ||
-            (mflag && (s - b).abs() >= (b - c).abs() / 2.) ||
-            (!mflag && (s - b).abs() >= (c - d).abs() / 2.) ||
-            (mflag && (b - c).abs() < eps) ||
-            (!mflag && (c - d).abs() < eps)
+        if (s < (3. * a + b) / 4. || s > b)
+            || (mflag && (s - b).abs() >= (b - c).abs() / 2.)
+            || (!mflag && (s - b).abs() >= (c - d).abs() / 2.)
+            || (mflag && (b - c).abs() < eps)
+            || (!mflag && (c - d).abs() < eps)
         {
             s = (a + b) / 2.;
             mflag = true;
@@ -240,14 +247,14 @@ pub fn brent_solve<F>(f: F, a: f64, b: f64, eps: f64) -> Result<f64, RootFinding
             mem::swap(&mut fa, &mut fb);
         }
     }
-    return Ok(s)
+    return Ok(s);
 }
 
 #[cfg(test)]
 mod test {
     use num::Complex;
-    use rustnomial::find_roots::{find_roots, complex_roots_cubic};
-    use ::{Roots, Polynomial, GenericPolynomial, Monomial, LinearBinomial};
+    use rustnomial::find_roots::{complex_roots_cubic, find_roots};
+    use {GenericPolynomial, LinearBinomial, Monomial, Polynomial, Roots};
 
     #[test]
     fn test_roots_empty() {
@@ -302,5 +309,4 @@ mod test {
     //     let c = Complex::new(-2.0, 0.);
     //     assert_eq!((c, c, c, c), complex_roots_quartic(2f32, 16., 48., 64., 32.));
     // }
-
 }

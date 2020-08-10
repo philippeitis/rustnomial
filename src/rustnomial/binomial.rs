@@ -141,7 +141,6 @@ impl<N: Copy + Zero> GenericPolynomial<N> for LinearBinomial<N> {
     fn is_zero(&self) -> bool {
         self.degree() == Degree::NegInf
     }
-
 }
 
 impl<N> MutablePolynomial<N> for LinearBinomial<N>
@@ -468,7 +467,7 @@ impl<N: Zero + Copy> ShrAssign<u32> for LinearBinomial<N> {
 
 #[cfg(test)]
 mod tests {
-    use {LinearBinomial, GenericPolynomial, Degree, Derivable, Evaluable};
+    use {Degree, Derivable, Evaluable, GenericPolynomial, LinearBinomial};
 
     #[test]
     fn test_degree_both_zero() {

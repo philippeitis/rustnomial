@@ -5,13 +5,14 @@ use std::ops::{
 
 use num::{One, Zero};
 
-use rustnomial::numerics::{Abs, IsNegativeOne, IsPositive, AbsSqrt, Cbrt};
-use rustnomial::traits::{FreeSizePolynomial, MutablePolynomial, TermIterator};
-use {Degree, Derivable, Evaluable, GenericPolynomial, Integrable, Integral, Term};
-
 use rustnomial::err::TryAddError;
-use rustnomial::find_roots::{Roots, find_roots};
-use {fmt_poly, poly_from_str};
+use rustnomial::find_roots::{find_roots, Roots};
+use rustnomial::numerics::{Abs, AbsSqrt, Cbrt, IsNegativeOne, IsPositive};
+use rustnomial::traits::{FreeSizePolynomial, MutablePolynomial, TermIterator};
+use {
+    fmt_poly, poly_from_str, Degree, Derivable, Evaluable, GenericPolynomial, Integrable, Integral,
+    Term,
+};
 
 #[macro_export]
 macro_rules! polynomial {
@@ -169,7 +170,6 @@ where
             self.terms = self.terms[ind..].to_vec();
         };
     }
-
 }
 
 impl<N: Copy + Zero> GenericPolynomial<N> for Polynomial<N> {
@@ -229,7 +229,6 @@ impl<N: Copy + Zero> GenericPolynomial<N> for Polynomial<N> {
         degree(&self.terms)
     }
 
-
     /// Returns true if all terms are zero, and false if a non-zero term exists.
     ///
     /// # Example
@@ -260,7 +259,7 @@ where
         + One
         + Neg<Output = N>
         + From<u8>
-        + Into<f64>
+        + Into<f64>,
 {
     /// Returns a `Polynomial` with no terms.
     ///
@@ -893,8 +892,8 @@ impl<N: Zero + Copy> ShrAssign<i32> for Polynomial<N> {
 /// modulo floordiv
 #[cfg(test)]
 mod tests {
-    use {Degree, Derivable, Evaluable, Integrable, Polynomial};
     use GenericPolynomial;
+    use {Degree, Derivable, Evaluable, Integrable, Polynomial};
 
     #[test]
     fn test_eval() {

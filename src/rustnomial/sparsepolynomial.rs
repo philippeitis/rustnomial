@@ -7,10 +7,13 @@ use std::ops::{
 use num::{One, Zero};
 
 use rustnomial::err::TryAddError;
-use rustnomial::numerics::{Abs, IsNegativeOne, IsPositive, PowUsize, AbsSqrt, Cbrt};
-use rustnomial::traits::{FreeSizePolynomial, MutablePolynomial, TermIterator};
-use {fmt_poly, poly_from_str, Roots, Degree, Derivable, Evaluable, GenericPolynomial, Polynomial, Term};
 use rustnomial::find_roots::find_roots;
+use rustnomial::numerics::{Abs, AbsSqrt, Cbrt, IsNegativeOne, IsPositive, PowUsize};
+use rustnomial::traits::{FreeSizePolynomial, MutablePolynomial, TermIterator};
+use {
+    fmt_poly, poly_from_str, Degree, Derivable, Evaluable, GenericPolynomial, Polynomial, Roots,
+    Term,
+};
 
 #[derive(Debug, Clone)]
 pub struct SparsePolynomial<N> {
@@ -178,7 +181,6 @@ impl<N: Zero + Copy> GenericPolynomial<N> for SparsePolynomial<N> {
     fn is_zero(&self) -> bool {
         self.degree() == Degree::NegInf
     }
-
 }
 
 impl<N> SparsePolynomial<N>
@@ -195,7 +197,7 @@ where
         + One
         + Neg<Output = N>
         + From<u8>
-        + Into<f64>
+        + Into<f64>,
 {
     /// Returns a `Polynomial` with no terms.
     ///
@@ -928,12 +930,12 @@ impl<N: Copy> ShrAssign<i32> for SparsePolynomial<N> {
 /// modulo floordiv
 #[cfg(test)]
 mod tests {
-    use {GenericPolynomial, Degree, Derivable, Evaluable, Polynomial, SparsePolynomial};
+    use {Degree, Derivable, Evaluable, GenericPolynomial, Polynomial, SparsePolynomial};
 
     #[test]
     fn test_eval() {
         let a = SparsePolynomial::from_vec(vec![1, 2, 3]);
-        assert_eq!( 25 + 2 * 5 + 3, a.eval(5));
+        assert_eq!(25 + 2 * 5 + 3, a.eval(5));
     }
 
     #[test]
