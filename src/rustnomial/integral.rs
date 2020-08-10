@@ -94,6 +94,6 @@ mod test {
     #[test]
     fn test_integral_str_negatives() {
         let a = integral![-3, -2, 1];
-        assert_eq!( "-x^3 - x^2 + x + C", a.to_string());
+        assert_eq!("-x^3 - x^2 + x + C", a.to_string());
     }
 }
