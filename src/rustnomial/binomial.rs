@@ -7,7 +7,7 @@ use num::{One, Zero};
 use rustnomial::err::TryAddError;
 use rustnomial::numerics::{Abs, IsNegativeOne, IsPositive};
 use rustnomial::traits::{MutablePolynomial, TermIterator};
-use {fmt_poly, poly_from_str, Degree, Derivable, Evaluable, GenericPolynomial, Roots, Term};
+use {Degree, Derivable, Evaluable, GenericPolynomial, Roots, Term};
 
 #[derive(Debug, Clone)]
 pub struct LinearBinomial<N> {

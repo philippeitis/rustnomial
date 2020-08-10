@@ -10,10 +10,7 @@ use rustnomial::err::TryAddError;
 use rustnomial::find_roots::find_roots;
 use rustnomial::numerics::{Abs, AbsSqrt, Cbrt, IsNegativeOne, IsPositive, PowUsize};
 use rustnomial::traits::{FreeSizePolynomial, MutablePolynomial, TermIterator};
-use {
-    fmt_poly, poly_from_str, Degree, Derivable, Evaluable, GenericPolynomial, Polynomial, Roots,
-    Term,
-};
+use {Degree, Derivable, Evaluable, GenericPolynomial, Polynomial, Roots, Term};
 
 #[derive(Debug, Clone)]
 pub struct SparsePolynomial<N> {

@@ -1,3 +1,6 @@
+#[macro_use]
+mod strings;
+
 pub mod binomial;
 pub mod derivative;
 pub mod err;
@@ -8,7 +11,6 @@ pub mod numerics;
 pub mod poly_math;
 pub mod polynomial;
 pub mod sparsepolynomial;
-mod strings;
 pub mod terms;
 pub mod traits;
 pub mod trinomial;

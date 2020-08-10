@@ -9,8 +9,8 @@ use rustnomial::numerics::{IsNegativeOne, PowUsize};
 use rustnomial::strings::write_leading_term;
 use rustnomial::traits::{MutablePolynomial, TermIterator};
 use {
-    poly_from_str, Degree, Derivable, Evaluable, FreeSizePolynomial, GenericPolynomial, Integrable,
-    Integral, Polynomial, Roots, Term,
+    Degree, Derivable, Evaluable, FreeSizePolynomial, GenericPolynomial, Integrable, Integral,
+    Polynomial, Roots, Term,
 };
 
 #[derive(Debug, Clone)]

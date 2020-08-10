@@ -9,10 +9,7 @@ use rustnomial::err::TryAddError;
 use rustnomial::find_roots::{find_roots, Roots};
 use rustnomial::numerics::{Abs, AbsSqrt, Cbrt, IsNegativeOne, IsPositive};
 use rustnomial::traits::{FreeSizePolynomial, MutablePolynomial, TermIterator};
-use {
-    fmt_poly, poly_from_str, Degree, Derivable, Evaluable, GenericPolynomial, Integrable, Integral,
-    Term,
-};
+use {Degree, Derivable, Evaluable, GenericPolynomial, Integrable, Integral, Term};
 
 #[macro_export]
 macro_rules! polynomial {

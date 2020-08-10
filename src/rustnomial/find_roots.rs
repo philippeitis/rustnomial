@@ -47,7 +47,7 @@ where
     let b = -b / a;
 
     if discriminant.is_zero() {
-        return Roots::TwoRealRoots(b, b)
+        return Roots::TwoRealRoots(b, b);
     }
 
     let sqrt = discriminant.abs_sqrt() / a;

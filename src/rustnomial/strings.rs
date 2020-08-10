@@ -4,7 +4,6 @@ use num::One;
 
 use rustnomial::numerics::{Abs, IsNegativeOne, IsPositive};
 
-#[macro_export]
 macro_rules! fmt_poly {
     ($T:ident) => {
         use std::fmt;
@@ -30,7 +29,6 @@ macro_rules! fmt_poly {
     };
 }
 
-#[macro_export]
 macro_rules! poly_from_str {
     ($T:ident) => {
         use std::str::FromStr;
