@@ -6,6 +6,11 @@ license = "MIT"
 description = "A crate for working with polynomials."
 repository = "https://github.com/philippeitis/rustnomial"
 readme = "README.md"
+include = [
+    "**/*.rs",
+    "Cargo.toml",
+    "**/*.md",
+]
 
 [lib]
 name = "rustnomial"
