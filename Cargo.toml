@@ -2,6 +2,11 @@
 name = "rustnomial"
 version = "0.0.1"
 authors = ["Philippe Solodov <solop1906@gmail.com>"]
+license = "MIT"
+license-file = "LICENSE.md"
+description = "A crate for working with polynomials."
+repository = "https://github.com/philippeitis/rustnomial"
+readme = "README.md"
 
 [lib]
 name = "rustnomial"
