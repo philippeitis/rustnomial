@@ -2,7 +2,7 @@ use std::mem;
 use std::ops::{Add, Div, Mul, Neg, Sub};
 
 use num::{Complex, Zero, One};
-use roots::{find_roots_eigen, find_roots_sturm};
+use roots::find_roots_sturm;
 
 use rustnomial::numerics::{AbsSqrt, IsPositive, Cbrt};
 use GenericPolynomial;

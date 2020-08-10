@@ -1,9 +1,8 @@
 [package]
 name = "rustnomial"
-version = "0.0.1"
+version = "0.0.2"
 authors = ["Philippe Solodov <solop1906@gmail.com>"]
 license = "MIT"
-license-file = "LICENSE.md"
 description = "A crate for working with polynomials."
 repository = "https://github.com/philippeitis/rustnomial"
 readme = "README.md"
@@ -11,10 +10,6 @@ readme = "README.md"
 [lib]
 name = "rustnomial"
 path = "src/lib.rs"
-
-[[bin]]
-name = "main"
-path = "src/main.rs"
 
 [[bench]]
 name = "benchmarks"
