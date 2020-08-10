@@ -7,7 +7,7 @@ use num::{Complex, One, Zero};
 use rustnomial::binomial::LinearBinomial;
 use rustnomial::err::TryAddError;
 use rustnomial::numerics::{Abs, AbsSqrt, IsNegativeOne, IsPositive};
-use rustnomial::roots::{complex_roots_trinomial, discriminant_trinomial};
+use rustnomial::find_roots::{complex_roots_trinomial, discriminant_trinomial};
 use rustnomial::traits::{MutablePolynomial, TermIterator};
 use {fmt_poly, poly_from_str, Degree, Derivable, Evaluable, GenericPolynomial, Term};
 

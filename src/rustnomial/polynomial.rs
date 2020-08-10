@@ -5,13 +5,14 @@ use std::ops::{
 
 use num::{One, Zero};
 
-use rustnomial::numerics::{Abs, IsNegativeOne, IsPositive, AbsSqrt};
+use rustnomial::numerics::{Abs, IsNegativeOne, IsPositive, AbsSqrt, Cbrt};
 use rustnomial::traits::{FreeSizePolynomial, MutablePolynomial, TermIterator};
 use {Degree, Derivable, Evaluable, GenericPolynomial, Integrable, Integral, Term};
 
 use rustnomial::err::TryAddError;
-use rustnomial::roots::{Roots, complex_roots_trinomial, find_roots};
+use rustnomial::find_roots::{Roots, complex_roots_trinomial, find_roots};
 use {fmt_poly, poly_from_str};
+use std::convert::TryFrom;
 
 #[macro_export]
 macro_rules! polynomial {
@@ -250,11 +251,15 @@ where
         + Div<Output = N>
         + Sub<Output = N>
         + Add<Output = N>
+        + Cbrt
         + AbsSqrt
         + IsPositive
         + Zero
+        + One
         + Neg<Output = N>
-        + From<u8>,
+        + From<u8>
+        + Into<f64>
+        + TryFrom<f64>
 {
     /// Returns a `Polynomial` with no terms.
     ///
@@ -887,7 +892,7 @@ impl<N: Zero + Copy> ShrAssign<i32> for Polynomial<N> {
 /// modulo floordiv
 #[cfg(test)]
 mod tests {
-    use rustnomial::roots::Roots;
+    use rustnomial::find_roots::Roots;
     use {Degree, Derivable, Evaluable, Integrable, Polynomial};
 
     #[test]

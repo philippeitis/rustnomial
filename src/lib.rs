@@ -1,5 +1,6 @@
 extern crate core;
 extern crate num;
+extern crate roots;
 
 mod rustnomial;
 pub use rustnomial::binomial::LinearBinomial;
@@ -13,4 +14,4 @@ pub use rustnomial::sparsepolynomial::SparsePolynomial;
 pub use rustnomial::terms::{Degree, Term};
 pub use rustnomial::traits::{Evaluable, FreeSizePolynomial, GenericPolynomial, MutablePolynomial};
 pub use rustnomial::trinomial::QuadraticTrinomial;
-pub use rustnomial::roots::{Roots, brent_solve};
+pub use rustnomial::find_roots::{Roots, brent_solve};

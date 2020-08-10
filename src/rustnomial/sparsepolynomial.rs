@@ -7,11 +7,12 @@ use std::ops::{
 use num::{One, Zero};
 
 use rustnomial::err::TryAddError;
-use rustnomial::numerics::{Abs, IsNegativeOne, IsPositive, PowUsize, AbsSqrt};
+use rustnomial::numerics::{Abs, IsNegativeOne, IsPositive, PowUsize, AbsSqrt, Cbrt};
 use rustnomial::traits::{FreeSizePolynomial, MutablePolynomial, TermIterator};
 use {fmt_poly, poly_from_str, Degree, Derivable, Evaluable, GenericPolynomial, Polynomial, Term};
 use Roots;
-use rustnomial::roots::find_roots;
+use rustnomial::find_roots::find_roots;
+use std::convert::TryFrom;
 
 #[derive(Debug, Clone)]
 pub struct SparsePolynomial<N> {
@@ -142,11 +143,15 @@ where
         + Div<Output = N>
         + Sub<Output = N>
         + Add<Output = N>
+        + Cbrt
         + AbsSqrt
         + IsPositive
         + Zero
+        + One
         + Neg<Output = N>
-        + From<u8>,
+        + From<u8>
+        + Into<f64>
+        + TryFrom<f64>
 {
     /// Returns a `Polynomial` with no terms.
     ///

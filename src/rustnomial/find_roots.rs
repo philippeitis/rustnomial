@@ -1,9 +1,12 @@
-use num::{Complex, Zero, Float};
-use rustnomial::numerics::{AbsSqrt, IsPositive, Abs};
+use num::{Complex, Zero, Float, One};
+use roots::find_roots_eigen;
+use rustnomial::numerics::{AbsSqrt, IsPositive, Abs, Cbrt};
 use std::ops::{Add, Div, Mul, Neg, Sub};
 use GenericPolynomial;
-use rustnomial::roots::RootFindingErr::NotBracketed;
+use rustnomial::find_roots::RootFindingErr::NotBracketed;
 use std::mem;
+use std::fmt::{Display, Debug};
+use std::convert::TryFrom;
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Roots<N> {
@@ -12,6 +15,7 @@ pub enum Roots<N> {
     RealRoots(Vec<N>),
     ComplexRoots(Vec<Complex<N>>),
     InfiniteRoots,
+    OnlyRealRoots(Vec<f64>),
 }
 
 pub fn discriminant_trinomial<N>(a: N, b: N, c: N) -> N
@@ -48,19 +52,73 @@ where
     }
 }
 
-/// Finds the roots of the polynomial with terms defined by the given vector, where each element
-/// is a tuple consisting of the coefficient and degree.
-pub fn find_roots<N>(poly: &dyn GenericPolynomial<N>) -> Roots<N> where
+pub fn complex_roots_cubic<N>(a: N, b: N, c: N, d: N) -> (Complex<N>, Complex<N>, Complex<N>)
+where
     N: Copy
         + Mul<Output = N>
         + Div<Output = N>
         + Sub<Output = N>
         + Add<Output = N>
         + AbsSqrt
+        + Cbrt
         + IsPositive
         + Zero
+        + One
         + Neg<Output = N>
-        + From<u8>,
+        + From<u8>
+{
+    let sqr = |x: N| x * x;
+    let cub = |x: N| x * x * x;
+    let p = -b / (N::from(3) * a);
+    let q = cub(p) + (b * c - N::from(3) * a * d) / (N::from(6) * sqr(a));
+    let r = c / (N::from(3) * a);
+    let k = (sqr(q) + cub(r - sqr(p))).abs_sqrt();
+    let x = (q + k).cbrt() + (q - k).cbrt() + p;
+
+    let b = b / a + x;
+    let c = c / a + b * x;
+    let (ca, cb) = complex_roots_trinomial(N::one(), b, c);
+    (Complex::new(x, N::zero()), ca, cb)
+}
+
+// pub fn complex_roots_quartic<N>(a: N, b: N, c: N, d: N, e: N) -> (Complex<N>, Complex<N>, Complex<N>, Complex<N>)
+// where
+//     N: Copy
+//         + Mul<Output = N>
+//         + Div<Output = N>
+//         + Sub<Output = N>
+//         + Add<Output = N>
+//         + AbsSqrt
+//         + Cbrt
+//         + IsPositive
+//         + Zero
+//         + One
+//         + Neg<Output = N>
+//         + From<u8>
+//         + PartialOrd
+// {
+//     let sqr = |x: N| x * x;
+//     let cub = |x: N| x * x * x;
+// }
+
+/// x^4 + 8 x^3 + 24 x^2 + 32 x + 16
+/// Finds the roots of the polynomial with terms defined by the given vector, where each element
+/// is a tuple consisting of the coefficient and degree. Order is not guaranteed.
+pub fn find_roots<N>(poly: &dyn GenericPolynomial<N>) -> Roots<N> where
+    N: Copy
+        + Mul<Output = N>
+        + Div<Output = N>
+        + Sub<Output = N>
+        + Add<Output = N>
+        + Cbrt
+        + AbsSqrt
+        + IsPositive
+        + Zero
+        + One
+        + Neg<Output = N>
+        + From<u8>
+        + Into<f64>
+        + TryFrom<f64>
 {
     match poly.term_iter().collect::<Vec<(N, usize)>>().as_slice() {
         [] => Roots::InfiniteRoots,
@@ -82,7 +140,35 @@ pub fn find_roots<N>(poly: &dyn GenericPolynomial<N>) -> Roots<N> where
                 Roots::ComplexRoots(vec![root_a, root_b])
             }
         },
-        _ => unimplemented!("A general root finding algorithm has not been implemented."),
+        [(a, 3), one_or_more @ ..] => {
+            let (b, c, d) = match one_or_more {
+                [] => (N::zero(), N::zero(), N::zero()),
+                [(xd, 0)] => (N::zero(), N::zero(), *xd),
+                [(xc, 1)] => (N::zero(), *xc, N::zero()),
+                [(xc, 1), (xd, 0)] => (N::zero(), *xc, *xd),
+                [(xb, 2)] => (*xb, N::zero(), N::zero()),
+                [(xb, 2), (xd, 0)] => (*xb, N::zero(), *xd),
+                [(xb, 2), (xc, 1)] => (*xb, *xc, N::zero()),
+                [(xb, 2), (xc, 1), (xd, 0)] => (*xb, *xc, *xd),
+                _ => unreachable!(),
+            };
+            let (root_c, root_a, root_b) = complex_roots_cubic(*a, b, c, d);
+            if root_a.im.is_zero() {
+                Roots::RealRoots(vec![root_a.re, root_b.re, root_c.re])
+            } else {
+                Roots::ComplexRoots(vec![root_a, root_b, root_c])
+            }
+        },
+        [vals @ ..] => {
+            let (leading, degree) = vals[0];
+            let leading = leading.into();
+            let mut values = vec![0f64; degree + 1];
+            values[0] = leading;
+            for (val, val_deg) in vals {
+                values[degree - val_deg] = (*val).into() / leading;
+            }
+            Roots::OnlyRealRoots(find_roots_eigen(values).into_iter().collect::<Vec<f64>>())
+        },
     }
 }
 
@@ -161,25 +247,57 @@ pub fn brent_solve<F>(f: F, a: f64, b: f64, eps: f64) -> Result<f64, RootFinding
 
 #[cfg(test)]
 mod test {
-    use rustnomial::roots::find_roots;
+    use rustnomial::find_roots::{find_roots, complex_roots_cubic};
     use ::{Roots, Polynomial};
     use ::{Monomial, LinearBinomial};
+    use num::Complex;
 
     #[test]
     fn test_roots_empty() {
-        let p = Polynomial::<i32>::zero();
+        let p = Polynomial::<f64>::zero();
         assert_eq!(Roots::InfiniteRoots, find_roots(&p));
     }
 
     #[test]
     fn test_roots_constant() {
-        let p = Monomial::new(1i32, 0);
+        let p = Monomial::new(1., 0);
         assert_eq!(Roots::NoRoots, find_roots(&p));
     }
 
     #[test]
     fn test_roots_binomial() {
-        let p = LinearBinomial::new([1i32, 2]);
-        assert_eq!(Roots::RealRoots(vec![-2]), find_roots(&p));
+        let p = LinearBinomial::new([1., 2.]);
+        assert_eq!(Roots::RealRoots(vec![-2.]), find_roots(&p));
     }
+
+    #[test]
+    fn test_roots_cubic_a_equals_one() {
+        let c = Complex::new(-2.0, 0.);
+        assert_eq!((c, c, c), complex_roots_cubic(1f64, 6., 12., 8.));
+    }
+
+    #[test]
+    fn test_roots_cubic_a_does_not_equal_one() {
+        let c = Complex::new(-2.0, 0.);
+        assert_eq!((c, c, c), complex_roots_cubic(2f64, 12., 24., 16.));
+    }
+
+    #[test]
+    fn test_cubic_polynomials() {
+        let p = Polynomial::new(vec![1f64, 6., 12., 8.]);
+        assert_eq!(Roots::RealRoots(vec![-2., -2., -2.]), find_roots(&p));
+    }
+
+    // #[test]
+    // fn test_roots_quartic_a_equals_one() {
+    //     let c = Complex::new(-2.0, 0.);
+    //     assert_eq!((c, c, c, c), complex_roots_quartic(1f32, 8., 24., 32., 16.));
+    // }
+    //
+    // #[test]
+    // fn test_roots_quartic_a_does_not_equal_one() {
+    //     let c = Complex::new(-2.0, 0.);
+    //     assert_eq!((c, c, c, c), complex_roots_quartic(2f32, 16., 48., 64., 32.));
+    // }
+
 }

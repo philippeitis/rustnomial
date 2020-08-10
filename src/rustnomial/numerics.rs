@@ -219,3 +219,19 @@ impl AbsSqrt for f64 {
         self.abs().sqrt()
     }
 }
+
+pub trait Cbrt {
+    fn cbrt(self) -> Self;
+}
+
+impl Cbrt for f32 {
+    fn cbrt(self) -> Self {
+        self.cbrt()
+    }
+}
+
+impl Cbrt for f64 {
+    fn cbrt(self) -> Self {
+        self.cbrt()
+    }
+}
