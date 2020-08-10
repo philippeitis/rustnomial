@@ -7,7 +7,7 @@ use num::{One, Zero};
 use rustnomial::err::TryAddError;
 use rustnomial::numerics::{Abs, IsNegativeOne, IsPositive};
 use rustnomial::traits::{MutablePolynomial, TermIterator};
-use {fmt_poly, poly_from_str, Degree, Derivable, Evaluable, GenericPolynomial, Term};
+use {fmt_poly, poly_from_str, Degree, Derivable, Evaluable, GenericPolynomial, Roots, Term};
 
 #[derive(Debug, Clone)]
 pub struct LinearBinomial<N> {
@@ -31,12 +31,32 @@ impl<N: Sized> LinearBinomial<N> {
 
 impl<N> LinearBinomial<N>
 where
-    N: Copy + Neg<Output = N> + Div<Output = N>,
+    N: Copy + Neg<Output = N> + Div<Output = N> + Zero,
 {
-    /// Return the root of `LinearBinomial`
-    pub fn root(&self) -> N {
+    /// Return the root of `LinearBinomial`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use rustnomial::{LinearBinomial, Roots, GenericPolynomial};
+    /// let binomial = LinearBinomial::new([1.0, 2.0]);
+    /// assert_eq!(Roots::OneRealRoot(-2.0), binomial.root());
+    /// let zero = LinearBinomial::<i32>::zero();
+    /// assert_eq!(Roots::InfiniteRoots, zero.root());
+    /// let constant = LinearBinomial::new([0, 1]);
+    /// assert_eq!(Roots::NoRoots, constant.root());
+    /// ```
+    pub fn root(&self) -> Roots<N> {
         let [a, b] = self.coefficients;
-        -b / a
+        if a.is_zero() {
+            if b.is_zero() {
+                Roots::InfiniteRoots
+            } else {
+                Roots::NoRoots
+            }
+        } else {
+            Roots::OneRealRoot(-b / a)
+        }
     }
 }
 
@@ -55,7 +75,7 @@ impl<N: Copy + Zero> GenericPolynomial<N> for LinearBinomial<N> {
         LinearBinomial::new([N::zero(); 2])
     }
 
-    /// Return the number of terms in `LinearBinomial`.
+    /// Return the length of `LinearBinomial`. Not equal to the number of terms.
     ///
     /// # Example
     ///
@@ -467,7 +487,25 @@ impl<N: Zero + Copy> ShrAssign<u32> for LinearBinomial<N> {
 
 #[cfg(test)]
 mod tests {
-    use {Degree, Derivable, Evaluable, GenericPolynomial, LinearBinomial};
+    use {Degree, Derivable, Evaluable, GenericPolynomial, LinearBinomial, Roots};
+
+    #[test]
+    fn test_root_both_zero() {
+        let a = LinearBinomial::new([0, 0]);
+        assert_eq!(Roots::InfiniteRoots, a.root());
+    }
+
+    #[test]
+    fn test_root_constant() {
+        let a = LinearBinomial::new([0, 1]);
+        assert_eq!(Roots::NoRoots, a.root());
+    }
+
+    #[test]
+    fn test_root_both() {
+        let a = LinearBinomial::new([1, 2]);
+        assert_eq!(Roots::OneRealRoot(-2), a.root());
+    }
 
     #[test]
     fn test_degree_both_zero() {
@@ -496,7 +534,7 @@ mod tests {
     #[test]
     fn test_eval() {
         let a = LinearBinomial::new([5, 0]);
-        assert_eq!(a.eval(5), 25);
+        assert_eq!(25, a.eval(5));
     }
     //
     // #[test]

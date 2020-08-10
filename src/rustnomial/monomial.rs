@@ -10,7 +10,7 @@ use rustnomial::strings::write_leading_term;
 use rustnomial::traits::{MutablePolynomial, TermIterator};
 use {
     poly_from_str, Degree, Derivable, Evaluable, FreeSizePolynomial, GenericPolynomial, Integrable,
-    Integral, Polynomial, Term,
+    Integral, Polynomial, Roots, Term,
 };
 
 #[derive(Debug, Clone)]
@@ -181,10 +181,26 @@ where
     }
 }
 
-impl<N: Zero> Monomial<N> {
-    /// Return the root of `Monomial`
-    pub fn root(&self) -> N {
-        N::zero()
+impl<N: Copy + Zero> Monomial<N> {
+    /// Return the root of `Monomial`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use rustnomial::{Monomial, Roots, GenericPolynomial};
+    /// let monomial = Monomial::new(1, 2);
+    /// assert_eq!(Roots::OneRealRoot(0), monomial.root());
+    /// let zero = Monomial::<i32>::zero();
+    /// assert_eq!(Roots::InfiniteRoots, zero.root());
+    /// let constant = Monomial::new(1, 0);
+    /// assert_eq!(Roots::NoRoots, constant.root());
+    /// ```
+    pub fn root(&self) -> Roots<N> {
+        match self.degree() {
+            Degree::NegInf => Roots::InfiniteRoots,
+            Degree::Num(0) => Roots::NoRoots,
+            Degree::Num(_) => Roots::OneRealRoot(N::zero()),
+        }
     }
 }
 
@@ -511,8 +527,28 @@ impl<N: Zero + Copy> ShrAssign<i32> for Monomial<N> {
 
 #[cfg(test)]
 mod tests {
-    use GenericPolynomial;
-    use {Derivable, Evaluable, FreeSizePolynomial, Integrable, Monomial, Polynomial};
+    use {
+        Derivable, Evaluable, FreeSizePolynomial, GenericPolynomial, Integrable, Monomial,
+        Polynomial, Roots,
+    };
+
+    #[test]
+    fn test_root_zero() {
+        let a = Monomial::<i32>::zero();
+        assert_eq!(Roots::InfiniteRoots, a.root());
+    }
+
+    #[test]
+    fn test_root_constant() {
+        let a = Monomial::new(1, 0);
+        assert_eq!(Roots::NoRoots, a.root());
+    }
+
+    #[test]
+    fn test_root_not_constant() {
+        let a = Monomial::new(1, 1);
+        assert_eq!(Roots::OneRealRoot(0), a.root());
+    }
 
     #[test]
     fn test_eval() {

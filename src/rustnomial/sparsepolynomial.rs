@@ -199,14 +199,24 @@ where
         + From<u8>
         + Into<f64>,
 {
-    /// Returns a `Polynomial` with no terms.
+    /// Return the roots of the `SparsePolynomial`.
     ///
     /// # Example
     ///
     /// ```
-    /// use rustnomial::Polynomial;
-    /// // Corresponds to 1.0x^2 + 4.0x + 4.0
-    /// let polynomial = Polynomial::new(vec![1.0, 4.0, 4.0]);
+    /// use rustnomial::{SparsePolynomial, Roots, GenericPolynomial};
+    /// let zero = SparsePolynomial::<f32>::zero();
+    /// assert_eq!(Roots::InfiniteRoots, zero.roots());
+    /// let constant = SparsePolynomial::from_vec(vec![1.]);
+    /// assert_eq!(Roots::NoRoots, constant.roots());
+    /// let monomial = SparsePolynomial::from_vec(vec![1.0, 0.,]);
+    /// assert_eq!(Roots::ManyRealRoots(vec![0.]), monomial.roots());
+    /// let binomial = SparsePolynomial::from_vec(vec![1.0, 2.0]);
+    /// assert_eq!(Roots::ManyRealRoots(vec![-2.0]), binomial.roots());
+    /// let trinomial = SparsePolynomial::from_vec(vec![1.0, 4.0, 4.0]);
+    /// assert_eq!(Roots::ManyRealRoots(vec![-2.0, -2.0]), trinomial.roots());
+    /// let quadnomial = SparsePolynomial::from_vec(vec![1.0, 6.0, 12.0, 8.0]);
+    /// assert_eq!(Roots::ManyRealRoots(vec![-2.0, -2.0, -2.0]), quadnomial.roots());
     /// ```
     pub fn roots(self) -> Roots<N> {
         find_roots(&self)

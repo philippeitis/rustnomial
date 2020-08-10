@@ -10,8 +10,14 @@ use GenericPolynomial;
 pub enum Roots<N> {
     NoRoots,
     NoRootsFound,
-    RealRoots(Vec<N>),
-    ComplexRoots(Vec<Complex<N>>),
+    OneRealRoot(N),
+    TwoRealRoots(N, N),
+    ThreeRealRoots(N, N, N),
+    ManyRealRoots(Vec<N>),
+    OneComplexRoot(Complex<N>),
+    TwoComplexRoots(Complex<N>, Complex<N>),
+    ThreeComplexRoots(Complex<N>, Complex<N>, Complex<N>),
+    ManyComplexRoots(Vec<Complex<N>>),
     InfiniteRoots,
     OnlyRealRoots(Vec<f64>),
 }
@@ -23,7 +29,7 @@ where
     b * b - a * c * N::from(4)
 }
 
-pub fn complex_roots_trinomial<N>(a: N, b: N, c: N) -> (Complex<N>, Complex<N>)
+pub fn trinomial_roots<N>(a: N, b: N, c: N) -> Roots<N>
 where
     N: Copy
         + Mul<Output = N>
@@ -40,17 +46,16 @@ where
     let a = a * N::from(2);
     let b = -b / a;
     let sqrt = discriminant.abs_sqrt() / a;
-    if discriminant.is_positive() {
-        (
-            Complex::new(b + sqrt, N::zero()),
-            Complex::new(b - sqrt, N::zero()),
-        )
+    if discriminant.is_zero() {
+        Roots::TwoRealRoots(b, b)
+    } else if discriminant.is_positive() {
+        Roots::TwoRealRoots(b + sqrt, b - sqrt)
     } else {
-        (Complex::new(b, sqrt), Complex::new(b, -sqrt))
+        Roots::TwoComplexRoots(Complex::new(b, sqrt), Complex::new(b, -sqrt))
     }
 }
 
-pub fn complex_roots_cubic<N>(a: N, b: N, c: N, d: N) -> (Complex<N>, Complex<N>, Complex<N>)
+pub fn cubic_roots<N>(a: N, b: N, c: N, d: N) -> Roots<N>
 where
     N: Copy
         + Mul<Output = N>
@@ -75,8 +80,12 @@ where
 
     let b = b / a + x;
     let c = c / a + b * x;
-    let (ca, cb) = complex_roots_trinomial(N::one(), b, c);
-    (Complex::new(x, N::zero()), ca, cb)
+    let roots = trinomial_roots(N::one(), b, c);
+    match roots {
+        Roots::TwoRealRoots(a, b) => Roots::ThreeRealRoots(x, a, b),
+        Roots::TwoComplexRoots(a, b) => Roots::ThreeComplexRoots(Complex::new(x, N::zero()), a, b),
+        _ => unreachable!(),
+    }
 }
 
 // pub fn complex_roots_quartic<N>(a: N, b: N, c: N, d: N, e: N) -> (Complex<N>, Complex<N>, Complex<N>, Complex<N>)
@@ -121,8 +130,8 @@ where
     match poly.term_iter().collect::<Vec<(N, usize)>>().as_slice() {
         [] => Roots::InfiniteRoots,
         [(_, 0)] => Roots::NoRoots,
-        [_] => Roots::RealRoots(vec![N::zero()]),
-        [(c1, 1), (c2, 0)] => Roots::RealRoots(vec![-*c2 / *c1]),
+        [_] => Roots::ManyRealRoots(vec![N::zero()]),
+        [(c1, 1), (c2, 0)] => Roots::ManyRealRoots(vec![-*c2 / *c1]),
         [(a, 2), one_or_more @ ..] => {
             let (b, c) = match one_or_more {
                 [] => (N::zero(), N::zero()),
@@ -131,11 +140,10 @@ where
                 [(xb, 1), (xc, 0)] => (*xb, *xc),
                 _ => unreachable!(),
             };
-            let (root_a, root_b) = complex_roots_trinomial(*a, b, c);
-            if root_a.im.is_zero() {
-                Roots::RealRoots(vec![root_a.re, root_b.re])
-            } else {
-                Roots::ComplexRoots(vec![root_a, root_b])
+            match trinomial_roots(*a, b, c) {
+                Roots::TwoComplexRoots(a, b) => Roots::ManyComplexRoots(vec![a, b]),
+                Roots::TwoRealRoots(a, b) => Roots::ManyRealRoots(vec![a, b]),
+                _ => unreachable!(),
             }
         }
         [(a, 3), one_or_more @ ..] => {
@@ -150,11 +158,10 @@ where
                 [(xb, 2), (xc, 1), (xd, 0)] => (*xb, *xc, *xd),
                 _ => unreachable!(),
             };
-            let (root_c, root_a, root_b) = complex_roots_cubic(*a, b, c, d);
-            if root_a.im.is_zero() {
-                Roots::RealRoots(vec![root_a.re, root_b.re, root_c.re])
-            } else {
-                Roots::ComplexRoots(vec![root_a, root_b, root_c])
+            match cubic_roots(*a, b, c, d) {
+                Roots::ThreeComplexRoots(a, b, c) => Roots::ManyComplexRoots(vec![a, b, c]),
+                Roots::ThreeRealRoots(a, b, c) => Roots::ManyRealRoots(vec![a, b, c]),
+                _ => unreachable!(),
             }
         }
         [vals @ ..] => {
@@ -177,8 +184,7 @@ where
 
 #[cfg(test)]
 mod test {
-    use num::Complex;
-    use rustnomial::find_roots::{complex_roots_cubic, find_roots};
+    use rustnomial::find_roots::{cubic_roots, find_roots};
     use {GenericPolynomial, LinearBinomial, Monomial, Polynomial, Roots};
 
     #[test]
@@ -196,25 +202,29 @@ mod test {
     #[test]
     fn test_roots_binomial() {
         let p = LinearBinomial::new([1., 2.]);
-        assert_eq!(Roots::RealRoots(vec![-2.]), find_roots(&p));
+        assert_eq!(Roots::ManyRealRoots(vec![-2.]), find_roots(&p));
     }
 
     #[test]
     fn test_roots_cubic_a_equals_one() {
-        let c = Complex::new(-2.0, 0.);
-        assert_eq!((c, c, c), complex_roots_cubic(1f64, 6., 12., 8.));
+        assert_eq!(
+            Roots::ThreeRealRoots(-2.0, -2.0, -2.0),
+            cubic_roots(1f64, 6., 12., 8.)
+        );
     }
 
     #[test]
     fn test_roots_cubic_a_does_not_equal_one() {
-        let c = Complex::new(-2.0, 0.);
-        assert_eq!((c, c, c), complex_roots_cubic(2f64, 12., 24., 16.));
+        assert_eq!(
+            Roots::ThreeRealRoots(-2.0, -2.0, -2.0),
+            cubic_roots(2f64, 12., 24., 16.)
+        );
     }
 
     #[test]
     fn test_cubic_polynomials() {
         let p = Polynomial::new(vec![1f64, 6., 12., 8.]);
-        assert_eq!(Roots::RealRoots(vec![-2., -2., -2.]), find_roots(&p));
+        assert_eq!(Roots::ManyRealRoots(vec![-2., -2., -2.]), find_roots(&p));
     }
 
     #[test]

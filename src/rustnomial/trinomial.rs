@@ -6,10 +6,10 @@ use num::{Complex, One, Zero};
 
 use rustnomial::binomial::LinearBinomial;
 use rustnomial::err::TryAddError;
-use rustnomial::find_roots::{complex_roots_trinomial, discriminant_trinomial};
+use rustnomial::find_roots::{discriminant_trinomial, trinomial_roots};
 use rustnomial::numerics::{Abs, AbsSqrt, IsNegativeOne, IsPositive};
 use rustnomial::traits::{MutablePolynomial, TermIterator};
-use {fmt_poly, poly_from_str, Degree, Derivable, Evaluable, GenericPolynomial, Term};
+use {fmt_poly, poly_from_str, Degree, Derivable, Evaluable, GenericPolynomial, Roots, Term};
 
 #[derive(Debug, Clone)]
 pub struct QuadraticTrinomial<N> {
@@ -50,33 +50,37 @@ where
         discriminant_trinomial(a, b, c)
     }
 
-    /// Return the complex roots of `QuadraticTrinomial` with largest
+    /// Return the roots of `QuadraticTrinomial` with largest
     /// first, smallest second.
-    pub fn complex_roots(&self) -> (Complex<N>, Complex<N>) {
+    pub fn roots(&self) -> Roots<N> {
         let [a, b, c] = self.coefficients;
-        complex_roots_trinomial(a, b, c)
-    }
-
-    pub fn real_roots(&self) -> Option<(N, N)> {
-        let (root_a, root_b) = self.complex_roots();
-        if root_a.im.is_zero() {
-            Some((root_a.re, root_b.re))
-        } else {
-            None
-        }
+        trinomial_roots(a, b, c)
     }
 
     pub fn complex_factors(&self) -> (N, LinearBinomial<Complex<N>>, LinearBinomial<Complex<N>>) {
-        let (root_a, root_b) = self.complex_roots();
-        (
-            self.coefficients[0],
-            LinearBinomial::new([Complex::new(N::one(), N::zero()), root_a]),
-            LinearBinomial::new([Complex::new(N::one(), N::zero()), root_b]),
-        )
+        match self.roots() {
+            Roots::TwoComplexRoots(root_a, root_b) => (
+                self.coefficients[0],
+                LinearBinomial::new([Complex::new(N::one(), -N::zero()), root_a]),
+                LinearBinomial::new([Complex::new(N::one(), -N::zero()), root_b]),
+            ),
+            Roots::TwoRealRoots(a, b) => (
+                self.coefficients[0],
+                LinearBinomial::new([
+                    Complex::new(N::one(), N::zero()),
+                    Complex::new(-a, N::zero()),
+                ]),
+                LinearBinomial::new([
+                    Complex::new(N::one(), N::zero()),
+                    Complex::new(-b, N::zero()),
+                ]),
+            ),
+            _ => unreachable!(),
+        }
     }
 
     pub fn real_factors(&self) -> Option<(N, LinearBinomial<N>, LinearBinomial<N>)> {
-        if let Some((root_a, root_b)) = self.real_roots() {
+        if let Roots::TwoRealRoots(root_a, root_b) = self.roots() {
             Some((
                 self.coefficients[0],
                 LinearBinomial::new([N::one(), -root_a]),
@@ -553,8 +557,8 @@ impl<N: Zero + Copy> ShrAssign<u32> for QuadraticTrinomial<N> {
 mod tests {
     use num::Complex;
     use rustnomial::trinomial::QuadraticTrinomial;
-    use GenericPolynomial;
     use {Derivable, Evaluable};
+    use {GenericPolynomial, Roots};
 
     #[test]
     fn test_eval() {
@@ -654,16 +658,16 @@ mod tests {
     }
 
     #[test]
-    fn test_complex_roots_pos() {
+    fn test_roots_pos() {
         let a = QuadraticTrinomial::new([1, 4, 4]);
-        let c = (Complex::new(-2i16, 0), Complex::new(-2i16, 0));
-        assert_eq!(c, a.complex_roots());
+        let c = Roots::TwoRealRoots(-2i16, -2i16);
+        assert_eq!(c, a.roots());
     }
 
     #[test]
     fn test_complex_roots_neg() {
         let a = QuadraticTrinomial::new([1, 0, 4]);
-        let c = (Complex::new(0, 2i16), Complex::new(0, -2i16));
-        assert_eq!(c, a.complex_roots());
+        let c = Roots::TwoComplexRoots(Complex::new(0, 2i16), Complex::new(0, -2i16));
+        assert_eq!(c, a.roots());
     }
 }
