@@ -201,9 +201,10 @@ extern crate rustnomial;
 //          P!("\n")});sleep_ms(30          // 22/22
 //              );}}//------//              // 14/14
 
-use rustnomial::{Polynomial, Monomial, GenericPolynomial, Evaluable, brent_solve};
+// use rustnomial::{Polynomial, Monomial, GenericPolynomial, Evaluable, brent_solve};
 fn main() {
-    let a = Polynomial::new(vec![1.0f64, 1.0f64, -5., 3.]);
-    let f = |x: f64| a.eval(x);
-    let b = brent_solve(f, -4., 4./3., 1e-8).unwrap();
+    // let a = Polynomial::new(vec![1.0f64, 1.0f64, -5., 3.]);
+    // let f = |x: f64| a.eval(x);
+    // let b = brent_solve(f, -4., 4./3., 1e-8).unwrap();
+    println!("hello");
 }

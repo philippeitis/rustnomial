@@ -9,10 +9,8 @@ use num::{One, Zero};
 use rustnomial::err::TryAddError;
 use rustnomial::numerics::{Abs, IsNegativeOne, IsPositive, PowUsize, AbsSqrt, Cbrt};
 use rustnomial::traits::{FreeSizePolynomial, MutablePolynomial, TermIterator};
-use {fmt_poly, poly_from_str, Degree, Derivable, Evaluable, GenericPolynomial, Polynomial, Term};
-use Roots;
+use {fmt_poly, poly_from_str, Roots, Degree, Derivable, Evaluable, GenericPolynomial, Polynomial, Term};
 use rustnomial::find_roots::find_roots;
-use std::convert::TryFrom;
 
 #[derive(Debug, Clone)]
 pub struct SparsePolynomial<N> {

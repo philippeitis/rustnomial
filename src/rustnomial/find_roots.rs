@@ -1,12 +1,11 @@
-use num::{Complex, Zero, Float, One};
-use roots::find_roots_eigen;
-use rustnomial::numerics::{AbsSqrt, IsPositive, Abs, Cbrt};
-use std::ops::{Add, Div, Mul, Neg, Sub};
-use GenericPolynomial;
-use rustnomial::find_roots::RootFindingErr::NotBracketed;
 use std::mem;
-use std::fmt::{Display, Debug};
-use std::convert::TryFrom;
+use std::ops::{Add, Div, Mul, Neg, Sub};
+
+use num::{Complex, Zero, One};
+use roots::{find_roots_eigen, find_roots_sturm};
+
+use rustnomial::numerics::{AbsSqrt, IsPositive, Cbrt};
+use GenericPolynomial;
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Roots<N> {
@@ -161,12 +160,12 @@ pub fn find_roots<N>(poly: &dyn GenericPolynomial<N>) -> Roots<N> where
         [vals @ ..] => {
             let (leading, degree) = vals[0];
             let leading = leading.into();
-            let mut values = vec![0f64; degree + 1];
-            values[0] = leading;
-            for (val, val_deg) in vals {
-                values[degree - val_deg] = (*val).into() / leading;
+            let mut values = vec![0f64; degree];
+            for (val, val_deg) in vals[1..].iter() {
+                values[degree - val_deg - 1] = (*val).into() / leading;
             }
-            Roots::OnlyRealRoots(find_roots_eigen(values).into_iter().collect::<Vec<f64>>())
+            Roots::OnlyRealRoots(find_roots_sturm(values.as_slice(), &mut 1e-8f64).into_iter().filter_map(Result::ok).collect::<Vec<f64>>())
+            // Roots::OnlyRealRoots(find_roots_eigen(values).into_iter().collect::<Vec<f64>>())
         },
     }
 }
@@ -250,6 +249,7 @@ mod test {
     use ::{Roots, Polynomial};
     use ::{Monomial, LinearBinomial};
     use num::Complex;
+    use Evaluable;
 
     #[test]
     fn test_roots_empty() {
@@ -285,6 +285,12 @@ mod test {
     fn test_cubic_polynomials() {
         let p = Polynomial::new(vec![1f64, 6., 12., 8.]);
         assert_eq!(Roots::RealRoots(vec![-2., -2., -2.]), find_roots(&p));
+    }
+
+    #[test]
+    fn test_quartic_polynomials() {
+        let p = Polynomial::new(vec![1f64, 2.]).pow(9);
+        assert_eq!(Roots::OnlyRealRoots(vec![-2., -2.]), find_roots(&p));
     }
 
     // #[test]

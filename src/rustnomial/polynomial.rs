@@ -10,9 +10,8 @@ use rustnomial::traits::{FreeSizePolynomial, MutablePolynomial, TermIterator};
 use {Degree, Derivable, Evaluable, GenericPolynomial, Integrable, Integral, Term};
 
 use rustnomial::err::TryAddError;
-use rustnomial::find_roots::{Roots, complex_roots_trinomial, find_roots};
+use rustnomial::find_roots::{Roots, find_roots};
 use {fmt_poly, poly_from_str};
-use std::convert::TryFrom;
 
 #[macro_export]
 macro_rules! polynomial {
