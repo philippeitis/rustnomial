@@ -1,6 +1,6 @@
 [package]
 name = "rustnomial"
-version = "0.0.2"
+version = "0.0.3"
 authors = ["Philippe Solodov <solop1906@gmail.com>"]
 license = "MIT"
 description = "A crate for working with polynomials."
