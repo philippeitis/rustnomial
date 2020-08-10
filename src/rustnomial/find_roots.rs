@@ -245,11 +245,9 @@ pub fn brent_solve<F>(f: F, a: f64, b: f64, eps: f64) -> Result<f64, RootFinding
 
 #[cfg(test)]
 mod test {
-    use rustnomial::find_roots::{find_roots, complex_roots_cubic};
-    use ::{Roots, Polynomial};
-    use ::{Monomial, LinearBinomial};
     use num::Complex;
-    use Evaluable;
+    use rustnomial::find_roots::{find_roots, complex_roots_cubic};
+    use ::{Roots, Polynomial, GenericPolynomial, Monomial, LinearBinomial};
 
     #[test]
     fn test_roots_empty() {

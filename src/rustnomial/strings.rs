@@ -112,3 +112,179 @@ where
         write!(f, "x")
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use {GenericPolynomial, Polynomial, Integrable, SparsePolynomial};
+    use std::str::FromStr;
+    use Monomial;
+
+    #[test]
+    fn test_from_str() {
+        match SparsePolynomial::<i32>::from_str("5x^2") {
+            Ok(a) => {
+                let b = SparsePolynomial::from_vec(vec![5, 0, 0]);
+                assert_eq!(b, a);
+            }
+            Err(e) => {
+                assert!(false, e);
+            }
+        }
+
+        match SparsePolynomial::<i32>::from_str("255x^2+15x+3") {
+            Ok(a) => {
+                let b = SparsePolynomial::from_vec(vec![255, 15, 3]);
+                assert_eq!(a, b);
+            }
+            Err(e) => {
+                assert!(false, e);
+            }
+        }
+
+        match SparsePolynomial::<i32>::from_str("255x^2-15x^1+3x^0") {
+            Ok(a) => {
+                let b = SparsePolynomial::from_vec(vec![255, -15, 3]);
+                assert_eq!(a, b);
+            }
+            Err(e) => {
+                assert!(false, e);
+            }
+        }
+
+        match SparsePolynomial::<i32>::from_str("-x^1") {
+            Ok(a) => {
+                let b = SparsePolynomial::from_vec(vec![-1, 0]);
+                assert_eq!(a, b);
+            }
+            Err(e) => {
+                assert!(false, e);
+            }
+        }
+
+        match SparsePolynomial::<i32>::from_str("5+x") {
+            Ok(a) => {
+                let b = SparsePolynomial::from_vec(vec![1, 5]);
+                assert_eq!(a, b);
+            }
+            Err(e) => {
+                assert!(false, e);
+            }
+        }
+
+        match SparsePolynomial::<i32>::from_str("5x+11x") {
+            Ok(a) => {
+                let b = SparsePolynomial::from_vec(vec![16, 0]);
+                assert_eq!(a, b);
+            }
+            Err(e) => {
+                assert!(false, e);
+            }
+        }
+
+        assert!(
+            SparsePolynomial::<i32>::from_str("5+x^").is_err(),
+            "Should err on dangling ^"
+        );
+    }
+
+    #[test]
+    fn test_sparse_polynomial_str_all_zeroes() {
+        let a = SparsePolynomial::from_vec(vec![0]);
+        assert_eq!("0", a.to_string());
+
+        let a: SparsePolynomial<i8> = SparsePolynomial::from_vec(vec![]);
+        assert_eq!("0", a.to_string());
+
+        let a = SparsePolynomial::from_vec(vec![0, 0]);
+        assert_eq!("0", a.to_string());
+    }
+
+    #[test]
+    fn test_sparse_polynomial_str() {
+        let a = SparsePolynomial::from_vec(vec![-1, -2, 3]);
+        assert_eq!("-x^2 - 2x + 3", a.to_string());
+    }
+
+    #[test]
+    fn test_sparse_polynomial_str_has_zeroes() {
+        let a = SparsePolynomial::from_vec(vec![-1, -2, 0, 0, 3]);
+        assert_eq!("-x^4 - 2x^3 + 3", a.to_string());
+    }
+
+    #[test]
+    fn test_sparse_polynomial_str_has_ones() {
+        let a = SparsePolynomial::from_vec(vec![-1, -1, -1, 0]);
+        assert_eq!("-x^3 - x^2 - x", a.to_string());
+    }
+
+    #[test]
+    fn test_sparse_polynomial_str_has_negative() {
+        let a = SparsePolynomial::from_vec(vec![-2, -1, -1, 0]);
+        assert_eq!( "-2x^3 - x^2 - x", a.to_string());
+    }
+
+    #[test]
+    fn test_sparse_integral_str() {
+        let a = Polynomial::new(vec![-3, -2, 1]).integral();
+        assert_eq!("-x^3 - x^2 + x + C", a.to_string());
+    }
+
+    #[test]
+    fn test_str_monomial() {
+        let a = Monomial::new(5, 2);
+        assert_eq!("5x^2", a.to_string());
+    }
+
+
+    #[test]
+    fn test_polynomial_str_all_zeroes() {
+        let a = Polynomial::new(vec![0]);
+        assert_eq!("0", a.to_string());
+
+        let a: Polynomial<i8> = Polynomial::zero();
+        assert_eq!("0", a.to_string());
+
+        let a = Polynomial::new(vec![0, 0]);
+        assert_eq!("0", a.to_string());
+
+        let a: Polynomial<i8> = Polynomial { terms: vec![] };
+        assert_eq!("0", a.to_string());
+
+        let a = Polynomial { terms: vec![0] };
+        assert_eq!("0", a.to_string());
+
+        let a = Polynomial { terms: vec![0, 0] };
+        assert_eq!("0", a.to_string());
+    }
+
+    #[test]
+    fn test_polynomial_str() {
+        let a = Polynomial::new(vec![-1, -2, 3]);
+        assert_eq!("-x^2 - 2x + 3", a.to_string());
+    }
+
+    #[test]
+    fn test_polynomial_str_has_zeroes() {
+        let a = Polynomial::new(vec![-1, -2, 0, 0, 3]);
+        assert_eq!("-x^4 - 2x^3 + 3", a.to_string());
+    }
+
+    #[test]
+    fn test_polynomial_str_has_ones() {
+        let a = Polynomial::new(vec![-1, -1, -1, 0]);
+        assert_eq!("-x^3 - x^2 - x", a.to_string());
+    }
+
+    #[test]
+    fn test_polynomial_str_has_negative() {
+        let a = Polynomial::new(vec![-2, -1, -1, 0]);
+        assert_eq!("-2x^3 - x^2 - x", a.to_string());
+    }
+
+    #[test]
+    fn test_polynomial_str_negative_one() {
+        let a = Polynomial::new(vec![-1]);
+        assert_eq!("-1", a.to_string());
+    }
+
+}

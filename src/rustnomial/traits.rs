@@ -1,14 +1,20 @@
 use num::Zero;
 use rustnomial::err::TryAddError;
 use std::ops::AddAssign;
-use Term;
+use ::{Term, Degree};
 
 pub trait GenericPolynomial<N> {
+    fn zero() -> Self where Self: Sized;
+
     fn len(&self) -> usize;
 
     fn nth_term(&self, index: usize) -> Term<N>;
 
     fn term_iter(&self) -> TermIterator<N>;
+
+    fn degree(&self) -> Degree;
+
+    fn is_zero(&self) -> bool;
 }
 
 pub trait MutablePolynomial<N> {

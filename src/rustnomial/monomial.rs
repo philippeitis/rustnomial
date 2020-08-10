@@ -27,7 +27,7 @@ impl<N> Monomial<N> {
     /// # Example
     ///
     /// ```
-    /// use rustnomial::{Monomial, Degree};
+    /// use rustnomial::{Monomial, Degree, GenericPolynomial};
     /// let monomial = Monomial::new(3.0, 2);
     /// assert_eq!(3.0, monomial.coefficient);
     /// assert_eq!(Degree::Num(2), monomial.degree());
@@ -40,48 +40,19 @@ impl<N> Monomial<N> {
     }
 }
 
-impl<N: Copy + Zero> Monomial<N> {
-    pub fn zero() -> Self {
+impl<N: Copy + Zero> GenericPolynomial<N> for Monomial<N> {
+    /// Return a `Monomial` which is equal to zero.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use rustnomial::{GenericPolynomial, Monomial};
+    /// assert!(Monomial::<i32>::zero().is_zero());
+    /// ```
+    fn zero() -> Self {
         Monomial::new(N::zero(), 0)
     }
-    /// Returns the degree of the `Monomial`.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use rustnomial::{Monomial, Degree};
-    /// let monomial = Monomial::new(3.0, 2);
-    /// assert_eq!(Degree::Num(2), monomial.degree());
-    /// let zero_with_nonzero_deg = Monomial::new(0.0, 2);
-    /// assert_eq!(Degree::NegInf, zero_with_nonzero_deg.degree());
-    /// let nonzero_with_zero_degree = Monomial::new(1.0, 0);
-    /// assert_eq!(Degree::Num(0), nonzero_with_zero_degree.degree());
-    /// ```
-    pub fn degree(&self) -> Degree {
-        if self.coefficient.is_zero() {
-            Degree::NegInf
-        } else {
-            Degree::Num(self.deg)
-        }
-    }
 
-    /// Returns true if all terms are zero, and false if a non-zero term exists.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use rustnomial::{Polynomial, Monomial};
-    /// let zero = Monomial::new(0, 1);
-    /// assert!(zero.is_zero());
-    /// let non_zero = Monomial::new(1, 0);
-    /// assert!(!non_zero.is_zero());
-    /// ```
-    pub fn is_zero(&self) -> bool {
-        self.degree() == Degree::NegInf
-    }
-}
-
-impl<N: Copy + Zero> GenericPolynomial<N> for Monomial<N> {
     /// Return the number of terms in `Monomial`.
     ///
     /// # Example
@@ -133,6 +104,43 @@ impl<N: Copy + Zero> GenericPolynomial<N> for Monomial<N> {
     fn term_iter(&self) -> TermIterator<N> {
         TermIterator::new(self)
     }
+
+    /// Returns the degree of the `Monomial`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use rustnomial::{GenericPolynomial, Monomial, Degree};
+    /// let monomial = Monomial::new(3.0, 2);
+    /// assert_eq!(Degree::Num(2), monomial.degree());
+    /// let zero_with_nonzero_deg = Monomial::new(0.0, 2);
+    /// assert_eq!(Degree::NegInf, zero_with_nonzero_deg.degree());
+    /// let nonzero_with_zero_degree = Monomial::new(1.0, 0);
+    /// assert_eq!(Degree::Num(0), nonzero_with_zero_degree.degree());
+    /// ```
+    fn degree(&self) -> Degree {
+        if self.coefficient.is_zero() {
+            Degree::NegInf
+        } else {
+            Degree::Num(self.deg)
+        }
+    }
+
+    /// Returns true if all terms are zero, and false if a non-zero term exists.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use rustnomial::{GenericPolynomial, Monomial};
+    /// let zero = Monomial::new(0, 1);
+    /// assert!(zero.is_zero());
+    /// let non_zero = Monomial::new(1, 0);
+    /// assert!(!non_zero.is_zero());
+    /// ```
+    fn is_zero(&self) -> bool {
+        self.degree() == Degree::NegInf
+    }
+
 }
 
 impl<N> MutablePolynomial<N> for Monomial<N>
@@ -506,20 +514,20 @@ impl<N: Zero + Copy> ShrAssign<i32> for Monomial<N> {
 
 #[cfg(test)]
 mod tests {
-    use FreeSizePolynomial;
-    use {Derivable, Evaluable, Integrable, Monomial, Polynomial};
+    use {FreeSizePolynomial, Derivable, Evaluable, Integrable, Monomial, Polynomial};
+    use GenericPolynomial;
 
     #[test]
     fn test_eval() {
         let a = Monomial::new(5, 2);
-        assert_eq!(a.eval(5), 125);
+        assert_eq!(125, a.eval(5));
     }
 
     #[test]
     fn test_shl_pos() {
         let a = Monomial::new(1, 2);
         let c = Monomial::new(1, 7);
-        assert_eq!(a << 5, c);
+        assert_eq!(c, a << 5);
     }
 
     #[test]
@@ -527,14 +535,14 @@ mod tests {
         let mut a = Monomial::new(1, 2);
         let c = Monomial::new(1, 7);
         a <<= 5;
-        assert_eq!(a, c);
+        assert_eq!(c, a);
     }
 
     #[test]
     fn test_shl_neg() {
         let a = Monomial::new(1, 7);
         let c = Monomial::new(1, 2);
-        assert_eq!(a << -5, c);
+        assert_eq!(c, a << -5);
     }
 
     #[test]
@@ -542,14 +550,14 @@ mod tests {
         let mut a = Monomial::new(1, 7);
         let c = Monomial::new(1, 2);
         a <<= -5;
-        assert_eq!(a, c);
+        assert_eq!(c, a);
     }
 
     #[test]
     fn test_shr_pos() {
         let a = Monomial::new(1, 7);
         let c = Monomial::new(1, 2);
-        assert_eq!(a >> 5, c);
+        assert_eq!(c, a >> 5);
     }
 
     #[test]
@@ -557,14 +565,14 @@ mod tests {
         let mut a = Monomial::new(1, 7);
         let c = Monomial::new(1, 2);
         a >>= 5;
-        assert_eq!(a, c);
+        assert_eq!(c, a);
     }
 
     #[test]
     fn test_shr_neg() {
         let a = Monomial::new(1, 2);
         let c = Monomial::new(1, 7);
-        assert_eq!(a >> -5, c);
+        assert_eq!(c, a >> -5);
     }
 
     #[test]
@@ -572,20 +580,20 @@ mod tests {
         let mut a = Monomial::new(1, 2);
         let c = Monomial::new(1, 7);
         a >>= -5;
-        assert_eq!(a, c);
+        assert_eq!(c, a);
     }
 
     #[test]
     fn test_shr_to_zero() {
         let a = Monomial::new(5, 1);
-        assert_eq!(a >> 5, Monomial::zero());
+        assert_eq!(Monomial::zero(), a >> 5);
     }
 
     #[test]
     fn test_shr_assign_to_zero() {
         let mut a = Monomial::new(5, 1);
         a >>= 5;
-        assert_eq!(a, Monomial::zero());
+        assert_eq!(Monomial::zero(), a);
     }
 
     #[test]
@@ -614,11 +622,5 @@ mod tests {
             Polynomial::from_terms(vec![(5 / 3, 3)]),
             integral.polynomial
         );
-    }
-
-    #[test]
-    fn test_str() {
-        let a = Monomial::new(5, 2);
-        assert_eq!(a.to_string(), "5x^2");
     }
 }

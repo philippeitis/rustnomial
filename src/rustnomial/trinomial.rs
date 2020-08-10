@@ -22,58 +22,13 @@ impl<N: Sized> QuadraticTrinomial<N> {
     /// # Example
     ///
     /// ```
-    /// use rustnomial::{Monomial, Degree};
-    /// let monomial = Monomial::new(3.0, 2);
-    /// assert_eq!(3.0, monomial.coefficient);
-    /// assert_eq!(Degree::Num(2), monomial.degree());
+    /// use rustnomial::{GenericPolynomial, QuadraticTrinomial, Degree};
+    /// let trinomial = QuadraticTrinomial::new([3.0, 1.0, 0.5]);
+    /// assert_eq!([3.0, 1.0, 0.5], trinomial.coefficients);
+    /// assert_eq!(Degree::Num(2), trinomial.degree());
     /// ```
     pub fn new(coefficients: [N; 3]) -> QuadraticTrinomial<N> {
         QuadraticTrinomial { coefficients }
-    }
-}
-
-impl<N: Copy + Zero> QuadraticTrinomial<N> {
-    pub fn zero() -> Self {
-        QuadraticTrinomial::new([N::zero(); 3])
-    }
-    /// Returns the degree of the `Monomial`.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use rustnomial::{Monomial, Degree};
-    /// let monomial = Monomial::new(3.0, 2);
-    /// assert_eq!(Degree::Num(2), monomial.degree());
-    /// let zero_with_nonzero_deg = Monomial::new(0.0, 2);
-    /// assert_eq!(Degree::NegInf, zero_with_nonzero_deg.degree());
-    /// let nonzero_with_zero_degree = Monomial::new(1.0, 0);
-    /// assert_eq!(Degree::Num(0), nonzero_with_zero_degree.degree());
-    /// ```
-    pub fn degree(&self) -> Degree {
-        if !self.coefficients[0].is_zero() {
-            Degree::Num(2)
-        } else if !self.coefficients[1].is_zero() {
-            Degree::Num(1)
-        } else if !self.coefficients[2].is_zero() {
-            Degree::Num(0)
-        } else {
-            Degree::NegInf
-        }
-    }
-
-    /// Returns true if all terms are zero, and false if a non-zero term exists.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use rustnomial::{Polynomial, Monomial};
-    /// let zero = Monomial::new(0, 1);
-    /// assert!(zero.is_zero());
-    /// let non_zero = Monomial::new(1, 0);
-    /// assert!(!non_zero.is_zero());
-    /// ```
-    pub fn is_zero(&self) -> bool {
-        self.degree() == Degree::NegInf
     }
 }
 
@@ -134,15 +89,27 @@ where
 }
 
 impl<N: Copy + Zero> GenericPolynomial<N> for QuadraticTrinomial<N> {
-    /// Return the number of terms in `Monomial`.
+    /// Return a `QuadraticTrinomial` which is equal to zero.
     ///
     /// # Example
     ///
     /// ```
-    /// use rustnomial::{Monomial, GenericPolynomial};
-    /// let monomial = Monomial::new(3.0, 2);
-    /// assert_eq!(1, monomial.len());
-    /// assert_eq!(0, Monomial::<i32>::zero().len());
+    /// use rustnomial::{QuadraticTrinomial, GenericPolynomial};
+    /// assert!(QuadraticTrinomial::<i32>::zero().is_zero());
+    /// ```
+    fn zero() -> Self {
+        QuadraticTrinomial::new([N::zero(); 3])
+    }
+
+    /// Return the number of terms in `QuadraticTrinomial`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use rustnomial::{QuadraticTrinomial, GenericPolynomial};
+    /// let trinomial = QuadraticTrinomial::new([1, 2, 3]);
+    /// assert_eq!(3, trinomial.len());
+    /// assert_eq!(0, QuadraticTrinomial::<i32>::zero().len());
     /// ```
     fn len(&self) -> usize {
         if self.is_zero() {
@@ -152,35 +119,82 @@ impl<N: Copy + Zero> GenericPolynomial<N> for QuadraticTrinomial<N> {
         }
     }
 
-    /// Returns the nth term of the `Monomial`.
+    /// Returns the nth term of the `QuadraticTrinomial`.
     ///
     /// # Example
     ///
     /// ```
-    /// use rustnomial::{Monomial, GenericPolynomial, Term};
-    /// let monomial = Monomial::new(5, 2);
-    /// assert_eq!(Term::Term(5, 2), monomial.nth_term(0));
-    /// assert_eq!(Term::ZeroTerm, monomial.nth_term(1));
+    /// use rustnomial::{QuadraticTrinomial, GenericPolynomial, Term};
+    /// let trinomial = QuadraticTrinomial::new([1, 0, 3]);
+    /// assert_eq!(Term::Term(1, 2), trinomial.nth_term(0));
+    /// assert_eq!(Term::ZeroTerm, trinomial.nth_term(1));
+    /// assert_eq!(Term::Term(3, 0), trinomial.nth_term(2));
     /// ```
     fn nth_term(&self, index: usize) -> Term<N> {
         Term::new(self.coefficients[index], 2 - index)
     }
 
-    /// Returns an iterator for the `Monomial`, yielding the term constant and degree. Terms are
-    /// iterated over in descending degree order, excluding zero terms.
+    /// Returns an iterator for the `QuadraticTrinomial`, yielding the term constant and degree.
+    /// Terms are iterated over in descending degree order, excluding zero terms.
     ///
     /// # Example
     ///
     /// ```
-    /// use rustnomial::{Monomial, GenericPolynomial};
-    /// let monomial = Monomial::new(5, 2);
-    /// let mut iter = monomial.term_iter();
-    /// assert_eq!(Some((5, 2)), iter.next());
+    /// use rustnomial::{QuadraticTrinomial, GenericPolynomial};
+    /// let trinomial = QuadraticTrinomial::new([1, 0, 3]);
+    /// let mut iter = trinomial.term_iter();
+    /// assert_eq!(Some((1, 2)), iter.next());
+    /// assert_eq!(Some((3, 0)), iter.next());
     /// assert_eq!(None, iter.next());
     /// ```
     fn term_iter(&self) -> TermIterator<N> {
         TermIterator::new(self)
     }
+
+    /// Returns the degree of the `QuadraticTrinomial`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use rustnomial::{GenericPolynomial, QuadraticTrinomial, Degree};
+    /// let trinomial = QuadraticTrinomial::new([1, 2, 3]);
+    /// assert_eq!(Degree::Num(2), trinomial.degree());
+    /// let binomial = QuadraticTrinomial::new([0, 2, 3]);
+    /// assert_eq!(Degree::Num(1), binomial.degree());
+    /// let monomial = QuadraticTrinomial::new([0, 0, 3]);
+    /// assert_eq!(Degree::Num(0), monomial.degree());
+    /// let zero = QuadraticTrinomial::new([0, 0, 0]);
+    /// assert_eq!(Degree::NegInf, zero.degree());
+    /// ```
+    fn degree(&self) -> Degree {
+        if !self.coefficients[0].is_zero() {
+            Degree::Num(2)
+        } else if !self.coefficients[1].is_zero() {
+            Degree::Num(1)
+        } else if !self.coefficients[2].is_zero() {
+            Degree::Num(0)
+        } else {
+            Degree::NegInf
+        }
+    }
+
+    /// Returns true if all terms are zero, and false if a non-zero term exists.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use rustnomial::{GenericPolynomial, QuadraticTrinomial, Degree};
+    /// let trinomial = QuadraticTrinomial::new([1, 2, 3]);
+    /// assert!(!trinomial.is_zero());
+    /// let zero = QuadraticTrinomial::new([0, 0, 0]);
+    /// assert!(zero.is_zero());
+    /// let zero = QuadraticTrinomial::<i32>::zero();
+    /// assert!(zero.is_zero());
+    /// ```
+    fn is_zero(&self) -> bool {
+        self.degree() == Degree::NegInf
+    }
+
 }
 
 impl<N> MutablePolynomial<N> for QuadraticTrinomial<N>
@@ -541,11 +555,12 @@ mod tests {
     use num::Complex;
     use rustnomial::trinomial::QuadraticTrinomial;
     use {Derivable, Evaluable};
+    use GenericPolynomial;
 
     #[test]
     fn test_eval() {
         let a = QuadraticTrinomial::new([5, 0, 0]);
-        assert_eq!(a.eval(5), 125);
+        assert_eq!(125, a.eval(5));
     }
     //
     // #[test]
@@ -582,7 +597,7 @@ mod tests {
     fn test_shr_pos() {
         let a = QuadraticTrinomial::new([1, 0, 0]);
         let c = QuadraticTrinomial::new([0, 0, 1]);
-        assert_eq!(a >> 2, c);
+        assert_eq!(c, a >> 2);
     }
 
     #[test]
@@ -590,7 +605,7 @@ mod tests {
         let mut a = QuadraticTrinomial::new([1, 0, 0]);
         let c = QuadraticTrinomial::new([0, 0, 1]);
         a >>= 2;
-        assert_eq!(a, c);
+        assert_eq!(c, a);
     }
 
     // #[test]
@@ -611,32 +626,32 @@ mod tests {
     #[test]
     fn test_shr_to_zero() {
         let a = QuadraticTrinomial::new([1, 2, 3]);
-        assert_eq!(a >> 5, QuadraticTrinomial::zero());
+        assert_eq!(QuadraticTrinomial::zero(), a >> 5);
     }
 
     #[test]
     fn test_shr_assign_to_zero() {
         let mut a = QuadraticTrinomial::new([1, 2, 3]);
         a >>= 5;
-        assert_eq!(a, QuadraticTrinomial::zero());
+        assert_eq!(QuadraticTrinomial::zero(), a);
     }
 
     #[test]
     fn test_derivative_of_zero() {
         let a: QuadraticTrinomial<i32> = QuadraticTrinomial::zero();
-        assert_eq!(a.derivative(), QuadraticTrinomial::zero());
+        assert_eq!(QuadraticTrinomial::zero(), a.derivative());
     }
 
     #[test]
     fn test_derivative_of_degree_zero() {
         let a = QuadraticTrinomial::new([0, 0, 1]);
-        assert_eq!(a.derivative(), QuadraticTrinomial::zero());
+        assert_eq!(QuadraticTrinomial::zero(), a.derivative());
     }
 
     #[test]
     fn test_derivative() {
         let a = QuadraticTrinomial::new([1, 2, 3]);
-        assert_eq!(a.derivative(), QuadraticTrinomial::new([0, 2, 2]));
+        assert_eq!(QuadraticTrinomial::new([0, 2, 2]), a.derivative());
     }
 
     #[test]
@@ -650,6 +665,6 @@ mod tests {
     fn test_complex_roots_neg() {
         let a = QuadraticTrinomial::new([1, 0, 4]);
         let c = (Complex::new(0, 2i16), Complex::new(0, -2i16));
-        assert_eq!(a.complex_roots(), c);
+        assert_eq!(c, a.complex_roots());
     }
 }

@@ -20,55 +20,12 @@ impl<N: Sized> LinearBinomial<N> {
     /// # Example
     ///
     /// ```
-    /// use rustnomial::{LinearBinomial, Degree};
+    /// use rustnomial::{GenericPolynomial, LinearBinomial, Degree};
     /// let binomial = LinearBinomial::new([3, 2]);
     /// assert_eq!(Degree::Num(1), binomial.degree());
     /// ```
     pub fn new(coefficients: [N; 2]) -> LinearBinomial<N> {
         LinearBinomial { coefficients }
-    }
-}
-
-impl<N: Copy + Zero> LinearBinomial<N> {
-    pub fn zero() -> Self {
-        LinearBinomial::new([N::zero(); 2])
-    }
-    /// Returns the degree of the `Monomial`.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use rustnomial::{Monomial, Degree};
-    /// let monomial = Monomial::new(3.0, 2);
-    /// assert_eq!(Degree::Num(2), monomial.degree());
-    /// let zero_with_nonzero_deg = Monomial::new(0.0, 2);
-    /// assert_eq!(Degree::NegInf, zero_with_nonzero_deg.degree());
-    /// let nonzero_with_zero_degree = Monomial::new(1.0, 0);
-    /// assert_eq!(Degree::Num(0), nonzero_with_zero_degree.degree());
-    /// ```
-    pub fn degree(&self) -> Degree {
-        if !self.coefficients[0].is_zero() {
-            Degree::Num(1)
-        } else if !self.coefficients[1].is_zero() {
-            Degree::Num(0)
-        } else {
-            Degree::NegInf
-        }
-    }
-
-    /// Returns true if all terms are zero, and false if a non-zero term exists.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use rustnomial::{Polynomial, Monomial};
-    /// let zero = Monomial::new(0, 1);
-    /// assert!(zero.is_zero());
-    /// let non_zero = Monomial::new(1, 0);
-    /// assert!(!non_zero.is_zero());
-    /// ```
-    pub fn is_zero(&self) -> bool {
-        self.degree() == Degree::NegInf
     }
 }
 
@@ -84,15 +41,29 @@ where
 }
 
 impl<N: Copy + Zero> GenericPolynomial<N> for LinearBinomial<N> {
-    /// Return the number of terms in `Monomial`.
+    /// Returns a `LinearBinomial` with no terms.
     ///
     /// # Example
     ///
     /// ```
-    /// use rustnomial::{Monomial, GenericPolynomial};
-    /// let monomial = Monomial::new(3.0, 2);
-    /// assert_eq!(1, monomial.len());
-    /// assert_eq!(0, Monomial::<i32>::zero().len());
+    /// use rustnomial::{GenericPolynomial, LinearBinomial};
+    /// let zero = LinearBinomial::<i32>::zero();
+    /// assert!(zero.is_zero());
+    /// assert!(zero.term_iter().next().is_none());
+    /// ```
+    fn zero() -> Self {
+        LinearBinomial::new([N::zero(); 2])
+    }
+
+    /// Return the number of terms in `LinearBinomial`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use rustnomial::{LinearBinomial, GenericPolynomial};
+    /// let binomial = LinearBinomial::new([3.0, 2.0]);
+    /// assert_eq!(2, binomial.len());
+    /// assert_eq!(0, LinearBinomial::<i32>::zero().len());
     /// ```
     fn len(&self) -> usize {
         if self.is_zero() {
@@ -102,35 +73,75 @@ impl<N: Copy + Zero> GenericPolynomial<N> for LinearBinomial<N> {
         }
     }
 
-    /// Returns the nth term of the `Monomial`.
+    /// Returns the nth term of the `LinearBinomial`.
     ///
     /// # Example
     ///
     /// ```
-    /// use rustnomial::{Monomial, GenericPolynomial, Term};
-    /// let monomial = Monomial::new(5, 2);
-    /// assert_eq!(Term::Term(5, 2), monomial.nth_term(0));
-    /// assert_eq!(Term::ZeroTerm, monomial.nth_term(1));
+    /// use rustnomial::{LinearBinomial, GenericPolynomial, Term};
+    /// let binomial = LinearBinomial::new([5, 0]);
+    /// assert_eq!(Term::Term(5, 1), binomial.nth_term(0));
+    /// assert_eq!(Term::ZeroTerm, binomial.nth_term(1));
     /// ```
     fn nth_term(&self, index: usize) -> Term<N> {
         Term::new(self.coefficients[index], 1 - index)
     }
 
-    /// Returns an iterator for the `Monomial`, yielding the term constant and degree. Terms are
-    /// iterated over in descending degree order, excluding zero terms.
+    /// Returns an iterator for the `LinearBinomial`, yielding the term constant and degree.
+    /// Terms are iterated over in descending degree order, excluding zero terms.
     ///
     /// # Example
     ///
     /// ```
-    /// use rustnomial::{Monomial, GenericPolynomial};
-    /// let monomial = Monomial::new(5, 2);
-    /// let mut iter = monomial.term_iter();
-    /// assert_eq!(Some((5, 2)), iter.next());
+    /// use rustnomial::{LinearBinomial, GenericPolynomial};
+    /// let binomial = LinearBinomial::new([5, 2]);
+    /// let mut iter = binomial.term_iter();
+    /// assert_eq!(Some((5, 1)), iter.next());
+    /// assert_eq!(Some((2, 0)), iter.next());
     /// assert_eq!(None, iter.next());
     /// ```
     fn term_iter(&self) -> TermIterator<N> {
         TermIterator::new(self)
     }
+
+    /// Returns the degree of the `LinearBinomial`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use rustnomial::{GenericPolynomial, LinearBinomial, Degree};
+    /// let binomial = LinearBinomial::new([3.0, 2.0]);
+    /// assert_eq!(Degree::Num(1), binomial.degree());
+    /// let monomial = LinearBinomial::new([0.0, 1.0]);
+    /// assert_eq!(Degree::Num(0), monomial.degree());
+    /// let zero = LinearBinomial::<i32>::zero();
+    /// assert_eq!(Degree::NegInf, zero.degree());
+    /// ```
+    fn degree(&self) -> Degree {
+        if !self.coefficients[0].is_zero() {
+            Degree::Num(1)
+        } else if !self.coefficients[1].is_zero() {
+            Degree::Num(0)
+        } else {
+            Degree::NegInf
+        }
+    }
+
+    /// Returns true if all terms are zero, and false if a non-zero term exists.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use rustnomial::{GenericPolynomial, LinearBinomial};
+    /// let zero = LinearBinomial::new([0, 0]);
+    /// assert!(zero.is_zero());
+    /// let zero = LinearBinomial::<i32>::zero();
+    /// assert!(zero.is_zero());
+    /// ```
+    fn is_zero(&self) -> bool {
+        self.degree() == Degree::NegInf
+    }
+
 }
 
 impl<N> MutablePolynomial<N> for LinearBinomial<N>
@@ -457,8 +468,7 @@ impl<N: Zero + Copy> ShrAssign<u32> for LinearBinomial<N> {
 
 #[cfg(test)]
 mod tests {
-    use rustnomial::binomial::LinearBinomial;
-    use {Degree, Derivable, Evaluable};
+    use {LinearBinomial, GenericPolynomial, Degree, Derivable, Evaluable};
 
     #[test]
     fn test_degree_both_zero() {

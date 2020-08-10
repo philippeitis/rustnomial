@@ -123,21 +123,6 @@ where
     Term::ZeroTerm
 }
 
-impl<N> Polynomial<N> {
-    /// Returns a `Polynomial` with no terms.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use rustnomial::Polynomial;
-    /// // Corresponds to 1.0x^2 + 4.0x + 4.0
-    /// let polynomial = Polynomial::new(vec![1.0, 4.0, 4.0]);
-    /// ```
-    pub fn zero() -> Polynomial<N> {
-        Polynomial { terms: vec![] }
-    }
-}
-
 impl<N> Polynomial<N>
 where
     N: Zero + Copy,
@@ -167,20 +152,6 @@ where
         }
     }
 
-    /// Returns the degree of the `Polynomial` it is called on, corresponding to the
-    /// largest non-zero term.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use rustnomial::{Polynomial, Degree};
-    /// let polynomial = Polynomial::new(vec![1.0, 4.0, 4.0]);
-    /// assert_eq!(Degree::Num(2), polynomial.degree());
-    /// ```
-    pub fn degree(&self) -> Degree {
-        degree(&self.terms)
-    }
-
     /// Reduces the size of the `Polynomial` in memory if the leading terms are zero.
     ///
     /// # Example
@@ -199,23 +170,25 @@ where
         };
     }
 
-    /// Returns true if all terms are zero, and false if a non-zero term exists.
+}
+
+impl<N: Copy + Zero> GenericPolynomial<N> for Polynomial<N> {
+    /// Returns a `Polynomial` with no terms.
     ///
     /// # Example
     ///
     /// ```
-    /// use rustnomial::Polynomial;
-    /// let zero = Polynomial::new(vec![0, 0]);
+    /// use rustnomial::{GenericPolynomial, Polynomial};
+    /// let zero = Polynomial::<i32>::zero();
     /// assert!(zero.is_zero());
-    /// let non_zero = Polynomial::new(vec![0, 1]);
-    /// assert!(!non_zero.is_zero());
+    /// assert!(zero.term_iter().next().is_none());
+    /// assert!(zero.terms.is_empty());
     /// ```
-    pub fn is_zero(&self) -> bool {
-        self.degree() == Degree::NegInf
+    fn zero() -> Polynomial<N> {
+        Polynomial { terms: vec![] }
     }
-}
 
-impl<N: Copy + Zero> GenericPolynomial<N> for Polynomial<N> {
+    /// Returns the length of the `Polynomial`. Not equal to the number of terms.
     fn len(&self) -> usize {
         self.terms.len()
     }
@@ -240,6 +213,36 @@ impl<N: Copy + Zero> GenericPolynomial<N> for Polynomial<N> {
     /// ```
     fn term_iter(&self) -> TermIterator<N> {
         TermIterator::new(self)
+    }
+
+    /// Returns the degree of the `Polynomial` it is called on, corresponding to the
+    /// largest non-zero term.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use rustnomial::{GenericPolynomial, Polynomial, Degree};
+    /// let polynomial = Polynomial::new(vec![1.0, 4.0, 4.0]);
+    /// assert_eq!(Degree::Num(2), polynomial.degree());
+    /// ```
+    fn degree(&self) -> Degree {
+        degree(&self.terms)
+    }
+
+
+    /// Returns true if all terms are zero, and false if a non-zero term exists.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use rustnomial::{GenericPolynomial, Polynomial};
+    /// let zero = Polynomial::new(vec![0, 0]);
+    /// assert!(zero.is_zero());
+    /// let non_zero = Polynomial::new(vec![0, 1]);
+    /// assert!(!non_zero.is_zero());
+    /// ```
+    fn is_zero(&self) -> bool {
+        self.degree() == Degree::NegInf
     }
 }
 
@@ -890,47 +893,47 @@ impl<N: Zero + Copy> ShrAssign<i32> for Polynomial<N> {
 /// modulo floordiv
 #[cfg(test)]
 mod tests {
-    use rustnomial::find_roots::Roots;
     use {Degree, Derivable, Evaluable, Integrable, Polynomial};
+    use GenericPolynomial;
 
     #[test]
     fn test_eval() {
         let a = Polynomial::new(vec![1, 2, 3]);
-        assert_eq!(a.eval(5), 25 + 2 * 5 + 3);
+        assert_eq!(25 + 2 * 5 + 3, a.eval(5));
     }
 
     #[test]
     fn test_derivative() {
         let a = Polynomial::new(vec![1, 2, 3]);
         let b = Polynomial::new(vec![2, 2]);
-        assert_eq!(a.derivative(), b);
+        assert_eq!(b, a.derivative());
 
         let a = Polynomial::new(vec![0, 1, 2, 3]);
-        assert_eq!(a.derivative(), b);
+        assert_eq!(b, a.derivative());
 
         let a = Polynomial::new(vec![1, 2, 3, 4]);
         let b = Polynomial::new(vec![3, 4, 3]);
-        assert_eq!(a.derivative(), b);
+        assert_eq!(b, a.derivative());
     }
 
     #[test]
     fn test_integral() {
         let a = Polynomial::new(vec![3, 2, 1]);
         let b = Polynomial::new(vec![1, 1, 1, 0]);
-        assert_eq!(a.integral().polynomial, b);
+        assert_eq!(b, a.integral().polynomial);
     }
 
     #[test]
     fn test_integral_eval() {
         let a = Polynomial::new(vec![3, 2, 1]);
-        assert_eq!(a.integral().eval(0, 1), 3);
+        assert_eq!(3, a.integral().eval(0, 1));
     }
 
     #[test]
     fn test_integral_const_substitute() {
         let a = Polynomial::new(vec![3, 2, 1]);
         let b = Polynomial::new(vec![1, 1, 1, 5]);
-        assert_eq!(a.integral().replace_c(5), b);
+        assert_eq!(b, a.integral().replace_c(5));
     }
 
     #[test]
@@ -938,7 +941,7 @@ mod tests {
         let a = Polynomial::new(vec![1, 2, 3]);
         let b = Polynomial::new(vec![1, 2, 3, 4]);
         let c = Polynomial::new(vec![1, 3, 5, 7]);
-        assert_eq!(b + a, c);
+        assert_eq!(c, b + a);
     }
 
     #[test]
@@ -946,7 +949,7 @@ mod tests {
         let a = Polynomial::new(vec![1, 2, 3]);
         let b = Polynomial::new(vec![1, 2, 3, 4]);
         let c = Polynomial::new(vec![1, 3, 5, 7]);
-        assert_eq!(a + b, c);
+        assert_eq!(c, a + b);
     }
 
     #[test]
@@ -955,7 +958,7 @@ mod tests {
         let mut b = Polynomial::new(vec![1, 2, 3, 4]);
         b += a;
         let c = Polynomial::new(vec![1, 3, 5, 7]);
-        assert_eq!(b, c);
+        assert_eq!(c, b);
     }
 
     #[test]
@@ -964,7 +967,7 @@ mod tests {
         let b = Polynomial::new(vec![1, 2, 3, 4]);
         a += b;
         let c = Polynomial::new(vec![1, 3, 5, 7]);
-        assert_eq!(a, c);
+        assert_eq!(c, a);
     }
 
     #[test]
@@ -972,7 +975,7 @@ mod tests {
         let a = Polynomial::new(vec![2, 3, 4]);
         let b = Polynomial::new(vec![1, 2, 3, 4]);
         let c = Polynomial::new(vec![1, 0, 0, 0]);
-        assert_eq!(b - a, c);
+        assert_eq!(c, b - a);
     }
 
     #[test]
@@ -980,7 +983,7 @@ mod tests {
         let a = Polynomial::new(vec![2, 3, 4]);
         let b = Polynomial::new(vec![1, 2, 3, 4]);
         let c = Polynomial::new(vec![-1, 0, 0, 0]);
-        assert_eq!(a - b, c);
+        assert_eq!(c, a - b);
     }
 
     #[test]
@@ -989,7 +992,7 @@ mod tests {
         let mut b = Polynomial::new(vec![1, 2, 3, 4]);
         b -= a;
         let c = Polynomial::new(vec![1, 0, 0, 0]);
-        assert_eq!(b, c);
+        assert_eq!(c, b);
     }
 
     #[test]
@@ -998,14 +1001,14 @@ mod tests {
         let b = Polynomial::new(vec![1, 2, 3, 4]);
         a -= b;
         let c = Polynomial::new(vec![-1, 0, 0, 0]);
-        assert_eq!(a, c);
+        assert_eq!(c, a);
     }
 
     #[test]
     fn test_negate() {
         let a = Polynomial::new(vec![1, 2, 3, 0, -5]);
         let c = Polynomial::new(vec![-1, -2, -3, 0, 5]);
-        assert_eq!(-a, c);
+        assert_eq!(c, -a);
     }
 
     #[test]
@@ -1013,7 +1016,7 @@ mod tests {
         let a = Polynomial::new(vec![1, 2]);
         let b = a.clone();
         let c = Polynomial::new(vec![1, 4, 4]);
-        assert_eq!(a * b, c);
+        assert_eq!(c, a * b);
     }
 
     #[test]
@@ -1022,14 +1025,14 @@ mod tests {
         let b = a.clone();
         a *= b;
         let c = Polynomial::new(vec![1, 4, 4]);
-        assert_eq!(a, c);
+        assert_eq!(c, a);
     }
 
     #[test]
     fn test_mul_num() {
         let a = Polynomial::new(vec![1, 2]);
         let c = Polynomial::new(vec![10, 20]);
-        assert_eq!(a * 10, c);
+        assert_eq!(c, a * 10);
     }
 
     #[test]
@@ -1037,7 +1040,7 @@ mod tests {
         let mut a = Polynomial::new(vec![1, 2]);
         a *= 10;
         let c = Polynomial::new(vec![10, 20]);
-        assert_eq!(a, c);
+        assert_eq!(c, a);
     }
 
     #[test]
@@ -1046,11 +1049,11 @@ mod tests {
         let mut c = Polynomial::new(vec![0, 0, 0, 1, 2]);
         c.terms = vec![0, 0, 0, 1, 2];
 
-        assert_eq!(a, c);
+        assert_eq!(c, a);
 
         c.terms = vec![1, 2, 0, 0, 0];
 
-        assert_ne!(a, c);
+        assert_ne!(c, a);
     }
 
     #[test]
@@ -1071,7 +1074,7 @@ mod tests {
     fn test_shl_pos() {
         let a = Polynomial::new(vec![1, 2]);
         let c = Polynomial::new(vec![1, 2, 0, 0, 0, 0, 0]);
-        assert_eq!(a << 5, c);
+        assert_eq!(c, a << 5);
     }
 
     #[test]
@@ -1079,14 +1082,14 @@ mod tests {
         let mut a = Polynomial::new(vec![1, 2]);
         a <<= 5;
         let c = Polynomial::new(vec![1, 2, 0, 0, 0, 0, 0]);
-        assert_eq!(a, c);
+        assert_eq!(c, a);
     }
 
     #[test]
     fn test_shl_neg() {
         let a = Polynomial::new(vec![1, 2, 0, 0, 0, 0, 0]);
         let c = Polynomial::new(vec![1, 2]);
-        assert_eq!(a << -5, c);
+        assert_eq!(c, a << -5);
     }
 
     #[test]
@@ -1094,14 +1097,14 @@ mod tests {
         let mut a = Polynomial::new(vec![1, 2, 0, 0, 0, 0, 0]);
         a <<= -5;
         let c = Polynomial::new(vec![1, 2]);
-        assert_eq!(a, c);
+        assert_eq!(c, a);
     }
 
     #[test]
     fn test_shr_pos() {
         let a = Polynomial::new(vec![1, 2, 0, 0, 0, 0, 0]);
         let c = Polynomial::new(vec![1, 2]);
-        assert_eq!(a >> 5, c);
+        assert_eq!(c, a >> 5);
     }
 
     #[test]
@@ -1109,14 +1112,14 @@ mod tests {
         let mut a = Polynomial::new(vec![1, 2, 0, 0, 0, 0, 0]);
         a >>= 5;
         let c = Polynomial::new(vec![1, 2]);
-        assert_eq!(a, c);
+        assert_eq!(c, a);
     }
 
     #[test]
     fn test_shr_neg() {
         let a = Polynomial::new(vec![1, 2]);
         let c = Polynomial::new(vec![1, 2, 0, 0, 0, 0, 0]);
-        assert_eq!(a >> -5, c);
+        assert_eq!(c, a >> -5);
     }
 
     #[test]
@@ -1124,20 +1127,20 @@ mod tests {
         let mut a = Polynomial::new(vec![1, 2]);
         a >>= -5;
         let c = Polynomial::new(vec![1, 2, 0, 0, 0, 0, 0]);
-        assert_eq!(a, c);
+        assert_eq!(c, a);
     }
 
     #[test]
     fn test_shr_to_zero() {
         let a = Polynomial::new(vec![1, 2]);
-        assert_eq!(a >> 5, Polynomial::zero());
+        assert_eq!(Polynomial::zero(), a >> 5);
     }
 
     #[test]
     fn test_shr_assign_to_zero() {
         let mut a = Polynomial::new(vec![1, 2]);
         a >>= 5;
-        assert_eq!(a, Polynomial::zero());
+        assert_eq!(Polynomial::zero(), a);
     }
 
     #[test]
@@ -1149,57 +1152,6 @@ mod tests {
             assert_eq!(b, a.pow(i));
             b *= a;
         }
-    }
-
-    #[test]
-    fn test_polynomial_str_all_zeroes() {
-        let a = Polynomial::new(vec![0]);
-        assert_eq!(a.to_string(), "0");
-
-        let a: Polynomial<i8> = Polynomial::zero();
-        assert_eq!(a.to_string(), "0");
-
-        let a = Polynomial::new(vec![0, 0]);
-        assert_eq!(a.to_string(), "0");
-
-        let a: Polynomial<i8> = Polynomial { terms: vec![] };
-        assert_eq!(a.to_string(), "0");
-
-        let a = Polynomial { terms: vec![0] };
-        assert_eq!(a.to_string(), "0");
-
-        let a = Polynomial { terms: vec![0, 0] };
-        assert_eq!(a.to_string(), "0");
-    }
-
-    #[test]
-    fn test_polynomial_str() {
-        let a = Polynomial::new(vec![-1, -2, 3]);
-        assert_eq!(a.to_string(), "-x^2 - 2x + 3");
-    }
-
-    #[test]
-    fn test_polynomial_str_has_zeroes() {
-        let a = Polynomial::new(vec![-1, -2, 0, 0, 3]);
-        assert_eq!(a.to_string(), "-x^4 - 2x^3 + 3");
-    }
-
-    #[test]
-    fn test_polynomial_str_has_ones() {
-        let a = Polynomial::new(vec![-1, -1, -1, 0]);
-        assert_eq!(a.to_string(), "-x^3 - x^2 - x");
-    }
-
-    #[test]
-    fn test_polynomial_str_has_negative() {
-        let a = Polynomial::new(vec![-2, -1, -1, 0]);
-        assert_eq!(a.to_string(), "-2x^3 - x^2 - x");
-    }
-
-    #[test]
-    fn test_polynomial_str_negative_one() {
-        let a = Polynomial::new(vec![-1]);
-        assert_eq!(a.to_string(), "-1");
     }
 
     #[test]
