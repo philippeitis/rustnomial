@@ -243,12 +243,12 @@ impl<N> FreeSizePolynomial<N> for SparsePolynomial<N>
 where
     N: Zero + Copy + AddAssign,
 {
-    /// Returns a `Polynomial` with the corresponding terms,
-    /// in order of ax^n + bx^(n-1) + ... + cx + d
+    /// Returns a `SparsePolynomial` with the corresponding terms.
     ///
     /// # Arguments
     ///
-    /// * ` terms ` - A vector of constants, in decreasing order of degree.
+    /// * ` terms ` - A hashmap, where keys correspond to degrees and values correspond to
+    ///                 coefficients.
     ///
     /// # Example
     ///
@@ -331,7 +331,7 @@ where
         SparsePolynomial { terms }
     }
 
-    /// Reduces the size of the `Polynomial` in memory any terms are zero.
+    /// Reduces the size of the `SparsePolynomial` in memory by removing zero terms.
     pub fn trim(&mut self) {
         let mut new_map = HashMap::new();
         for (&degree, &coeff) in self.terms.iter() {
@@ -360,7 +360,7 @@ impl<N> Derivable<N> for SparsePolynomial<N>
 where
     N: Zero + From<u8> + Copy + Mul<Output = N>,
 {
-    /// Returns the derivative of the `Polynomial`.
+    /// Returns the derivative of the `SparsePolynomial`.
     ///
     /// # Example
     ///
@@ -420,7 +420,7 @@ where
         }
     }
 
-    /// Raises the `Polynomial` to the power of exp, using exponentiation by squaring.
+    /// Raises the `SparsePolynomial` to the power of exp, using exponentiation by squaring.
     ///
     /// # Example
     ///
@@ -464,17 +464,13 @@ where
         + Div<Output = N>
         + AddAssign,
 {
-    /// Divides self by the given `Polynomial`, and returns the quotient and remainder.
+    /// Divides self by the given `SparsePolynomial`, and returns the quotient and remainder.
     ///
     /// # Example
     ///
     /// ```
-    /// use rustnomial::Polynomial;
-    /// let polynomial = Polynomial::new(vec![1.0, 2.0]);
-    /// let polynomial_sqr = polynomial.pow(2);
-    /// let polynomial_cub = polynomial.pow(3);
-    /// assert_eq!(polynomial.clone() * polynomial.clone(), polynomial_sqr);
-    /// assert_eq!(polynomial_sqr.clone() * polynomial.clone(), polynomial_cub);
+    /// use rustnomial::SparsePolynomial;
+    /// let polynomial = SparsePolynomial::from_vec(vec![1.0, 2.0]);
     /// ```
     pub fn div_mod(
         &self,

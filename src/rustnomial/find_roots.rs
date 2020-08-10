@@ -22,14 +22,14 @@ pub enum Roots<N> {
     OnlyRealRoots(Vec<f64>),
 }
 
-pub fn discriminant_trinomial<N>(a: N, b: N, c: N) -> N
+pub(crate) fn discriminant_trinomial<N>(a: N, b: N, c: N) -> N
 where
     N: Copy + Mul<Output = N> + Sub<Output = N> + From<u8>,
 {
     b * b - a * c * N::from(4)
 }
 
-pub fn trinomial_roots<N>(a: N, b: N, c: N) -> Roots<N>
+pub(crate) fn trinomial_roots<N>(a: N, b: N, c: N) -> Roots<N>
 where
     N: Copy
         + Mul<Output = N>
@@ -58,7 +58,7 @@ where
     }
 }
 
-pub fn cubic_roots<N>(a: N, b: N, c: N, d: N) -> Roots<N>
+pub(crate) fn cubic_roots<N>(a: N, b: N, c: N, d: N) -> Roots<N>
 where
     N: Copy
         + Mul<Output = N>
@@ -114,7 +114,7 @@ where
 /// x^4 + 8 x^3 + 24 x^2 + 32 x + 16
 /// Finds the roots of the polynomial with terms defined by the given vector, where each element
 /// is a tuple consisting of the coefficient and degree. Order is not guaranteed.
-pub fn find_roots<N>(poly: &dyn GenericPolynomial<N>) -> Roots<N>
+pub(crate) fn find_roots<N>(poly: &dyn GenericPolynomial<N>) -> Roots<N>
 where
     N: Copy
         + Mul<Output = N>

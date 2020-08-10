@@ -17,7 +17,7 @@ pub struct QuadraticTrinomial<N> {
 }
 
 impl<N: Sized> QuadraticTrinomial<N> {
-    /// Create a `Monomial` with coefficient and degree.
+    /// Create a `QuadraticTrinomial` with the given coefficients.
     ///
     /// # Example
     ///
@@ -222,15 +222,15 @@ impl<N> Evaluable<N> for QuadraticTrinomial<N>
 where
     N: Add<Output = N> + Mul<Output = N> + Copy,
 {
-    /// Returns the value of the `Monomial` at the given point.
+    /// Returns the value of the `QuadraticTrinomial` at the given point.
     ///
     /// # Example
     ///
     /// ```
-    /// use rustnomial::{Monomial, Evaluable};
-    /// let monomial = Monomial::new(5, 2);
-    /// assert_eq!(125, monomial.eval(5));
-    /// assert_eq!(1, Monomial::new(1, 0).eval(0));
+    /// use rustnomial::{QuadraticTrinomial, Evaluable};
+    /// let trinomial = QuadraticTrinomial::new([1, 2, 3]);
+    /// assert_eq!(6, trinomial.eval(1));
+    /// assert_eq!(3, trinomial.eval(0));
     /// ```
     fn eval(&self, point: N) -> N {
         point * (self.coefficients[0] * point + self.coefficients[1]) + self.coefficients[2]
@@ -241,15 +241,7 @@ impl<N> Derivable<N> for QuadraticTrinomial<N>
 where
     N: Zero + One + Copy + Mul<Output = N> + From<u8>,
 {
-    /// Returns the derivative of the `Monomial`.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use rustnomial::{Monomial, Polynomial, Derivable};
-    /// let monomial = Monomial::new(3.0, 2);
-    /// assert_eq!(Monomial::new(6.0, 1), monomial.derivative());
-    /// ```
+    /// Returns the derivative of the `QuadraticTrinomial`.
     fn derivative(&self) -> QuadraticTrinomial<N> {
         QuadraticTrinomial::new([
             N::zero(),
@@ -312,18 +304,7 @@ impl<N> PartialEq for QuadraticTrinomial<N>
 where
     N: Zero + PartialEq + Copy,
 {
-    /// Returns true if this `Monomial` is equal to other.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use rustnomial::Monomial;
-    /// let a = Monomial::new(2, 2);
-    /// let b = Monomial::new(2, 2);
-    /// let c = Monomial::new(1, 2);
-    /// assert_eq!(a, b);
-    /// assert_ne!(a, c);
-    /// ```
+    /// Returns true if this `QuadraticTrinomial` is equal to other.
     fn eq(&self, other: &Self) -> bool {
         self.coefficients == other.coefficients
     }

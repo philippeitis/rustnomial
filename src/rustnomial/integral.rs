@@ -82,18 +82,18 @@ mod test {
     #[test]
     fn test_integral_empty_polynomial() {
         let integral = integral!(0);
-        assert_eq!(integral.to_string(), "C");
+        assert_eq!("C", integral.to_string());
     }
 
     #[test]
     fn test_integral_str() {
         let integral = integral!(6, 4, 2);
-        assert_eq!(integral.to_string(), "2x^3 + 2x^2 + 2x + C");
+        assert_eq!("2x^3 + 2x^2 + 2x + C", integral.to_string());
     }
 
     #[test]
     fn test_integral_str_negatives() {
         let a = integral![-3, -2, 1];
-        assert_eq!(a.to_string(), "-x^3 - x^2 + x + C");
+        assert_eq!( "-x^3 - x^2 + x + C", a.to_string());
     }
 }

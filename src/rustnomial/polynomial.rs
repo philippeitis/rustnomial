@@ -455,17 +455,6 @@ where
     N: Copy + Zero + SubAssign + Mul<Output = N> + Div<Output = N>,
 {
     /// Divides self by the given `Polynomial`, and returns the quotient and remainder.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use rustnomial::Polynomial;
-    /// let polynomial = Polynomial::new(vec![1.0, 2.0]);
-    /// let polynomial_sqr = polynomial.pow(2);
-    /// let polynomial_cub = polynomial.pow(3);
-    /// assert_eq!(polynomial.clone() * polynomial.clone(), polynomial_sqr);
-    /// assert_eq!(polynomial_sqr.clone() * polynomial.clone(), polynomial_cub);
-    /// ```
     pub fn div_mod(&self, _rhs: &Polynomial<N>) -> (Polynomial<N>, Polynomial<N>) {
         let zero = N::zero();
 
@@ -512,17 +501,6 @@ where
     N: Copy + Zero + SubAssign + Mul<Output = N> + Div<Output = N>,
 {
     /// Divides self by the given `Polynomial`, and returns the quotient.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use rustnomial::Polynomial;
-    /// let polynomial = Polynomial::new(vec![1.0, 2.0]);
-    /// let polynomial_sqr = polynomial.pow(2);
-    /// let polynomial_cub = polynomial.pow(3);
-    /// assert_eq!(polynomial.clone() * polynomial.clone(), polynomial_sqr);
-    /// assert_eq!(polynomial_sqr.clone() * polynomial.clone(), polynomial_cub);
-    /// ```
     pub fn floor_div(&self, _rhs: &Polynomial<N>) -> Polynomial<N> {
         self.div_mod(_rhs).0
     }
@@ -606,7 +584,7 @@ impl<N> PartialEq for Polynomial<N>
 where
     N: PartialEq + Zero + Copy,
 {
-    /// Returns true if self has the same terms as other.
+    /// Returns true if self and other have the same terms.
     ///
     /// # Example
     ///

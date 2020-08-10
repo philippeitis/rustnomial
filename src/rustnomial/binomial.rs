@@ -15,7 +15,7 @@ pub struct LinearBinomial<N> {
 }
 
 impl<N: Sized> LinearBinomial<N> {
-    /// Create a `LinearBinomial` with coefficient and degree.
+    /// Create a `LinearBinomial` with the given terms.
     ///
     /// # Example
     ///
@@ -185,15 +185,15 @@ impl<N> Evaluable<N> for LinearBinomial<N>
 where
     N: Add<Output = N> + Mul<Output = N> + Copy,
 {
-    /// Returns the value of the `Monomial` at the given point.
+    /// Returns the value of the `LinearBinomial` at the given point.
     ///
     /// # Example
     ///
     /// ```
-    /// use rustnomial::{Monomial, Evaluable};
-    /// let monomial = Monomial::new(5, 2);
-    /// assert_eq!(125, monomial.eval(5));
-    /// assert_eq!(1, Monomial::new(1, 0).eval(0));
+    /// use rustnomial::{LinearBinomial, Evaluable};
+    /// let binomial = LinearBinomial::new([1, 2]);
+    /// assert_eq!(7, binomial.eval(5));
+    /// assert_eq!(2, binomial.eval(0));
     /// ```
     fn eval(&self, point: N) -> N {
         point * self.coefficients[0] + self.coefficients[1]
@@ -204,14 +204,14 @@ impl<N> Derivable<N> for LinearBinomial<N>
 where
     N: Zero + One + Copy + Mul<Output = N> + From<u8>,
 {
-    /// Returns the derivative of the `Monomial`.
+    /// Returns the derivative of the `LinearBinomial`.
     ///
     /// # Example
     ///
     /// ```
-    /// use rustnomial::{Monomial, Polynomial, Derivable};
-    /// let monomial = Monomial::new(3.0, 2);
-    /// assert_eq!(Monomial::new(6.0, 1), monomial.derivative());
+    /// use rustnomial::{LinearBinomial, Derivable};
+    /// let binomial = LinearBinomial::new([3.0, 1.0]);
+    /// assert_eq!(LinearBinomial::new([0., 3.0]), binomial.derivative());
     /// ```
     fn derivative(&self) -> LinearBinomial<N> {
         LinearBinomial::new([N::zero(), self.coefficients[0]])
@@ -270,18 +270,7 @@ impl<N> PartialEq for LinearBinomial<N>
 where
     N: Zero + PartialEq + Copy,
 {
-    /// Returns true if this `Monomial` is equal to other.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use rustnomial::Monomial;
-    /// let a = Monomial::new(2, 2);
-    /// let b = Monomial::new(2, 2);
-    /// let c = Monomial::new(1, 2);
-    /// assert_eq!(a, b);
-    /// assert_ne!(a, c);
-    /// ```
+    /// Returns true if this `LinearBinomial` and other are equal.
     fn eq(&self, other: &Self) -> bool {
         self.coefficients == other.coefficients
     }

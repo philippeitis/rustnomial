@@ -213,7 +213,7 @@ where
     /// # Example
     ///
     /// ```
-    /// use rustnomial::{Monomial, Polynomial, Derivable};
+    /// use rustnomial::{Monomial, Derivable};
     /// let monomial = Monomial::new(3.0, 2);
     /// assert_eq!(Monomial::new(6.0, 1), monomial.derivative());
     /// ```
