@@ -1,5 +1,5 @@
 /// Applies `$macro` in the context of upscaling from one numerical type
-/// to another, more permissive numberical type. Assumes `$macro` takes
+/// to another, more permissive numerical type. Assumes `$macro` takes
 /// the smaller type first, and the larger type second.
 /// All possible upscalings will be applied.
 macro_rules! upcast {
