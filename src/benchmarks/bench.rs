@@ -5,7 +5,8 @@ extern crate rustnomial;
 mod bench {
     extern crate test;
     use self::test::{black_box, Bencher};
-    use rustnomial::{Evaluable, Polynomial, SparsePolynomial};
+    use rustnomial::{Evaluable, Polynomial, SparsePolynomial, SizedPolynomial};
+    use std::collections::HashMap;
 
     #[bench]
     fn bench_init(b: &mut Bencher) {
@@ -116,6 +117,26 @@ mod bench {
             })
         });
     }
+
+    #[bench]
+    fn bench_trim_sparse(b: &mut Bencher) {
+        let mut ap = SparsePolynomial::from(vec![]);
+        let mut terms = HashMap::new();
+        terms.insert(0, 2);
+        terms.insert(1, 1);
+        terms.insert(2, 0);
+        let mut expected_terms = HashMap::new();
+        expected_terms.insert(0, 2);
+        expected_terms.insert(1, 1);
+        b.iter(|| {
+            black_box({
+                ap.terms = terms.clone();
+                ap.trim();
+                assert_eq!(expected_terms, ap.terms)
+            })
+        });
+    }
+
 
     #[bench]
     fn bench_pow_poly(b: &mut Bencher) {

@@ -318,7 +318,7 @@ impl<N> From<Vec<N>> for SparsePolynomial<N>
     /// let polynomial = SparsePolynomial::from(vec![1.0, 4.0, 4.0]);
     /// ```
     fn from(term_vec: Vec<N>) -> Self {
-        let mut terms: HashMap<usize, N> = HashMap::new();
+        let mut terms = HashMap::new();
         if term_vec.len() != 0 {
             let degree = term_vec.len() - 1;
             for (index, &val) in term_vec.iter().enumerate() {
@@ -337,13 +337,7 @@ where
 {
     /// Reduces the size of the `SparsePolynomial` in memory by removing zero terms.
     pub fn trim(&mut self) {
-        let mut new_map = HashMap::new();
-        for (&degree, &coeff) in self.terms.iter() {
-            if !coeff.is_zero() {
-                new_map.insert(degree, coeff);
-            }
-        }
-        self.terms = new_map;
+        self.terms.retain(|_, coeff| !coeff.is_zero());
     }
 }
 
