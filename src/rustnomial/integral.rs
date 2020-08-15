@@ -5,7 +5,7 @@ use std::{fmt, iter};
 use num::{One, Zero};
 
 use rustnomial::numerics::{Abs, IsNegativeOne, IsPositive};
-use {Evaluable, FreeSizePolynomial, GenericPolynomial, Polynomial};
+use {Evaluable, FreeSizePolynomial, Polynomial, SizedPolynomial};
 
 #[macro_export]
 macro_rules! integral {

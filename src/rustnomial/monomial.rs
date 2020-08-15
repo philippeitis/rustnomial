@@ -9,8 +9,8 @@ use rustnomial::numerics::{IsNegativeOne, PowUsize};
 use rustnomial::strings::write_leading_term;
 use rustnomial::traits::{MutablePolynomial, TermIterator};
 use {
-    Degree, Derivable, Evaluable, FreeSizePolynomial, GenericPolynomial, Integrable, Integral,
-    Polynomial, Roots, Term,
+    Degree, Derivable, Evaluable, FreeSizePolynomial, Integrable, Integral, Polynomial, Roots,
+    SizedPolynomial, Term,
 };
 
 #[derive(Debug, Clone)]
@@ -25,7 +25,7 @@ impl<N> Monomial<N> {
     /// # Example
     ///
     /// ```
-    /// use rustnomial::{Monomial, Degree, GenericPolynomial};
+    /// use rustnomial::{Monomial, Degree, SizedPolynomial};
     /// let monomial = Monomial::new(3.0, 2);
     /// assert_eq!(3.0, monomial.coefficient);
     /// assert_eq!(Degree::Num(2), monomial.degree());
@@ -38,25 +38,13 @@ impl<N> Monomial<N> {
     }
 }
 
-impl<N: Copy + Zero> GenericPolynomial<N> for Monomial<N> {
-    /// Return a `Monomial` which is equal to zero.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use rustnomial::{GenericPolynomial, Monomial};
-    /// assert!(Monomial::<i32>::zero().is_zero());
-    /// ```
-    fn zero() -> Self {
-        Monomial::new(N::zero(), 0)
-    }
-
+impl<N: Copy + Zero> SizedPolynomial<N> for Monomial<N> {
     /// Return the number of terms in `Monomial`.
     ///
     /// # Example
     ///
     /// ```
-    /// use rustnomial::{Monomial, GenericPolynomial};
+    /// use rustnomial::{Monomial, SizedPolynomial};
     /// let monomial = Monomial::new(3.0, 2);
     /// assert_eq!(1, monomial.len());
     /// assert_eq!(0, Monomial::<i32>::zero().len());
@@ -74,7 +62,7 @@ impl<N: Copy + Zero> GenericPolynomial<N> for Monomial<N> {
     /// # Example
     ///
     /// ```
-    /// use rustnomial::{Monomial, GenericPolynomial, Term};
+    /// use rustnomial::{Monomial, SizedPolynomial, Term};
     /// let monomial = Monomial::new(5, 2);
     /// assert_eq!(Term::Term(5, 2), monomial.nth_term(0));
     /// assert_eq!(Term::ZeroTerm, monomial.nth_term(1));
@@ -93,7 +81,7 @@ impl<N: Copy + Zero> GenericPolynomial<N> for Monomial<N> {
     /// # Example
     ///
     /// ```
-    /// use rustnomial::{Monomial, GenericPolynomial};
+    /// use rustnomial::{Monomial, SizedPolynomial};
     /// let monomial = Monomial::new(5, 2);
     /// let mut iter = monomial.term_iter();
     /// assert_eq!(Some((5, 2)), iter.next());
@@ -108,7 +96,7 @@ impl<N: Copy + Zero> GenericPolynomial<N> for Monomial<N> {
     /// # Example
     ///
     /// ```
-    /// use rustnomial::{GenericPolynomial, Monomial, Degree};
+    /// use rustnomial::{SizedPolynomial, Monomial, Degree};
     /// let monomial = Monomial::new(3.0, 2);
     /// assert_eq!(Degree::Num(2), monomial.degree());
     /// let zero_with_nonzero_deg = Monomial::new(0.0, 2);
@@ -124,12 +112,24 @@ impl<N: Copy + Zero> GenericPolynomial<N> for Monomial<N> {
         }
     }
 
+    /// Return a `Monomial` which is equal to zero.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use rustnomial::{SizedPolynomial, Monomial};
+    /// assert!(Monomial::<i32>::zero().is_zero());
+    /// ```
+    fn zero() -> Self {
+        Monomial::new(N::zero(), 0)
+    }
+
     /// Returns true if all terms are zero, and false if a non-zero term exists.
     ///
     /// # Example
     ///
     /// ```
-    /// use rustnomial::{GenericPolynomial, Monomial};
+    /// use rustnomial::{SizedPolynomial, Monomial};
     /// let zero = Monomial::new(0, 1);
     /// assert!(zero.is_zero());
     /// let non_zero = Monomial::new(1, 0);
@@ -187,7 +187,7 @@ impl<N: Copy + Zero> Monomial<N> {
     /// # Example
     ///
     /// ```
-    /// use rustnomial::{Monomial, Roots, GenericPolynomial};
+    /// use rustnomial::{Monomial, Roots, SizedPolynomial};
     /// let monomial = Monomial::new(1, 2);
     /// assert_eq!(Roots::OneRealRoot(0), monomial.root());
     /// let zero = Monomial::<i32>::zero();
@@ -539,8 +539,8 @@ impl<N: Zero + Copy> ShrAssign<i32> for Monomial<N> {
 #[cfg(test)]
 mod tests {
     use {
-        Derivable, Evaluable, FreeSizePolynomial, GenericPolynomial, Integrable, Monomial,
-        Polynomial, Roots,
+        Derivable, Evaluable, FreeSizePolynomial, Integrable, Monomial, Polynomial, Roots,
+        SizedPolynomial,
     };
 
     #[test]

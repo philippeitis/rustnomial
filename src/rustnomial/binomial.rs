@@ -4,10 +4,9 @@ use std::ops::{
 
 use num::{One, Zero};
 
-use rustnomial::err::TryAddError;
 use rustnomial::numerics::{Abs, IsNegativeOne, IsPositive};
 use rustnomial::traits::{MutablePolynomial, TermIterator};
-use {Degree, Derivable, Evaluable, GenericPolynomial, Roots, Term};
+use {Degree, Derivable, Evaluable, Roots, SizedPolynomial, Term, TryAddError};
 
 #[derive(Debug, Clone)]
 pub struct LinearBinomial<N> {
@@ -20,7 +19,7 @@ impl<N: Sized> LinearBinomial<N> {
     /// # Example
     ///
     /// ```
-    /// use rustnomial::{GenericPolynomial, LinearBinomial, Degree};
+    /// use rustnomial::{SizedPolynomial, LinearBinomial, Degree};
     /// let binomial = LinearBinomial::new([3, 2]);
     /// assert_eq!(Degree::Num(1), binomial.degree());
     /// ```
@@ -38,7 +37,7 @@ where
     /// # Example
     ///
     /// ```
-    /// use rustnomial::{LinearBinomial, Roots, GenericPolynomial};
+    /// use rustnomial::{LinearBinomial, Roots, SizedPolynomial};
     /// let binomial = LinearBinomial::new([1.0, 2.0]);
     /// assert_eq!(Roots::OneRealRoot(-2.0), binomial.root());
     /// let zero = LinearBinomial::<i32>::zero();
@@ -60,27 +59,13 @@ where
     }
 }
 
-impl<N: Copy + Zero> GenericPolynomial<N> for LinearBinomial<N> {
-    /// Returns a `LinearBinomial` with no terms.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use rustnomial::{GenericPolynomial, LinearBinomial};
-    /// let zero = LinearBinomial::<i32>::zero();
-    /// assert!(zero.is_zero());
-    /// assert!(zero.term_iter().next().is_none());
-    /// ```
-    fn zero() -> Self {
-        LinearBinomial::new([N::zero(); 2])
-    }
-
+impl<N: Copy + Zero> SizedPolynomial<N> for LinearBinomial<N> {
     /// Return the length of `LinearBinomial`. Not equal to the number of terms.
     ///
     /// # Example
     ///
     /// ```
-    /// use rustnomial::{LinearBinomial, GenericPolynomial};
+    /// use rustnomial::{LinearBinomial, SizedPolynomial};
     /// let binomial = LinearBinomial::new([3.0, 2.0]);
     /// assert_eq!(2, binomial.len());
     /// assert_eq!(0, LinearBinomial::<i32>::zero().len());
@@ -98,7 +83,7 @@ impl<N: Copy + Zero> GenericPolynomial<N> for LinearBinomial<N> {
     /// # Example
     ///
     /// ```
-    /// use rustnomial::{LinearBinomial, GenericPolynomial, Term};
+    /// use rustnomial::{LinearBinomial, SizedPolynomial, Term};
     /// let binomial = LinearBinomial::new([5, 0]);
     /// assert_eq!(Term::Term(5, 1), binomial.nth_term(0));
     /// assert_eq!(Term::ZeroTerm, binomial.nth_term(1));
@@ -113,7 +98,7 @@ impl<N: Copy + Zero> GenericPolynomial<N> for LinearBinomial<N> {
     /// # Example
     ///
     /// ```
-    /// use rustnomial::{LinearBinomial, GenericPolynomial};
+    /// use rustnomial::{LinearBinomial, SizedPolynomial};
     /// let binomial = LinearBinomial::new([5, 2]);
     /// let mut iter = binomial.term_iter();
     /// assert_eq!(Some((5, 1)), iter.next());
@@ -129,7 +114,7 @@ impl<N: Copy + Zero> GenericPolynomial<N> for LinearBinomial<N> {
     /// # Example
     ///
     /// ```
-    /// use rustnomial::{GenericPolynomial, LinearBinomial, Degree};
+    /// use rustnomial::{SizedPolynomial, LinearBinomial, Degree};
     /// let binomial = LinearBinomial::new([3.0, 2.0]);
     /// assert_eq!(Degree::Num(1), binomial.degree());
     /// let monomial = LinearBinomial::new([0.0, 1.0]);
@@ -147,12 +132,26 @@ impl<N: Copy + Zero> GenericPolynomial<N> for LinearBinomial<N> {
         }
     }
 
+    /// Returns a `LinearBinomial` with no terms.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use rustnomial::{SizedPolynomial, LinearBinomial};
+    /// let zero = LinearBinomial::<i32>::zero();
+    /// assert!(zero.is_zero());
+    /// assert!(zero.term_iter().next().is_none());
+    /// ```
+    fn zero() -> Self {
+        LinearBinomial::new([N::zero(); 2])
+    }
+
     /// Returns true if all terms are zero, and false if a non-zero term exists.
     ///
     /// # Example
     ///
     /// ```
-    /// use rustnomial::{GenericPolynomial, LinearBinomial};
+    /// use rustnomial::{SizedPolynomial, LinearBinomial};
     /// let zero = LinearBinomial::new([0, 0]);
     /// assert!(zero.is_zero());
     /// let zero = LinearBinomial::<i32>::zero();
@@ -487,7 +486,7 @@ impl<N: Zero + Copy> ShrAssign<u32> for LinearBinomial<N> {
 
 #[cfg(test)]
 mod tests {
-    use {Degree, Derivable, Evaluable, GenericPolynomial, LinearBinomial, Roots};
+    use {Degree, Derivable, Evaluable, LinearBinomial, Roots, SizedPolynomial};
 
     #[test]
     fn test_root_both_zero() {

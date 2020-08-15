@@ -5,7 +5,7 @@ use roots::find_roots_sturm;
 
 use rustnomial::numerics::{AbsSqrt, Cbrt, IsPositive, PowUsize};
 use rustnomial::polynomial::{first_nonzero_index, first_term};
-use {GenericPolynomial, Term};
+use {Degree, SizedPolynomial, Term};
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Roots<N> {
@@ -158,7 +158,7 @@ fn normalize<N: Zero + Copy + DivAssign>(values: &mut Vec<N>) {
     }
 }
 
-fn eval(poly: &dyn GenericPolynomial<f64>, point: f64) -> f64 {
+fn eval(poly: &dyn SizedPolynomial<f64>, point: f64) -> f64 {
     let mut sum = 0f64;
     for (val, degree) in poly.term_iter() {
         sum += val * point.upow(degree);
@@ -168,7 +168,7 @@ fn eval(poly: &dyn GenericPolynomial<f64>, point: f64) -> f64 {
 
 /// Finds the roots of the polynomial with terms defined by the given vector, where each element
 /// is a tuple consisting of the coefficient and degree. Order is not guaranteed.
-pub(crate) fn find_roots(poly: &dyn GenericPolynomial<f64>) -> Roots<f64> {
+pub(crate) fn find_roots(poly: &dyn SizedPolynomial<f64>) -> Roots<f64> {
     match poly.term_iter().collect::<Vec<(f64, usize)>>().as_slice() {
         [] => Roots::InfiniteRoots,
         [(_, 0)] => Roots::NoRoots,
@@ -228,8 +228,17 @@ pub(crate) fn find_roots(poly: &dyn GenericPolynomial<f64>) -> Roots<f64> {
                     .into_iter()
                     .filter_map(Result::ok)
                     .collect();
+
                 if temp_roots.is_empty() {
-                    return Roots::ManyRealRoots(roots);
+                    match poly.degree() {
+                        Degree::Num(x) => {
+                            if x == temp_roots.len() {
+                                return Roots::ManyRealRoots(roots);
+                            }
+                        }
+                        _ => unreachable!("Polynomial should not be zero in this stage."),
+                    }
+                    return Roots::OnlyRealRoots(roots);
                 }
 
                 for root in temp_roots {
@@ -262,7 +271,7 @@ pub(crate) fn find_roots(poly: &dyn GenericPolynomial<f64>) -> Roots<f64> {
 #[cfg(test)]
 mod test {
     use rustnomial::find_roots::{cubic_roots, find_roots};
-    use {GenericPolynomial, LinearBinomial, Monomial, Polynomial, Roots};
+    use {LinearBinomial, Monomial, Polynomial, Roots, SizedPolynomial};
 
     #[test]
     fn test_roots_empty() {

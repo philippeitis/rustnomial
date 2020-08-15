@@ -2,14 +2,9 @@ use std::ops::AddAssign;
 
 use num::Zero;
 
-use rustnomial::err::TryAddError;
-use {Degree, Term};
+use {Degree, Term, TryAddError};
 
-pub trait GenericPolynomial<N> {
-    fn zero() -> Self
-    where
-        Self: Sized;
-
+pub trait SizedPolynomial<N> {
     fn len(&self) -> usize;
 
     fn nth_term(&self, index: usize) -> Term<N>;
@@ -18,8 +13,14 @@ pub trait GenericPolynomial<N> {
 
     fn degree(&self) -> Degree;
 
+    fn zero() -> Self
+    where
+        Self: Sized;
+
     fn is_zero(&self) -> bool;
 }
+
+pub trait GenericPolynomial<N>: SizedPolynomial<N> + MutablePolynomial<N> + Evaluable<N> {}
 
 pub trait MutablePolynomial<N> {
     fn try_add_term(&mut self, term: N, degree: usize) -> Result<(), TryAddError>;
@@ -41,12 +42,12 @@ pub trait Evaluable<N> {
 }
 
 pub struct TermIterator<'a, N> {
-    polynomial: &'a dyn GenericPolynomial<N>,
+    polynomial: &'a dyn SizedPolynomial<N>,
     index: usize,
 }
 
 impl<N> TermIterator<'_, N> {
-    pub(crate) fn new(polynomial: &dyn GenericPolynomial<N>) -> TermIterator<N> {
+    pub(crate) fn new(polynomial: &dyn SizedPolynomial<N>) -> TermIterator<N> {
         TermIterator {
             polynomial,
             index: 0,

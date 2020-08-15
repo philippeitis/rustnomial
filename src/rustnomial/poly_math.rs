@@ -1,7 +1,7 @@
 use num::Zero;
 use std::ops::{AddAssign, Mul};
 use TryAddError;
-use {GenericPolynomial, MutablePolynomial};
+use {MutablePolynomial, SizedPolynomial};
 
 #[macro_export]
 macro_rules! poly_add {
@@ -31,7 +31,7 @@ macro_rules! poly_add {
 }
 
 pub fn add_poly<N>(
-    poly: &dyn GenericPolynomial<N>,
+    poly: &dyn SizedPolynomial<N>,
     sink: &mut dyn MutablePolynomial<N>,
 ) -> Result<(), TryAddError>
 where
@@ -75,7 +75,7 @@ macro_rules! poly_mul {
 }
 
 pub fn mul_poly_vec<N>(
-    rhs: &dyn GenericPolynomial<N>,
+    rhs: &dyn SizedPolynomial<N>,
     lhs: Vec<(N, usize)>,
     sink: &mut dyn MutablePolynomial<N>,
 ) -> Result<(), TryAddError>
@@ -92,8 +92,8 @@ where
 }
 
 pub fn mul_poly<N>(
-    rhs: &dyn GenericPolynomial<N>,
-    lhs: &dyn GenericPolynomial<N>,
+    rhs: &dyn SizedPolynomial<N>,
+    lhs: &dyn SizedPolynomial<N>,
     sink: &mut dyn MutablePolynomial<N>,
 ) -> Result<(), TryAddError>
 where

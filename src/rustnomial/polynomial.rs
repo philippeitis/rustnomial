@@ -9,7 +9,7 @@ use rustnomial::err::TryAddError;
 use rustnomial::find_roots::{find_roots, Roots};
 use rustnomial::numerics::{Abs, IsNegativeOne, IsPositive};
 use rustnomial::traits::{FreeSizePolynomial, MutablePolynomial, TermIterator};
-use {Degree, Derivable, Evaluable, GenericPolynomial, Integrable, Integral, Term};
+use {Degree, Derivable, Evaluable, Integrable, Integral, SizedPolynomial, Term};
 
 #[macro_export]
 macro_rules! polynomial {
@@ -172,22 +172,7 @@ where
     }
 }
 
-impl<N: Copy + Zero> GenericPolynomial<N> for Polynomial<N> {
-    /// Returns a `Polynomial` with no terms.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use rustnomial::{GenericPolynomial, Polynomial};
-    /// let zero = Polynomial::<i32>::zero();
-    /// assert!(zero.is_zero());
-    /// assert!(zero.term_iter().next().is_none());
-    /// assert!(zero.terms.is_empty());
-    /// ```
-    fn zero() -> Polynomial<N> {
-        Polynomial { terms: vec![] }
-    }
-
+impl<N: Copy + Zero> SizedPolynomial<N> for Polynomial<N> {
     /// Returns the length of the `Polynomial`. Not equal to the number of terms.
     fn len(&self) -> usize {
         self.terms.len()
@@ -203,7 +188,7 @@ impl<N: Copy + Zero> GenericPolynomial<N> for Polynomial<N> {
     /// # Example
     ///
     /// ```
-    /// use rustnomial::{Polynomial, GenericPolynomial};
+    /// use rustnomial::{Polynomial, SizedPolynomial};
     /// let polynomial = Polynomial::new(vec![1, 0, 2, 3]);
     /// let mut iter = polynomial.term_iter();
     /// assert_eq!(Some((1, 3)), iter.next());
@@ -221,7 +206,7 @@ impl<N: Copy + Zero> GenericPolynomial<N> for Polynomial<N> {
     /// # Example
     ///
     /// ```
-    /// use rustnomial::{GenericPolynomial, Polynomial, Degree};
+    /// use rustnomial::{SizedPolynomial, Polynomial, Degree};
     /// let polynomial = Polynomial::new(vec![1.0, 4.0, 4.0]);
     /// assert_eq!(Degree::Num(2), polynomial.degree());
     /// ```
@@ -229,12 +214,27 @@ impl<N: Copy + Zero> GenericPolynomial<N> for Polynomial<N> {
         degree(&self.terms)
     }
 
+    /// Returns a `Polynomial` with no terms.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use rustnomial::{SizedPolynomial, Polynomial};
+    /// let zero = Polynomial::<i32>::zero();
+    /// assert!(zero.is_zero());
+    /// assert!(zero.term_iter().next().is_none());
+    /// assert!(zero.terms.is_empty());
+    /// ```
+    fn zero() -> Polynomial<N> {
+        Polynomial { terms: vec![] }
+    }
+
     /// Returns true if all terms are zero, and false if a non-zero term exists.
     ///
     /// # Example
     ///
     /// ```
-    /// use rustnomial::{GenericPolynomial, Polynomial};
+    /// use rustnomial::{SizedPolynomial, Polynomial};
     /// let zero = Polynomial::new(vec![0, 0]);
     /// assert!(zero.is_zero());
     /// let non_zero = Polynomial::new(vec![0, 1]);
@@ -251,7 +251,7 @@ impl Polynomial<f64> {
     /// # Example
     ///
     /// ```
-    /// use rustnomial::{Polynomial, Roots, GenericPolynomial};
+    /// use rustnomial::{Polynomial, Roots, SizedPolynomial};
     /// let zero = Polynomial::<f64>::zero();
     /// assert_eq!(Roots::InfiniteRoots, zero.roots());
     /// let constant = Polynomial::new(vec![1.]);
@@ -873,7 +873,7 @@ impl<N: Zero + Copy> ShrAssign<i32> for Polynomial<N> {
 /// modulo floordiv
 #[cfg(test)]
 mod tests {
-    use GenericPolynomial;
+    use SizedPolynomial;
     use {Degree, Derivable, Evaluable, Integrable, Polynomial};
 
     #[test]

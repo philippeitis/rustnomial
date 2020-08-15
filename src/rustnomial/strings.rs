@@ -114,7 +114,7 @@ where
 #[cfg(test)]
 mod tests {
     use std::str::FromStr;
-    use {GenericPolynomial, Integrable, Monomial, Polynomial, SparsePolynomial};
+    use {Integrable, Monomial, Polynomial, SizedPolynomial, SparsePolynomial};
 
     #[test]
     fn test_from_str() {

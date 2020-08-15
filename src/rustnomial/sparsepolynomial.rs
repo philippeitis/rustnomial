@@ -10,7 +10,7 @@ use rustnomial::err::TryAddError;
 use rustnomial::find_roots::find_roots;
 use rustnomial::numerics::{Abs, IsNegativeOne, IsPositive, PowUsize};
 use rustnomial::traits::{FreeSizePolynomial, MutablePolynomial, TermIterator};
-use {Degree, Derivable, Evaluable, GenericPolynomial, Polynomial, Roots, Term};
+use {Degree, Derivable, Evaluable, Polynomial, Roots, SizedPolynomial, Term};
 
 #[derive(Debug, Clone)]
 pub struct SparsePolynomial<N> {
@@ -93,24 +93,7 @@ fn first_term<N: Zero + Copy>(terms: &HashMap<usize, N>) -> Term<N> {
     }
 }
 
-impl<N: Zero + Copy> GenericPolynomial<N> for SparsePolynomial<N> {
-    /// Returns a `SparsePolynomial` with no terms.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use rustnomial::{GenericPolynomial, SparsePolynomial};
-    /// let zero = SparsePolynomial::<i32>::zero();
-    /// assert!(zero.is_zero());
-    /// assert!(zero.term_iter().next().is_none());
-    /// assert!(zero.terms.is_empty());
-    /// ```
-    fn zero() -> SparsePolynomial<N> {
-        SparsePolynomial {
-            terms: HashMap::new(),
-        }
-    }
-
+impl<N: Zero + Copy> SizedPolynomial<N> for SparsePolynomial<N> {
     fn len(&self) -> usize {
         match self.degree() {
             Degree::NegInf => 0,
@@ -138,7 +121,7 @@ impl<N: Zero + Copy> GenericPolynomial<N> for SparsePolynomial<N> {
     /// # Example
     ///
     /// ```
-    /// use rustnomial::{SparsePolynomial, GenericPolynomial};
+    /// use rustnomial::{SparsePolynomial, SizedPolynomial};
     /// let spolynomial = SparsePolynomial::from_vec(vec![1, 0, 2, 3]);
     /// let mut iter = spolynomial.term_iter();
     /// assert_eq!(Some((1, 3)), iter.next());
@@ -156,7 +139,7 @@ impl<N: Zero + Copy> GenericPolynomial<N> for SparsePolynomial<N> {
     /// # Example
     ///
     /// ```
-    /// use rustnomial::{GenericPolynomial, SparsePolynomial, Degree};
+    /// use rustnomial::{SizedPolynomial, SparsePolynomial, Degree};
     /// let polynomial = SparsePolynomial::from_vec(vec![1.0, 4.0, 4.0]);
     /// assert_eq!(Degree::Num(2), polynomial.degree());
     /// ```
@@ -164,12 +147,29 @@ impl<N: Zero + Copy> GenericPolynomial<N> for SparsePolynomial<N> {
         degree(&self.terms)
     }
 
+    /// Returns a `SparsePolynomial` with no terms.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use rustnomial::{SizedPolynomial, SparsePolynomial};
+    /// let zero = SparsePolynomial::<i32>::zero();
+    /// assert!(zero.is_zero());
+    /// assert!(zero.term_iter().next().is_none());
+    /// assert!(zero.terms.is_empty());
+    /// ```
+    fn zero() -> SparsePolynomial<N> {
+        SparsePolynomial {
+            terms: HashMap::new(),
+        }
+    }
+
     /// Returns true if all terms are zero, and false if a non-zero term exists.
     ///
     /// # Example
     ///
     /// ```
-    /// use rustnomial::{SparsePolynomial, GenericPolynomial};
+    /// use rustnomial::{SparsePolynomial, SizedPolynomial};
     /// let zero = SparsePolynomial::from_vec(vec![0, 0]);
     /// assert!(zero.is_zero());
     /// let non_zero = SparsePolynomial::from_vec(vec![0, 1]);
@@ -186,7 +186,7 @@ impl SparsePolynomial<f64> {
     /// # Example
     ///
     /// ```
-    /// use rustnomial::{SparsePolynomial, Roots, GenericPolynomial};
+    /// use rustnomial::{SparsePolynomial, Roots, SizedPolynomial};
     /// let zero = SparsePolynomial::<f64>::zero();
     /// assert_eq!(Roots::InfiniteRoots, zero.roots());
     /// let constant = SparsePolynomial::from_vec(vec![1.]);
@@ -934,7 +934,7 @@ impl<N: Copy> ShrAssign<i32> for SparsePolynomial<N> {
 /// modulo floordiv
 #[cfg(test)]
 mod tests {
-    use {Degree, Derivable, Evaluable, GenericPolynomial, Polynomial, SparsePolynomial};
+    use {Degree, Derivable, Evaluable, Polynomial, SizedPolynomial, SparsePolynomial};
 
     #[test]
     fn test_from() {

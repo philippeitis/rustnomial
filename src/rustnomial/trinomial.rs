@@ -9,7 +9,7 @@ use rustnomial::err::TryAddError;
 use rustnomial::find_roots::{discriminant_trinomial, trinomial_roots};
 use rustnomial::numerics::{Abs, AbsSqrt, IsNegativeOne, IsPositive};
 use rustnomial::traits::{MutablePolynomial, TermIterator};
-use {Degree, Derivable, Evaluable, GenericPolynomial, Roots, Term};
+use {Degree, Derivable, Evaluable, Roots, SizedPolynomial, Term};
 
 #[derive(Debug, Clone)]
 pub struct QuadraticTrinomial<N> {
@@ -22,7 +22,7 @@ impl<N: Sized> QuadraticTrinomial<N> {
     /// # Example
     ///
     /// ```
-    /// use rustnomial::{GenericPolynomial, QuadraticTrinomial, Degree};
+    /// use rustnomial::{SizedPolynomial, QuadraticTrinomial, Degree};
     /// let trinomial = QuadraticTrinomial::new([3.0, 1.0, 0.5]);
     /// assert_eq!([3.0, 1.0, 0.5], trinomial.coefficients);
     /// assert_eq!(Degree::Num(2), trinomial.degree());
@@ -92,25 +92,13 @@ where
     }
 }
 
-impl<N: Copy + Zero> GenericPolynomial<N> for QuadraticTrinomial<N> {
-    /// Return a `QuadraticTrinomial` which is equal to zero.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use rustnomial::{QuadraticTrinomial, GenericPolynomial};
-    /// assert!(QuadraticTrinomial::<i32>::zero().is_zero());
-    /// ```
-    fn zero() -> Self {
-        QuadraticTrinomial::new([N::zero(); 3])
-    }
-
+impl<N: Copy + Zero> SizedPolynomial<N> for QuadraticTrinomial<N> {
     /// Return the number of terms in `QuadraticTrinomial`.
     ///
     /// # Example
     ///
     /// ```
-    /// use rustnomial::{QuadraticTrinomial, GenericPolynomial};
+    /// use rustnomial::{QuadraticTrinomial, SizedPolynomial};
     /// let trinomial = QuadraticTrinomial::new([1, 2, 3]);
     /// assert_eq!(3, trinomial.len());
     /// assert_eq!(0, QuadraticTrinomial::<i32>::zero().len());
@@ -128,7 +116,7 @@ impl<N: Copy + Zero> GenericPolynomial<N> for QuadraticTrinomial<N> {
     /// # Example
     ///
     /// ```
-    /// use rustnomial::{QuadraticTrinomial, GenericPolynomial, Term};
+    /// use rustnomial::{QuadraticTrinomial, SizedPolynomial, Term};
     /// let trinomial = QuadraticTrinomial::new([1, 0, 3]);
     /// assert_eq!(Term::Term(1, 2), trinomial.nth_term(0));
     /// assert_eq!(Term::ZeroTerm, trinomial.nth_term(1));
@@ -144,7 +132,7 @@ impl<N: Copy + Zero> GenericPolynomial<N> for QuadraticTrinomial<N> {
     /// # Example
     ///
     /// ```
-    /// use rustnomial::{QuadraticTrinomial, GenericPolynomial};
+    /// use rustnomial::{QuadraticTrinomial, SizedPolynomial};
     /// let trinomial = QuadraticTrinomial::new([1, 0, 3]);
     /// let mut iter = trinomial.term_iter();
     /// assert_eq!(Some((1, 2)), iter.next());
@@ -160,7 +148,7 @@ impl<N: Copy + Zero> GenericPolynomial<N> for QuadraticTrinomial<N> {
     /// # Example
     ///
     /// ```
-    /// use rustnomial::{GenericPolynomial, QuadraticTrinomial, Degree};
+    /// use rustnomial::{SizedPolynomial, QuadraticTrinomial, Degree};
     /// let trinomial = QuadraticTrinomial::new([1, 2, 3]);
     /// assert_eq!(Degree::Num(2), trinomial.degree());
     /// let binomial = QuadraticTrinomial::new([0, 2, 3]);
@@ -182,12 +170,24 @@ impl<N: Copy + Zero> GenericPolynomial<N> for QuadraticTrinomial<N> {
         }
     }
 
+    /// Return a `QuadraticTrinomial` which is equal to zero.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use rustnomial::{QuadraticTrinomial, SizedPolynomial};
+    /// assert!(QuadraticTrinomial::<i32>::zero().is_zero());
+    /// ```
+    fn zero() -> Self {
+        QuadraticTrinomial::new([N::zero(); 3])
+    }
+
     /// Returns true if all terms are zero, and false if a non-zero term exists.
     ///
     /// # Example
     ///
     /// ```
-    /// use rustnomial::{GenericPolynomial, QuadraticTrinomial, Degree};
+    /// use rustnomial::{SizedPolynomial, QuadraticTrinomial, Degree};
     /// let trinomial = QuadraticTrinomial::new([1, 2, 3]);
     /// assert!(!trinomial.is_zero());
     /// let zero = QuadraticTrinomial::new([0, 0, 0]);
@@ -552,9 +552,7 @@ impl<N: Zero + Copy> ShrAssign<u32> for QuadraticTrinomial<N> {
 #[cfg(test)]
 mod tests {
     use num::Complex;
-    use rustnomial::trinomial::QuadraticTrinomial;
-    use {Derivable, Evaluable};
-    use {GenericPolynomial, Roots};
+    use {Derivable, Evaluable, QuadraticTrinomial, Roots, SizedPolynomial};
 
     #[test]
     fn test_eval() {
