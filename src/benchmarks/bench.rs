@@ -17,7 +17,7 @@ mod bench {
     #[bench]
     fn bench_inits(b: &mut Bencher) {
         b.iter(|| {
-            SparsePolynomial::from_vec(vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+            SparsePolynomial::from(vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
         });
     }
 
@@ -33,8 +33,8 @@ mod bench {
     #[bench]
     fn bench_muls(b: &mut Bencher) {
         b.iter(|| {
-            let ap = SparsePolynomial::from_vec(vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
-            let bp = SparsePolynomial::from_vec(vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+            let ap = SparsePolynomial::from(vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+            let bp = SparsePolynomial::from(vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
             ap * bp
         });
     }
@@ -49,7 +49,7 @@ mod bench {
     #[bench]
     fn bench_scales(b: &mut Bencher) {
         b.iter(|| {
-            SparsePolynomial::from_vec(vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10]) * 5;
+            SparsePolynomial::from(vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10]) * 5;
         });
     }
 
@@ -63,7 +63,7 @@ mod bench {
 
     #[bench]
     fn bench_div_sparse(b: &mut Bencher) {
-        let a = &SparsePolynomial::from_vec(vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+        let a = &SparsePolynomial::from(vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
         b.iter(|| a.clone() / 5);
     }
 
@@ -83,7 +83,7 @@ mod bench {
 
     #[bench]
     fn bench_degree_sparse(b: &mut Bencher) {
-        let ap = black_box(SparsePolynomial::from_vec(vec![
+        let ap = black_box(SparsePolynomial::from(vec![
             1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
         ]));
         b.iter(|| black_box(ap.degree()));
@@ -129,7 +129,7 @@ mod bench {
 
     #[bench]
     fn bench_pow_sparse(b: &mut Bencher) {
-        let a = SparsePolynomial::from_vec(vec![1i32, 2, 3, 4, 5]);
+        let a = SparsePolynomial::from(vec![1i32, 2, 3, 4, 5]);
         b.iter(|| {
             black_box({
                 a.pow(37);
@@ -149,7 +149,7 @@ mod bench {
 
     #[bench]
     fn bench_eval_sparse(b: &mut Bencher) {
-        let a = SparsePolynomial::from_vec(vec![1i32, 2, 3, 4, 5]);
+        let a = SparsePolynomial::from(vec![1i32, 2, 3, 4, 5]);
         b.iter(|| {
             black_box({
                 a.eval(5);
@@ -159,8 +159,8 @@ mod bench {
 
     #[bench]
     fn bench_equal_sparse(b: &mut Bencher) {
-        let a = SparsePolynomial::from_vec(vec![1i32, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
-        let c = SparsePolynomial::from_vec(vec![1i32, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+        let a = SparsePolynomial::from(vec![1i32, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+        let c = SparsePolynomial::from(vec![1i32, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
         b.iter(|| a == c);
     }
 
