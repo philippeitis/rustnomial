@@ -4,12 +4,13 @@ use std::ops::{
 
 use num::{Complex, One, Zero};
 
-use rustnomial::binomial::LinearBinomial;
-use rustnomial::err::TryAddError;
 use rustnomial::find_roots::{discriminant_trinomial, trinomial_roots};
 use rustnomial::numerics::{Abs, AbsSqrt, IsNegativeOne, IsPositive};
-use rustnomial::traits::{MutablePolynomial, TermIterator};
-use {Degree, Derivable, Evaluable, Roots, SizedPolynomial, Term};
+use rustnomial::traits::TermIterator;
+use {
+    Degree, Derivable, Evaluable, LinearBinomial, MutablePolynomial, Roots, SizedPolynomial, Term,
+    TryAddError,
+};
 
 #[derive(Debug, Clone)]
 pub struct QuadraticTrinomial<N> {
@@ -198,6 +199,21 @@ impl<N: Copy + Zero> SizedPolynomial<N> for QuadraticTrinomial<N> {
     fn is_zero(&self) -> bool {
         self.degree() == Degree::NegInf
     }
+
+    /// Sets self to zero.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use rustnomial::{QuadraticTrinomial, SizedPolynomial};
+    /// let mut non_zero = QuadraticTrinomial::new([1, 1, 1]);
+    /// assert!(!non_zero.is_zero());
+    /// non_zero.set_to_zero();
+    /// assert!(non_zero.is_zero());
+    /// ```
+    fn set_to_zero(&mut self) {
+        self.coefficients = [N::zero(); 3];
+    }
 }
 
 impl<N> MutablePolynomial<N> for QuadraticTrinomial<N>
@@ -211,10 +227,6 @@ where
         } else {
             Err(TryAddError::DegreeOutOfBounds)
         }
-    }
-
-    fn set_to_zero(&mut self) {
-        self.coefficients = [N::zero(); 3];
     }
 }
 

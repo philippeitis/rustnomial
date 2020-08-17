@@ -4,9 +4,12 @@ extern crate rustnomial;
 
 mod bench {
     extern crate test;
-    use self::test::{black_box, Bencher};
-    use rustnomial::{Evaluable, Polynomial, SparsePolynomial, SizedPolynomial};
+
     use std::collections::HashMap;
+
+    use self::test::{black_box, Bencher};
+
+    use rustnomial::{Evaluable, Polynomial, SizedPolynomial, SparsePolynomial};
 
     #[bench]
     fn bench_init(b: &mut Bencher) {
@@ -84,9 +87,7 @@ mod bench {
 
     #[bench]
     fn bench_degree_sparse(b: &mut Bencher) {
-        let ap = black_box(SparsePolynomial::from(vec![
-            1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
-        ]));
+        let ap = black_box(SparsePolynomial::from(vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10]));
         b.iter(|| black_box(ap.degree()));
     }
 
@@ -136,7 +137,6 @@ mod bench {
             })
         });
     }
-
 
     #[bench]
     fn bench_pow_poly(b: &mut Bencher) {

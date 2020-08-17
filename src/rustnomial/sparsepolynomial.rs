@@ -6,11 +6,13 @@ use std::ops::{
 
 use num::{One, Zero};
 
-use rustnomial::err::TryAddError;
 use rustnomial::find_roots::find_roots;
 use rustnomial::numerics::{Abs, IsNegativeOne, IsPositive, PowUsize};
-use rustnomial::traits::{FreeSizePolynomial, MutablePolynomial, TermIterator};
-use {Degree, Derivable, Evaluable, Polynomial, Roots, SizedPolynomial, Term};
+use rustnomial::traits::TermIterator;
+use {
+    Degree, Derivable, Evaluable, FreeSizePolynomial, MutablePolynomial, Polynomial, Roots,
+    SizedPolynomial, Term, TryAddError,
+};
 
 #[derive(Debug, Clone)]
 pub struct SparsePolynomial<N> {
@@ -178,6 +180,30 @@ impl<N: Zero + Copy> SizedPolynomial<N> for SparsePolynomial<N> {
     fn is_zero(&self) -> bool {
         self.degree() == Degree::NegInf
     }
+
+    /// Sets self to zero.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use rustnomial::{SparsePolynomial, SizedPolynomial};
+    /// let mut non_zero = SparsePolynomial::from(vec![0, 1]);
+    /// assert!(!non_zero.is_zero());
+    /// non_zero.set_to_zero();
+    /// assert!(non_zero.is_zero());
+    /// ```
+    fn set_to_zero(&mut self) {
+        self.terms.iter_mut().for_each(|(_, c)| *c = N::zero())
+    }
+}
+
+impl<N> MutablePolynomial<N> for SparsePolynomial<N>
+where
+    N: Zero + Copy + AddAssign,
+{
+    fn try_add_term(&mut self, term: N, degree: usize) -> Result<(), TryAddError> {
+        Ok(self.add_term(term, degree))
+    }
 }
 
 impl SparsePolynomial<f64> {
@@ -282,19 +308,6 @@ where
     }
 }
 
-impl<N> MutablePolynomial<N> for SparsePolynomial<N>
-where
-    N: Zero + Copy + AddAssign,
-{
-    fn try_add_term(&mut self, term: N, degree: usize) -> Result<(), TryAddError> {
-        Ok(self.add_term(term, degree))
-    }
-
-    fn set_to_zero(&mut self) {
-        self.terms.iter_mut().for_each(|(_, c)| *c = N::zero())
-    }
-}
-
 impl<N> SparsePolynomial<N> {
     pub fn new(terms: HashMap<usize, N>) -> SparsePolynomial<N> {
         SparsePolynomial { terms }
@@ -302,7 +315,9 @@ impl<N> SparsePolynomial<N> {
 }
 
 impl<N> From<Vec<N>> for SparsePolynomial<N>
-    where N: Copy + Zero {
+where
+    N: Copy + Zero,
+{
     /// Returns a `SparsePolynomial` with the corresponding terms,
     /// in order of ax^n + bx^(n-1) + ... + cx + d
     ///

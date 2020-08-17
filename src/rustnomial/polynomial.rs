@@ -5,11 +5,13 @@ use std::ops::{
 
 use num::{One, Zero};
 
-use rustnomial::err::TryAddError;
 use rustnomial::find_roots::{find_roots, Roots};
 use rustnomial::numerics::{Abs, IsNegativeOne, IsPositive};
-use rustnomial::traits::{FreeSizePolynomial, MutablePolynomial, TermIterator};
-use {Degree, Derivable, Evaluable, Integrable, Integral, SizedPolynomial, Term};
+use rustnomial::traits::TermIterator;
+use {
+    Degree, Derivable, Evaluable, FreeSizePolynomial, Integrable, Integral, MutablePolynomial,
+    SizedPolynomial, Term, TryAddError,
+};
 
 #[macro_export]
 macro_rules! polynomial {
@@ -243,6 +245,30 @@ impl<N: Copy + Zero> SizedPolynomial<N> for Polynomial<N> {
     fn is_zero(&self) -> bool {
         self.degree() == Degree::NegInf
     }
+
+    /// Sets self to zero.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use rustnomial::{Polynomial, SizedPolynomial};
+    /// let mut non_zero = Polynomial::from(vec![0, 1]);
+    /// assert!(!non_zero.is_zero());
+    /// non_zero.set_to_zero();
+    /// assert!(non_zero.is_zero());
+    /// ```
+    fn set_to_zero(&mut self) {
+        self.terms.iter_mut().for_each(|c| *c = N::zero())
+    }
+}
+
+impl<N> MutablePolynomial<N> for Polynomial<N>
+where
+    N: Zero + Copy + AddAssign,
+{
+    fn try_add_term(&mut self, term: N, degree: usize) -> Result<(), TryAddError> {
+        Ok(self.add_term(term, degree))
+    }
 }
 
 impl Polynomial<f64> {
@@ -304,19 +330,6 @@ where
         }
         let index = self.len() - degree - 1;
         self.terms[index] += term;
-    }
-}
-
-impl<N> MutablePolynomial<N> for Polynomial<N>
-where
-    N: Zero + Copy + AddAssign,
-{
-    fn try_add_term(&mut self, term: N, degree: usize) -> Result<(), TryAddError> {
-        Ok(self.add_term(term, degree))
-    }
-
-    fn set_to_zero(&mut self) {
-        self.terms.iter_mut().for_each(|c| *c = N::zero())
     }
 }
 
@@ -584,7 +597,9 @@ where
 }
 
 impl<N> From<Vec<N>> for Polynomial<N>
-    where N: Copy + Zero {
+where
+    N: Copy + Zero,
+{
     /// Returns a `SparsePolynomial` with the corresponding terms,
     /// in order of ax^n + bx^(n-1) + ... + cx + d
     ///

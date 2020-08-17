@@ -5,8 +5,8 @@ use std::ops::{
 use num::{One, Zero};
 
 use rustnomial::numerics::{Abs, IsNegativeOne, IsPositive};
-use rustnomial::traits::{MutablePolynomial, TermIterator};
-use {Degree, Derivable, Evaluable, Roots, SizedPolynomial, Term, TryAddError};
+use rustnomial::traits::TermIterator;
+use {Degree, Derivable, Evaluable, MutablePolynomial, Roots, SizedPolynomial, Term, TryAddError};
 
 #[derive(Debug, Clone)]
 pub struct LinearBinomial<N> {
@@ -160,6 +160,21 @@ impl<N: Copy + Zero> SizedPolynomial<N> for LinearBinomial<N> {
     fn is_zero(&self) -> bool {
         self.degree() == Degree::NegInf
     }
+
+    /// Sets self to zero.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use rustnomial::{SizedPolynomial, LinearBinomial};
+    /// let mut non_zero = LinearBinomial::new([1, 1]);
+    /// assert!(!non_zero.is_zero());
+    /// non_zero.set_to_zero();
+    /// assert!(non_zero.is_zero());
+    /// ```
+    fn set_to_zero(&mut self) {
+        self.coefficients = [N::zero(); 2];
+    }
 }
 
 impl<N> MutablePolynomial<N> for LinearBinomial<N>
@@ -173,10 +188,6 @@ where
         } else {
             Err(TryAddError::DegreeOutOfBounds)
         }
-    }
-
-    fn set_to_zero(&mut self) {
-        self.coefficients = [N::zero(); 2];
     }
 }
 

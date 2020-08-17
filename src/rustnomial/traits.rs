@@ -18,14 +18,14 @@ pub trait SizedPolynomial<N> {
         Self: Sized;
 
     fn is_zero(&self) -> bool;
+
+    fn set_to_zero(&mut self);
 }
 
 pub trait GenericPolynomial<N>: SizedPolynomial<N> + MutablePolynomial<N> + Evaluable<N> {}
 
 pub trait MutablePolynomial<N> {
     fn try_add_term(&mut self, term: N, degree: usize) -> Result<(), TryAddError>;
-
-    fn set_to_zero(&mut self);
 }
 
 pub trait FreeSizePolynomial<N>

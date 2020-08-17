@@ -4,13 +4,12 @@ use std::ops::{AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Shl, ShlAssign, S
 
 use num::{One, Zero};
 
-use rustnomial::err::TryAddError;
 use rustnomial::numerics::{IsNegativeOne, PowUsize};
 use rustnomial::strings::write_leading_term;
-use rustnomial::traits::{MutablePolynomial, TermIterator};
+use rustnomial::traits::TermIterator;
 use {
-    Degree, Derivable, Evaluable, FreeSizePolynomial, Integrable, Integral, Polynomial, Roots,
-    SizedPolynomial, Term,
+    Degree, Derivable, Evaluable, FreeSizePolynomial, Integrable, Integral, MutablePolynomial,
+    Polynomial, Roots, SizedPolynomial, Term, TryAddError,
 };
 
 #[derive(Debug, Clone)]
@@ -138,6 +137,21 @@ impl<N: Copy + Zero> SizedPolynomial<N> for Monomial<N> {
     fn is_zero(&self) -> bool {
         self.degree() == Degree::NegInf
     }
+
+    /// Sets self to zero.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use rustnomial::{SizedPolynomial, Monomial};
+    /// let mut non_zero = Monomial::new(1, 1);
+    /// assert!(!non_zero.is_zero());
+    /// non_zero.set_to_zero();
+    /// assert!(non_zero.is_zero());
+    /// ```
+    fn set_to_zero(&mut self) {
+        self.coefficient = N::zero();
+    }
 }
 
 impl<N> MutablePolynomial<N> for Monomial<N>
@@ -155,10 +169,6 @@ where
             self.coefficient += term;
             Ok(())
         }
-    }
-
-    fn set_to_zero(&mut self) {
-        self.coefficient = N::zero();
     }
 }
 
