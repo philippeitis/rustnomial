@@ -180,8 +180,12 @@ impl<N: Copy + Zero> SizedPolynomial<N> for Polynomial<N> {
         self.terms.len()
     }
 
-    fn nth_term(&self, index: usize) -> Term<N> {
-        Term::new(self.terms[index], self.len() - index - 1)
+    fn nth_term(&self, index: usize) -> Option<Term<N>> {
+        if let Some(&val) = self.terms.get(index) {
+            Some(Term::new(val, self.len() - index - 1))
+        } else {
+            None
+        }
     }
 
     /// Returns an iterator for the `Polynomial`, yielding the term constant and degree. Terms are

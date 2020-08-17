@@ -85,11 +85,15 @@ impl<N: Copy + Zero> SizedPolynomial<N> for LinearBinomial<N> {
     /// ```
     /// use rustnomial::{LinearBinomial, SizedPolynomial, Term};
     /// let binomial = LinearBinomial::new([5, 0]);
-    /// assert_eq!(Term::Term(5, 1), binomial.nth_term(0));
-    /// assert_eq!(Term::ZeroTerm, binomial.nth_term(1));
+    /// assert_eq!(Some(Term::Term(5, 1)), binomial.nth_term(0));
+    /// assert_eq!(Some(Term::ZeroTerm), binomial.nth_term(1));
     /// ```
-    fn nth_term(&self, index: usize) -> Term<N> {
-        Term::new(self.coefficients[index], 1 - index)
+    fn nth_term(&self, index: usize) -> Option<Term<N>> {
+        if index <= 1 {
+            Some(Term::new(self.coefficients[index], 1 - index))
+        } else {
+            None
+        }
     }
 
     /// Returns an iterator for the `LinearBinomial`, yielding the term constant and degree.

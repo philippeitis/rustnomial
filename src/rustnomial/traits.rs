@@ -7,7 +7,7 @@ use {Degree, Term, TryAddError};
 pub trait SizedPolynomial<N> {
     fn len(&self) -> usize;
 
-    fn nth_term(&self, index: usize) -> Term<N>;
+    fn nth_term(&self, index: usize) -> Option<Term<N>>;
 
     fn term_iter(&self) -> TermIterator<N>;
 
@@ -61,7 +61,7 @@ impl<N: Zero + Copy> Iterator for TermIterator<'_, N> {
         while self.index < self.polynomial.len() {
             let nth_term = self.polynomial.nth_term(self.index);
             self.index += 1;
-            if let Term::Term(coeff, deg) = nth_term {
+            if let Some(Term::Term(coeff, deg)) = nth_term {
                 return Some((coeff, deg));
             }
         }

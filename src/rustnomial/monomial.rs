@@ -63,14 +63,14 @@ impl<N: Copy + Zero> SizedPolynomial<N> for Monomial<N> {
     /// ```
     /// use rustnomial::{Monomial, SizedPolynomial, Term};
     /// let monomial = Monomial::new(5, 2);
-    /// assert_eq!(Term::Term(5, 2), monomial.nth_term(0));
-    /// assert_eq!(Term::ZeroTerm, monomial.nth_term(1));
+    /// assert_eq!(Some(Term::Term(5, 2)), monomial.nth_term(0));
+    /// assert_eq!(None, monomial.nth_term(1));
     /// ```
-    fn nth_term(&self, index: usize) -> Term<N> {
+    fn nth_term(&self, index: usize) -> Option<Term<N>> {
         if index != 0 {
-            Term::ZeroTerm
+            None
         } else {
-            Term::new(self.coefficient, self.deg)
+            Some(Term::new(self.coefficient, self.deg))
         }
     }
 

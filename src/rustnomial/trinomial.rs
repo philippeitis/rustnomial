@@ -119,12 +119,16 @@ impl<N: Copy + Zero> SizedPolynomial<N> for QuadraticTrinomial<N> {
     /// ```
     /// use rustnomial::{QuadraticTrinomial, SizedPolynomial, Term};
     /// let trinomial = QuadraticTrinomial::new([1, 0, 3]);
-    /// assert_eq!(Term::Term(1, 2), trinomial.nth_term(0));
-    /// assert_eq!(Term::ZeroTerm, trinomial.nth_term(1));
-    /// assert_eq!(Term::Term(3, 0), trinomial.nth_term(2));
+    /// assert_eq!(Some(Term::Term(1, 2)), trinomial.nth_term(0));
+    /// assert_eq!(Some(Term::ZeroTerm), trinomial.nth_term(1));
+    /// assert_eq!(Some(Term::Term(3, 0)), trinomial.nth_term(2));
     /// ```
-    fn nth_term(&self, index: usize) -> Term<N> {
-        Term::new(self.coefficients[index], 2 - index)
+    fn nth_term(&self, index: usize) -> Option<Term<N>> {
+        if index <= 2 {
+            Some(Term::new(self.coefficients[index], 2 - index))
+        } else {
+            None
+        }
     }
 
     /// Returns an iterator for the `QuadraticTrinomial`, yielding the term constant and degree.
