@@ -583,6 +583,28 @@ where
     }
 }
 
+impl<N> From<Vec<N>> for Polynomial<N>
+    where N: Copy + Zero {
+    /// Returns a `SparsePolynomial` with the corresponding terms,
+    /// in order of ax^n + bx^(n-1) + ... + cx + d
+    ///
+    /// # Arguments
+    ///
+    /// * ` term_vec ` - A vector of constants, in decreasing order of degree.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use rustnomial::{Polynomial};
+    /// // Corresponds to 1.0x^2 + 4.0x + 4.0
+    /// let polynomial = Polynomial::from(vec![1.0, 4.0, 4.0]);
+    /// let polynomial: Polynomial<f64> = vec![1.0, 4.0, 4.0].into();
+    /// ```
+    fn from(term_vec: Vec<N>) -> Self {
+        Polynomial::new(term_vec)
+    }
+}
+
 macro_rules! from_poly_a_to_b {
     ($A:ty, $B:ty) => {
         impl From<Polynomial<$A>> for Polynomial<$B> {

@@ -295,6 +295,12 @@ where
     }
 }
 
+impl<N> From<N> for Monomial<N> {
+    fn from(item: N) -> Self {
+        Monomial::new(item, 0)
+    }
+}
+
 macro_rules! from_monomial_a_to_b {
     ($A:ty, $B:ty) => {
         impl From<Monomial<$A>> for Monomial<$B> {
