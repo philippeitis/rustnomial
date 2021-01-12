@@ -1,6 +1,8 @@
 use num::{One, Zero};
 
 pub trait IsNegativeOne {
+    /// Returns true is self is equal to negative one. Used for string formatting purposes,
+    /// and does not respect tolerances.
     fn is_negative_one(&self) -> bool;
 }
 
@@ -17,6 +19,7 @@ macro_rules! is_neg_one_u {
 macro_rules! is_neg_one {
     ($U:ty) => {
         impl IsNegativeOne for $U {
+            #[allow(clippy::float_cmp)]
             fn is_negative_one(&self) -> bool {
                 *self == -<$U>::one()
             }
