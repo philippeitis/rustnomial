@@ -344,7 +344,7 @@ where
     /// ```
     fn from(term_vec: Vec<N>) -> Self {
         let mut terms = HashMap::new();
-        if term_vec.len() != 0 {
+        if !term_vec.is_empty() {
             let degree = term_vec.len() - 1;
             for (index, &val) in term_vec.iter().enumerate() {
                 if !val.is_zero() {
@@ -962,6 +962,7 @@ mod tests {
     fn test_from() {
         let a = SparsePolynomial::from(vec![1u8, 2, 3, 4]);
         let b: SparsePolynomial<u16> = a.into();
+        assert_eq!(b, SparsePolynomial::from(vec![1u16, 2, 3, 4]))
     }
 
     #[test]

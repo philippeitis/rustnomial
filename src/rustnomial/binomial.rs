@@ -476,7 +476,7 @@ impl<N: Zero + Copy> Shr<u32> for LinearBinomial<N> {
 
     fn shr(self, _rhs: u32) -> LinearBinomial<N> {
         match _rhs {
-            0 => LinearBinomial::new(self.coefficients.clone()),
+            0 => LinearBinomial::new(self.coefficients),
             1 => LinearBinomial::new([N::zero(), self.coefficients[0]]),
             _ => LinearBinomial::zero(),
         }

@@ -31,12 +31,11 @@ where
     type Err = TermFromStringError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let mut char_iter = s.chars();
         let mut num_vec = vec![];
         let mut coeff = N::one();
         let mut seen_x = false;
         let mut seen_caret = false;
-        while let Some(c) = char_iter.next() {
+        for c in s.chars() {
             match c {
                 ' ' | ',' | '_' => {}
                 '+' | '-' | '.' | '0'..='9' => num_vec.push(c),

@@ -32,7 +32,7 @@ pub struct Polynomial<N> {
     pub terms: Vec<N>,
 }
 
-pub(crate) fn first_nonzero_index<N>(terms: &Vec<N>) -> usize
+pub(crate) fn first_nonzero_index<N>(terms: &[N]) -> usize
 where
     N: Zero + Copy,
 {
@@ -55,7 +55,7 @@ where
     len
 }
 
-fn vec_mul<N>(_lhs: &Vec<N>, _rhs: &Vec<N>) -> Vec<N>
+fn slice_mul<N>(_lhs: &[N], _rhs: &[N]) -> Vec<N>
 where
     N: Mul<Output = N> + AddAssign + Copy + Zero,
 {
@@ -74,9 +74,9 @@ where
 }
 
 fn vec_sub_w_scale<N>(
-    _lhs: &mut Vec<N>,
+    _lhs: &mut [N],
     _lhs_degree: usize,
-    _rhs: &Vec<N>,
+    _rhs: &[N],
     _rhs_deg: usize,
     _rhs_scale: N,
 ) where
@@ -91,7 +91,7 @@ fn vec_sub_w_scale<N>(
     }
 }
 
-fn degree<N>(poly_vec: &Vec<N>) -> Degree
+fn degree<N>(poly_vec: &[N]) -> Degree
 where
     N: Zero + Copy,
 {
@@ -103,7 +103,7 @@ where
     }
 }
 
-pub(crate) fn first_term<N>(poly_vec: &Vec<N>) -> Term<N>
+pub(crate) fn first_term<N>(poly_vec: &[N]) -> Term<N>
 where
     N: Zero + Copy,
 {
@@ -757,7 +757,7 @@ where
 
     fn mul(self, _rhs: Polynomial<N>) -> Polynomial<N> {
         Polynomial {
-            terms: vec_mul(&self.terms, &_rhs.terms),
+            terms: slice_mul(&self.terms, &_rhs.terms),
         }
     }
 }
@@ -769,7 +769,7 @@ where
     type Output = Polynomial<N>;
 
     fn mul(self, _rhs: &Polynomial<N>) -> Polynomial<N> {
-        Polynomial::new(vec_mul(&self.terms, &_rhs.terms))
+        Polynomial::new(slice_mul(&self.terms, &_rhs.terms))
     }
 }
 
@@ -781,7 +781,7 @@ where
 
     fn mul(self, _rhs: Polynomial<N>) -> Polynomial<N> {
         Polynomial {
-            terms: vec_mul(&self.terms, &_rhs.terms),
+            terms: slice_mul(&self.terms, &_rhs.terms),
         }
     }
 }
@@ -793,7 +793,7 @@ where
     type Output = Polynomial<N>;
 
     fn mul(self, _rhs: &Polynomial<N>) -> Polynomial<N> {
-        Polynomial::new(vec_mul(&self.terms, &_rhs.terms))
+        Polynomial::new(slice_mul(&self.terms, &_rhs.terms))
     }
 }
 
@@ -802,7 +802,7 @@ where
     N: Mul<Output = N> + AddAssign + Copy + Zero,
 {
     fn mul_assign(&mut self, _rhs: Polynomial<N>) {
-        self.terms = vec_mul(&self.terms, &_rhs.terms);
+        self.terms = slice_mul(&self.terms, &_rhs.terms);
     }
 }
 
@@ -811,7 +811,7 @@ where
     N: Mul<Output = N> + AddAssign + Copy + Zero,
 {
     fn mul_assign(&mut self, _rhs: &Polynomial<N>) {
-        self.terms = vec_mul(&self.terms, &_rhs.terms);
+        self.terms = slice_mul(&self.terms, &_rhs.terms);
     }
 }
 

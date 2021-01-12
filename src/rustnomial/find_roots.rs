@@ -59,6 +59,7 @@ where
     }
 }
 
+#[allow(clippy::many_single_char_names)]
 pub(crate) fn cubic_roots<N>(a: N, b: N, c: N, d: N) -> Roots<N>
 where
     N: Copy

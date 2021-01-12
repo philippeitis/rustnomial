@@ -534,7 +534,7 @@ impl<N: Zero + Copy> Shr<u32> for QuadraticTrinomial<N> {
 
     fn shr(self, _rhs: u32) -> QuadraticTrinomial<N> {
         match _rhs {
-            0 => QuadraticTrinomial::new(self.coefficients.clone()),
+            0 => QuadraticTrinomial::new(self.coefficients),
             1 => QuadraticTrinomial::new([N::zero(), self.coefficients[0], self.coefficients[1]]),
             2 => QuadraticTrinomial::new([N::zero(), N::zero(), self.coefficients[0]]),
             _ => QuadraticTrinomial::zero(),
