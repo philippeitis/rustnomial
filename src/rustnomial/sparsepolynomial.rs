@@ -206,7 +206,7 @@ impl<N: Zero + Copy> SizedPolynomial<N> for SparsePolynomial<N> {
     /// assert!(non_zero.is_zero());
     /// ```
     fn set_to_zero(&mut self) {
-        self.terms.iter_mut().for_each(|(_, c)| *c = N::zero())
+        self.terms.clear()
     }
 }
 

@@ -258,7 +258,7 @@ impl<N: Copy + Zero> SizedPolynomial<N> for Polynomial<N> {
     /// assert!(non_zero.is_zero());
     /// ```
     fn set_to_zero(&mut self) {
-        self.terms.iter_mut().for_each(|c| *c = N::zero())
+        self.terms.clear()
     }
 }
 
