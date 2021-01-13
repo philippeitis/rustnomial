@@ -1,6 +1,6 @@
+use std::fmt;
 use std::fmt::{Debug, Display};
 use std::ops::{AddAssign, Mul, MulAssign, Sub};
-use std::{fmt, iter};
 
 use num::{One, Zero};
 
@@ -41,12 +41,9 @@ where
 
 impl<N: Zero + Copy + AddAssign> Integral<N> {
     pub fn replace_c(&self, c: N) -> Polynomial<N> {
-        Polynomial::from_terms(
-            self.polynomial
-                .term_iter()
-                .chain(iter::once((c, 0)))
-                .collect(),
-        )
+        let mut p = self.polynomial.clone();
+        p.add_term(c, 0);
+        p
     }
 }
 
