@@ -185,9 +185,9 @@ impl<N> MutablePolynomial<N> for LinearBinomial<N>
 where
     N: Zero + AddAssign + Copy,
 {
-    fn try_add_term(&mut self, term: N, coeff: usize) -> Result<(), TryAddError> {
-        if coeff <= 1 {
-            self.coefficients[1 - coeff] += term;
+    fn try_add_term(&mut self, coeff: N, degree: usize) -> Result<(), TryAddError> {
+        if degree <= 1 {
+            self.coefficients[1 - degree] += coeff;
             Ok(())
         } else {
             Err(TryAddError::DegreeOutOfBounds)

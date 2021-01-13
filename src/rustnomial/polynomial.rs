@@ -266,8 +266,8 @@ impl<N> MutablePolynomial<N> for Polynomial<N>
 where
     N: Zero + Copy + AddAssign,
 {
-    fn try_add_term(&mut self, term: N, degree: usize) -> Result<(), TryAddError> {
-        Ok(self.add_term(term, degree))
+    fn try_add_term(&mut self, coeff: N, degree: usize) -> Result<(), TryAddError> {
+        Ok(self.add_term(coeff, degree))
     }
 }
 
@@ -322,14 +322,14 @@ where
         a
     }
 
-    fn add_term(&mut self, term: N, degree: usize) {
+    fn add_term(&mut self, coeff: N, degree: usize) {
         if self.len() < degree + 1 {
             let mut terms = vec![N::zero(); degree + 1 - self.len()];
             terms.extend(&self.terms);
             self.terms = terms;
         }
         let index = self.len() - degree - 1;
-        self.terms[index] += term;
+        self.terms[index] += coeff;
     }
 }
 

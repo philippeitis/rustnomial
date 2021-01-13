@@ -158,15 +158,15 @@ impl<N> MutablePolynomial<N> for Monomial<N>
 where
     N: AddAssign + Copy + Zero,
 {
-    fn try_add_term(&mut self, term: N, degree: usize) -> Result<(), TryAddError> {
+    fn try_add_term(&mut self, coeff: N, degree: usize) -> Result<(), TryAddError> {
         if self.is_zero() {
-            self.coefficient += term;
+            self.coefficient += coeff;
             self.deg = degree;
             Ok(())
         } else if degree != self.deg {
             Err(TryAddError::TooManyTerms)
         } else {
-            self.coefficient += term;
+            self.coefficient += coeff;
             Ok(())
         }
     }

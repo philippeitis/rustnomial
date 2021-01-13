@@ -211,8 +211,8 @@ impl<N> MutablePolynomial<N> for SparsePolynomial<N>
 where
     N: Zero + Copy + AddAssign,
 {
-    fn try_add_term(&mut self, term: N, degree: usize) -> Result<(), TryAddError> {
-        Ok(self.add_term(term, degree))
+    fn try_add_term(&mut self, coeff: N, degree: usize) -> Result<(), TryAddError> {
+        Ok(self.add_term(coeff, degree))
     }
 }
 
@@ -302,17 +302,17 @@ where
         a
     }
 
-    fn add_term(&mut self, term: N, degree: usize) {
-        if term.is_zero() {
+    fn add_term(&mut self, coeff: N, degree: usize) {
+        if coeff.is_zero() {
             return;
         }
 
         match self.terms.get_mut(&degree) {
             None => {
-                self.terms.insert(degree, term);
+                self.terms.insert(degree, coeff);
             }
             Some(val) => {
-                *val += term;
+                *val += coeff;
             }
         }
     }

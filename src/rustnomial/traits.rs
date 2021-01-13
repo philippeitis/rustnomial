@@ -25,7 +25,9 @@ pub trait SizedPolynomial<N> {
 pub trait GenericPolynomial<N>: SizedPolynomial<N> + MutablePolynomial<N> + Evaluable<N> {}
 
 pub trait MutablePolynomial<N> {
-    fn try_add_term(&mut self, term: N, degree: usize) -> Result<(), TryAddError>;
+    /// Adds the term with given coefficient and `degree` to self, returning an error
+    /// if the particular term can not be added to self without violating constraints.
+    fn try_add_term(&mut self, coeff: N, degree: usize) -> Result<(), TryAddError>;
 }
 
 pub trait FreeSizePolynomial<N>
@@ -34,7 +36,8 @@ where
 {
     fn from_terms(terms: Vec<(N, usize)>) -> Self;
 
-    fn add_term(&mut self, term: N, degree: usize);
+    /// Adds the term with given coefficient and `degree` to self.
+    fn add_term(&mut self, coeff: N, degree: usize);
 }
 
 pub trait Evaluable<N> {

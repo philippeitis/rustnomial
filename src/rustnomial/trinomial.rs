@@ -224,9 +224,9 @@ impl<N> MutablePolynomial<N> for QuadraticTrinomial<N>
 where
     N: Zero + AddAssign + Copy,
 {
-    fn try_add_term(&mut self, term: N, degree: usize) -> Result<(), TryAddError> {
+    fn try_add_term(&mut self, coeff: N, degree: usize) -> Result<(), TryAddError> {
         if degree <= 2 {
-            self.coefficients[2 - degree] += term;
+            self.coefficients[2 - degree] += coeff;
             Ok(())
         } else {
             Err(TryAddError::DegreeOutOfBounds)
