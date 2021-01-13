@@ -117,67 +117,58 @@ mod tests {
     use {Integrable, Monomial, Polynomial, SizedPolynomial, SparsePolynomial};
 
     #[test]
-    fn test_from_str() {
-        match SparsePolynomial::<i32>::from_str("5x^2") {
-            Ok(a) => {
-                let b = SparsePolynomial::from(vec![5, 0, 0]);
-                assert_eq!(b, a);
-            }
-            Err(e) => {
-                assert!(false, e);
-            }
-        }
+    fn test_from_str_all_terms() {
+        let a = SparsePolynomial::<i32>::from_str("255x^2+15x+3").unwrap();
+        let b = SparsePolynomial::from(vec![255, 15, 3]);
+        assert_eq!(b, a);
+    }
 
-        match SparsePolynomial::<i32>::from_str("255x^2+15x+3") {
-            Ok(a) => {
-                let b = SparsePolynomial::from(vec![255, 15, 3]);
-                assert_eq!(a, b);
-            }
-            Err(e) => {
-                assert!(false, e);
-            }
-        }
+    #[test]
+    fn test_from_str_missing_trailing_terms() {
+        let a = SparsePolynomial::<i32>::from_str("5x^2").unwrap();
+        let b = SparsePolynomial::from(vec![5, 0, 0]);
+        assert_eq!(b, a);
+    }
 
-        match SparsePolynomial::<i32>::from_str("255x^2-15x^1+3x^0") {
-            Ok(a) => {
-                let b = SparsePolynomial::from(vec![255, -15, 3]);
-                assert_eq!(a, b);
-            }
-            Err(e) => {
-                assert!(false, e);
-            }
-        }
+    #[test]
+    fn test_from_str_term_degree_0() {
+        let a = SparsePolynomial::<i32>::from_str("255x^2-15x^1+3x^0").unwrap();
+        let b = SparsePolynomial::from(vec![255, -15, 3]);
+        assert_eq!(
+            b, a,
+            "from_str should handle terms with explicit degree zero"
+        );
+    }
 
-        match SparsePolynomial::<i32>::from_str("-x^1") {
-            Ok(a) => {
-                let b = SparsePolynomial::from(vec![-1, 0]);
-                assert_eq!(a, b);
-            }
-            Err(e) => {
-                assert!(false, e);
-            }
-        }
+    #[test]
+    fn test_from_str_negative_implicit_coefficient() {
+        let a = SparsePolynomial::<i32>::from_str("-x^1").unwrap();
+        let b = SparsePolynomial::from(vec![-1, 0]);
+        assert_eq!(
+            b, a,
+            "from_str should handle a negative term without an explicit coefficient"
+        );
+    }
 
-        match SparsePolynomial::<i32>::from_str("5+x") {
-            Ok(a) => {
-                let b = SparsePolynomial::from(vec![1, 5]);
-                assert_eq!(a, b);
-            }
-            Err(e) => {
-                assert!(false, e);
-            }
-        }
+    #[test]
+    fn test_from_str_terms_out_of_order() {
+        let a = SparsePolynomial::<i32>::from_str("5+x").unwrap();
+        let b = SparsePolynomial::from(vec![1, 5]);
+        assert_eq!(
+            b, a,
+            "from_str should not fail if terms are not in specific order"
+        );
+    }
 
-        match SparsePolynomial::<i32>::from_str("5x+11x") {
-            Ok(a) => {
-                let b = SparsePolynomial::from(vec![16, 0]);
-                assert_eq!(a, b);
-            }
-            Err(e) => {
-                assert!(false, e);
-            }
-        }
+    #[test]
+    fn test_from_str_repeated_degree() {
+        let a = SparsePolynomial::<i32>::from_str("5x+11x").unwrap();
+        let b = SparsePolynomial::from(vec![16, 0]);
+        assert_eq!(b, a, "from_str should combine terms with equal degree");
+    }
 
+    #[test]
+    fn test_dangling_caret_errors() {
         assert!(
             SparsePolynomial::<i32>::from_str("5+x^").is_err(),
             "Should err on dangling ^"
