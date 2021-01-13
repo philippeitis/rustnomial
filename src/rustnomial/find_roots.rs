@@ -159,7 +159,7 @@ fn normalize<N: Zero + Copy + DivAssign>(values: &mut Vec<N>) {
     }
 }
 
-fn eval(poly: &dyn SizedPolynomial<f64>, point: f64) -> f64 {
+fn eval<S: SizedPolynomial<f64>>(poly: &S, point: f64) -> f64 {
     let mut sum = 0f64;
     for (val, degree) in poly.term_iter() {
         sum += val * point.upow(degree);
@@ -169,7 +169,7 @@ fn eval(poly: &dyn SizedPolynomial<f64>, point: f64) -> f64 {
 
 /// Finds the roots of the polynomial with terms defined by the given vector, where each element
 /// is a tuple consisting of the coefficient and degree. Order is not guaranteed.
-pub(crate) fn find_roots(poly: &dyn SizedPolynomial<f64>) -> Roots<f64> {
+pub(crate) fn find_roots<S: SizedPolynomial<f64>>(poly: &S) -> Roots<f64> {
     match poly.term_iter().collect::<Vec<(f64, usize)>>().as_slice() {
         [] => Roots::InfiniteRoots,
         [(_, 0)] => Roots::NoRoots,

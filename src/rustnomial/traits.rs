@@ -42,7 +42,9 @@ where
     N: Zero + Copy + AddAssign,
 {
     /// Creates an instance of `Self` with the provided terms
-    fn from_terms(terms: &[(N, usize)]) -> Self;
+    fn from_terms(terms: &[(N, usize)]) -> Self
+    where
+        Self: Sized;
 
     /// Adds the term with given coefficient and `degree` to self.
     fn add_term(&mut self, coeff: N, degree: usize);
@@ -65,6 +67,7 @@ impl<N> TermIterator<'_, N> {
         }
     }
 }
+
 impl<N: Zero + Copy> Iterator for TermIterator<'_, N> {
     type Item = (N, usize);
 
