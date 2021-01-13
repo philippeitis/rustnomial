@@ -5,23 +5,21 @@ use {MutablePolynomial, SizedPolynomial};
 
 #[macro_export]
 macro_rules! poly_add {
-    ($mand:expr, $( $x:expr ),+) => {{
-        use $crate::Polynomial;
+    ($mand:expr $(,$x:expr)+) => {{
+        use $crate::{Polynomial, SizedPolynomial};
         let mut sink = Polynomial::zero();
-        poly_add!(sink; $mand $(,$x)*);
+        // This will never error.
+        let _ = poly_add!(sink; $mand $(,$x)*);
         sink
     }};
 
     ($sink:expr; $( $x:expr ),+) => {{
-        use $crate::{FreeSizePolynomial, GenericPolynomial, MutablePolynomial};
         use $crate::poly_math::add_poly;
 
-        let mut temp_vec: Vec<&dyn GenericPolynomial<_>> = Vec::new();
-        $(
-            let x = $x;
-            temp_vec.push(&x);
-        )*
-        let res: Result<Vec<_>, _> = temp_vec.into_iter().map(|x| add_poly(x, &mut $sink)).collect();
+        let res: Result<Vec<_>, _> = vec![
+            $(add_poly(&$x, &mut $sink),)*
+        ].into_iter().collect();
+
         if let Err(x) = res {
             Err(x)
         } else {
@@ -30,9 +28,9 @@ macro_rules! poly_add {
     }};
 }
 
-pub fn add_poly<N>(
-    poly: &dyn SizedPolynomial<N>,
-    sink: &mut dyn MutablePolynomial<N>,
+pub fn add_poly<N, P: SizedPolynomial<N>, S: MutablePolynomial<N>>(
+    poly: &P,
+    sink: &mut S,
 ) -> Result<(), TryAddError>
 where
     N: Zero + AddAssign + Copy,
@@ -62,7 +60,7 @@ macro_rules! poly_mul {
         mul_poly_vec(&$lhs, sink_terms, &mut $sink)
     }};
 
-    ($lhs:expr, $rhs:expr, $( $x:expr ),+) => {{
+    ($lhs:expr, $rhs:expr $(,$x:expr )+) => {{
         poly_mul!(poly_mul!($lhs, $rhs) $(,$x)*)
     }};
 
@@ -74,10 +72,10 @@ macro_rules! poly_mul {
     }};
 }
 
-pub fn mul_poly_vec<N>(
-    rhs: &dyn SizedPolynomial<N>,
+pub fn mul_poly_vec<N, R: SizedPolynomial<N>, S: MutablePolynomial<N>>(
+    rhs: &R,
     lhs: Vec<(N, usize)>,
-    sink: &mut dyn MutablePolynomial<N>,
+    sink: &mut S,
 ) -> Result<(), TryAddError>
 where
     N: Zero + AddAssign + Copy + Mul<Output = N>,
@@ -91,10 +89,10 @@ where
     Ok(())
 }
 
-pub fn mul_poly<N>(
-    rhs: &dyn SizedPolynomial<N>,
-    lhs: &dyn SizedPolynomial<N>,
-    sink: &mut dyn MutablePolynomial<N>,
+pub fn mul_poly<N, R: SizedPolynomial<N>, L: SizedPolynomial<N>, S: MutablePolynomial<N>>(
+    rhs: &R,
+    lhs: &L,
+    sink: &mut S,
 ) -> Result<(), TryAddError>
 where
     N: Zero + AddAssign + Copy + Mul<Output = N>,
@@ -110,7 +108,7 @@ where
 
 #[macro_export]
 macro_rules! poly_sub {
-    ($lhs:expr, $( $x:expr ),+) => {{
+    ($lhs:expr $(,$x:expr )+) => {{
         use $crate::Polynomial;
         let mut sink = Polynomial::zero();
         poly_add!(sink; $lhs);
@@ -129,4 +127,19 @@ macro_rules! poly_sub {
             }
         )*
     }};
+}
+
+#[cfg(test)]
+mod test {
+    use crate::Polynomial;
+    use SizedPolynomial;
+
+    #[test]
+    fn test_poly_add() {
+        let mut base = Polynomial::zero();
+        let new = Polynomial::from(vec![1u32, 2u32, 3u32]);
+        assert_eq!(poly_add!(base, new), new);
+        assert!(poly_add!(base; new).is_ok());
+        assert_eq!(base, new);
+    }
 }
