@@ -7,18 +7,25 @@ use {Degree, Term, TryAddError};
 pub trait SizedPolynomial<N> {
     fn len(&self) -> usize;
 
+    /// Returns the `index`th term in order of decreasing degree from `SizedPolynomial`,
+    /// if it exists.
     fn nth_term(&self, index: usize) -> Option<Term<N>>;
 
+    /// Returns an in-order iterator over the terms of `SizedPolynomial`.
     fn term_iter(&self) -> TermIterator<N>;
 
+    /// Returns the degree of `SizedPolynomial`.
     fn degree(&self) -> Degree;
 
+    /// Returns the zero-instance of `SizedPolynomial`.
     fn zero() -> Self
     where
         Self: Sized;
 
+    /// Returns whether `SizedPolynomial` is zero or not.
     fn is_zero(&self) -> bool;
 
+    /// Sets the terms of `SizedPolynomial` to zero.
     fn set_to_zero(&mut self);
 }
 

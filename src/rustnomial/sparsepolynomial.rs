@@ -15,6 +15,9 @@ use {
 };
 
 #[derive(Debug, Clone)]
+/// This version of Polynomial is intended for use for polynomials of large degree,
+/// but with a very small number of internal terms. However, it is significantly slower
+/// than Polynomial in the case where the number of non-zero terms is close to the degree.
 pub struct SparsePolynomial<N> {
     pub terms: HashMap<usize, N>,
 }
