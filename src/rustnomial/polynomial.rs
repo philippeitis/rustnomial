@@ -7,7 +7,6 @@ use num::{One, Zero};
 
 use rustnomial::find_roots::{find_roots, Roots};
 use rustnomial::numerics::{Abs, IsNegativeOne, IsPositive};
-use rustnomial::traits::TermIterator;
 use {
     Degree, Derivable, Evaluable, FreeSizePolynomial, Integrable, Integral, MutablePolynomial,
     SizedPolynomial, Term, TryAddError,
@@ -184,24 +183,6 @@ impl<N: Copy + Zero> SizedPolynomial<N> for Polynomial<N> {
         }
     }
 
-    /// Returns an iterator for the `Polynomial`, yielding the term constant and degree. Terms are
-    /// iterated over in descending degree order, excluding zero terms.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use rustnomial::{Polynomial, SizedPolynomial};
-    /// let polynomial = Polynomial::new(vec![1, 0, 2, 3]);
-    /// let mut iter = polynomial.term_iter();
-    /// assert_eq!(Some((1, 3)), iter.next());
-    /// assert_eq!(Some((2, 1)), iter.next());
-    /// assert_eq!(Some((3, 0)), iter.next());
-    /// assert_eq!(None, iter.next());
-    /// ```
-    fn term_iter(&self) -> TermIterator<N> {
-        TermIterator::new(self)
-    }
-
     /// Returns the degree of the `Polynomial` it is called on, corresponding to the
     /// largest non-zero term.
     ///
@@ -229,21 +210,6 @@ impl<N: Copy + Zero> SizedPolynomial<N> for Polynomial<N> {
     /// ```
     fn zero() -> Polynomial<N> {
         Polynomial { terms: vec![] }
-    }
-
-    /// Returns true if all terms are zero, and false if a non-zero term exists.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use rustnomial::{SizedPolynomial, Polynomial};
-    /// let zero = Polynomial::new(vec![0, 0]);
-    /// assert!(zero.is_zero());
-    /// let non_zero = Polynomial::new(vec![0, 1]);
-    /// assert!(!non_zero.is_zero());
-    /// ```
-    fn is_zero(&self) -> bool {
-        self.degree() == Degree::NegInf
     }
 
     /// Sets self to zero.

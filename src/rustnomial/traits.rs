@@ -11,8 +11,26 @@ pub trait SizedPolynomial<N> {
     /// if it exists.
     fn nth_term(&self, index: usize) -> Option<Term<N>>;
 
-    /// Returns an in-order iterator over the terms of `SizedPolynomial`.
-    fn term_iter(&self) -> TermIterator<N>;
+    /// Returns an iterator for the `Polynomial`, yielding the coefficient and degree of each
+    /// non-zero term, in descending degree order.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use rustnomial::{Polynomial, SizedPolynomial};
+    /// let polynomial = Polynomial::new(vec![1, 0, 2, 3]);
+    /// let mut iter = polynomial.term_iter();
+    /// assert_eq!(Some((1, 3)), iter.next());
+    /// assert_eq!(Some((2, 1)), iter.next());
+    /// assert_eq!(Some((3, 0)), iter.next());
+    /// assert_eq!(None, iter.next());
+    /// ```
+    fn term_iter(&self) -> TermIterator<N>
+    where
+        Self: Sized,
+    {
+        TermIterator::new(self)
+    }
 
     /// Returns the degree of `SizedPolynomial`.
     fn degree(&self) -> Degree;
@@ -22,8 +40,20 @@ pub trait SizedPolynomial<N> {
     where
         Self: Sized;
 
-    /// Returns whether `SizedPolynomial` is zero or not.
-    fn is_zero(&self) -> bool;
+    /// Returns true if all terms are zero, and false if a non-zero term exists.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use rustnomial::{SizedPolynomial, Polynomial};
+    /// let zero = Polynomial::new(vec![0, 0]);
+    /// assert!(zero.is_zero());
+    /// let non_zero = Polynomial::new(vec![0, 1]);
+    /// assert!(!non_zero.is_zero());
+    /// ```
+    fn is_zero(&self) -> bool {
+        self.degree() == Degree::NegInf
+    }
 
     /// Sets the terms of `SizedPolynomial` to zero.
     fn set_to_zero(&mut self);

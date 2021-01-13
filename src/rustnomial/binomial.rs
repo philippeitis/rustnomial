@@ -5,7 +5,6 @@ use std::ops::{
 use num::{One, Zero};
 
 use rustnomial::numerics::{Abs, IsNegativeOne, IsPositive};
-use rustnomial::traits::TermIterator;
 use {Degree, Derivable, Evaluable, MutablePolynomial, Roots, SizedPolynomial, Term, TryAddError};
 
 #[derive(Debug, Clone)]
@@ -96,23 +95,6 @@ impl<N: Copy + Zero> SizedPolynomial<N> for LinearBinomial<N> {
         }
     }
 
-    /// Returns an iterator for the `LinearBinomial`, yielding the term constant and degree.
-    /// Terms are iterated over in descending degree order, excluding zero terms.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use rustnomial::{LinearBinomial, SizedPolynomial};
-    /// let binomial = LinearBinomial::new([5, 2]);
-    /// let mut iter = binomial.term_iter();
-    /// assert_eq!(Some((5, 1)), iter.next());
-    /// assert_eq!(Some((2, 0)), iter.next());
-    /// assert_eq!(None, iter.next());
-    /// ```
-    fn term_iter(&self) -> TermIterator<N> {
-        TermIterator::new(self)
-    }
-
     /// Returns the degree of the `LinearBinomial`.
     ///
     /// # Example
@@ -148,21 +130,6 @@ impl<N: Copy + Zero> SizedPolynomial<N> for LinearBinomial<N> {
     /// ```
     fn zero() -> Self {
         LinearBinomial::new([N::zero(); 2])
-    }
-
-    /// Returns true if all terms are zero, and false if a non-zero term exists.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use rustnomial::{SizedPolynomial, LinearBinomial};
-    /// let zero = LinearBinomial::new([0, 0]);
-    /// assert!(zero.is_zero());
-    /// let zero = LinearBinomial::<i32>::zero();
-    /// assert!(zero.is_zero());
-    /// ```
-    fn is_zero(&self) -> bool {
-        self.degree() == Degree::NegInf
     }
 
     /// Sets self to zero.

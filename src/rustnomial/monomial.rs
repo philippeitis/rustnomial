@@ -6,7 +6,6 @@ use num::{One, Zero};
 
 use rustnomial::numerics::{IsNegativeOne, PowUsize};
 use rustnomial::strings::write_leading_term;
-use rustnomial::traits::TermIterator;
 use {
     Degree, Derivable, Evaluable, FreeSizePolynomial, Integrable, Integral, MutablePolynomial,
     Polynomial, Roots, SizedPolynomial, Term, TryAddError,
@@ -74,22 +73,6 @@ impl<N: Copy + Zero> SizedPolynomial<N> for Monomial<N> {
         }
     }
 
-    /// Returns an iterator for the `Monomial`, yielding the term constant and degree. Terms are
-    /// iterated over in descending degree order, excluding zero terms.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use rustnomial::{Monomial, SizedPolynomial};
-    /// let monomial = Monomial::new(5, 2);
-    /// let mut iter = monomial.term_iter();
-    /// assert_eq!(Some((5, 2)), iter.next());
-    /// assert_eq!(None, iter.next());
-    /// ```
-    fn term_iter(&self) -> TermIterator<N> {
-        TermIterator::new(self)
-    }
-
     /// Returns the degree of the `Monomial`.
     ///
     /// # Example
@@ -121,21 +104,6 @@ impl<N: Copy + Zero> SizedPolynomial<N> for Monomial<N> {
     /// ```
     fn zero() -> Self {
         Monomial::new(N::zero(), 0)
-    }
-
-    /// Returns true if all terms are zero, and false if a non-zero term exists.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use rustnomial::{SizedPolynomial, Monomial};
-    /// let zero = Monomial::new(0, 1);
-    /// assert!(zero.is_zero());
-    /// let non_zero = Monomial::new(1, 0);
-    /// assert!(!non_zero.is_zero());
-    /// ```
-    fn is_zero(&self) -> bool {
-        self.degree() == Degree::NegInf
     }
 
     /// Sets self to zero.

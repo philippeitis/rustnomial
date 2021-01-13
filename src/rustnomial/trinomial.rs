@@ -6,7 +6,6 @@ use num::{Complex, One, Zero};
 
 use rustnomial::find_roots::{discriminant_trinomial, trinomial_roots};
 use rustnomial::numerics::{Abs, AbsSqrt, IsNegativeOne, IsPositive};
-use rustnomial::traits::TermIterator;
 use {
     Degree, Derivable, Evaluable, LinearBinomial, MutablePolynomial, Roots, SizedPolynomial, Term,
     TryAddError,
@@ -131,23 +130,6 @@ impl<N: Copy + Zero> SizedPolynomial<N> for QuadraticTrinomial<N> {
         }
     }
 
-    /// Returns an iterator for the `QuadraticTrinomial`, yielding the term constant and degree.
-    /// Terms are iterated over in descending degree order, excluding zero terms.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use rustnomial::{QuadraticTrinomial, SizedPolynomial};
-    /// let trinomial = QuadraticTrinomial::new([1, 0, 3]);
-    /// let mut iter = trinomial.term_iter();
-    /// assert_eq!(Some((1, 2)), iter.next());
-    /// assert_eq!(Some((3, 0)), iter.next());
-    /// assert_eq!(None, iter.next());
-    /// ```
-    fn term_iter(&self) -> TermIterator<N> {
-        TermIterator::new(self)
-    }
-
     /// Returns the degree of the `QuadraticTrinomial`.
     ///
     /// # Example
@@ -185,23 +167,6 @@ impl<N: Copy + Zero> SizedPolynomial<N> for QuadraticTrinomial<N> {
     /// ```
     fn zero() -> Self {
         QuadraticTrinomial::new([N::zero(); 3])
-    }
-
-    /// Returns true if all terms are zero, and false if a non-zero term exists.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use rustnomial::{SizedPolynomial, QuadraticTrinomial, Degree};
-    /// let trinomial = QuadraticTrinomial::new([1, 2, 3]);
-    /// assert!(!trinomial.is_zero());
-    /// let zero = QuadraticTrinomial::new([0, 0, 0]);
-    /// assert!(zero.is_zero());
-    /// let zero = QuadraticTrinomial::<i32>::zero();
-    /// assert!(zero.is_zero());
-    /// ```
-    fn is_zero(&self) -> bool {
-        self.degree() == Degree::NegInf
     }
 
     /// Sets self to zero.

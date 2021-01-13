@@ -8,7 +8,6 @@ use num::{One, Zero};
 
 use rustnomial::find_roots::find_roots;
 use rustnomial::numerics::{Abs, IsNegativeOne, IsPositive, PowUsize};
-use rustnomial::traits::TermIterator;
 use {
     Degree, Derivable, Evaluable, FreeSizePolynomial, MutablePolynomial, Polynomial, Roots,
     SizedPolynomial, Term, TryAddError,
@@ -130,24 +129,6 @@ impl<N: Zero + Copy> SizedPolynomial<N> for SparsePolynomial<N> {
         })
     }
 
-    /// Returns an iterator for the `SparsePolynomial`, yielding the term constant and degree. Terms are
-    /// iterated over in descending degree order, excluding zero terms.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use rustnomial::{SparsePolynomial, SizedPolynomial};
-    /// let spolynomial = SparsePolynomial::from(vec![1, 0, 2, 3]);
-    /// let mut iter = spolynomial.term_iter();
-    /// assert_eq!(Some((1, 3)), iter.next());
-    /// assert_eq!(Some((2, 1)), iter.next());
-    /// assert_eq!(Some((3, 0)), iter.next());
-    /// assert_eq!(None, iter.next());
-    /// ```
-    fn term_iter(&self) -> TermIterator<N> {
-        TermIterator::new(self)
-    }
-
     /// Returns the degree of the `SparsePolynomial` it is called on, corresponding to the
     /// largest non-zero term.
     ///
@@ -177,21 +158,6 @@ impl<N: Zero + Copy> SizedPolynomial<N> for SparsePolynomial<N> {
         SparsePolynomial {
             terms: HashMap::new(),
         }
-    }
-
-    /// Returns true if all terms are zero, and false if a non-zero term exists.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use rustnomial::{SparsePolynomial, SizedPolynomial};
-    /// let zero = SparsePolynomial::from(vec![0, 0]);
-    /// assert!(zero.is_zero());
-    /// let non_zero = SparsePolynomial::from(vec![0, 1]);
-    /// assert!(!non_zero.is_zero());
-    /// ```
-    fn is_zero(&self) -> bool {
-        self.degree() == Degree::NegInf
     }
 
     /// Sets self to zero.
