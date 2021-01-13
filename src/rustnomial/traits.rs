@@ -34,7 +34,8 @@ pub trait FreeSizePolynomial<N>
 where
     N: Zero + Copy + AddAssign,
 {
-    fn from_terms(terms: Vec<(N, usize)>) -> Self;
+    /// Creates an instance of `Self` with the provided terms
+    fn from_terms(terms: &[(N, usize)]) -> Self;
 
     /// Adds the term with given coefficient and `degree` to self.
     fn add_term(&mut self, coeff: N, degree: usize);

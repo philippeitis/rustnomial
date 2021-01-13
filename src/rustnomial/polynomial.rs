@@ -305,18 +305,18 @@ where
     ///
     /// # Arguments
     ///
-    /// * ` terms ` - A vector of constants, in decreasing order of degree.
+    /// * ` terms ` - A slice of (coefficient, degree) pairs.
     ///
     /// # Example
     ///
     /// ```
-    /// use rustnomial::Polynomial;
+    /// use rustnomial::{FreeSizePolynomial, Polynomial};
     /// // Corresponds to 1.0x^2 + 4.0x + 4.0
-    /// let polynomial = Polynomial::new(vec![1.0, 4.0, 4.0]);
+    /// let polynomial = Polynomial::from_terms(&[(1.0, 2), (4.0, 1), (4.0, 1)]);
     /// ```
-    fn from_terms(terms: Vec<(N, usize)>) -> Self {
+    fn from_terms(terms: &[(N, usize)]) -> Self {
         let mut a = Polynomial::zero();
-        for (term, degree) in terms {
+        for &(term, degree) in terms {
             a.add_term(term, degree);
         }
         a

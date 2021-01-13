@@ -284,19 +284,18 @@ where
     ///
     /// # Arguments
     ///
-    /// * ` terms ` - A hashmap, where keys correspond to degrees and values correspond to
-    ///                 coefficients.
+    /// * ` terms ` - A slice of (coefficient, degree) pairs.
     ///
     /// # Example
     ///
     /// ```
-    /// use rustnomial::SparsePolynomial;
+    /// use rustnomial::{SparsePolynomial, FreeSizePolynomial};
     /// // Corresponds to 1.0x^2 + 4.0x + 4.0
-    /// let polynomial = SparsePolynomial::from(vec![1.0, 4.0, 4.0]);
+    /// let polynomial = SparsePolynomial::from_terms(&[(1.0, 2), (4.0, 1), (4.0, 1)]);
     /// ```
-    fn from_terms(terms: Vec<(N, usize)>) -> Self {
+    fn from_terms(terms: &[(N, usize)]) -> Self {
         let mut a = SparsePolynomial::new(HashMap::with_capacity(terms.len()));
-        for (term, degree) in terms {
+        for &(term, degree) in terms {
             a.add_term(term, degree);
         }
         a

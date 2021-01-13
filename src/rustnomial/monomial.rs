@@ -255,7 +255,7 @@ where
                 polynomial: Polynomial::new(vec![N::zero()]),
             },
             Degree::Num(x) => Integral {
-                polynomial: Polynomial::from_terms(vec![(
+                polynomial: Polynomial::from_terms(&[(
                     self.coefficient / N::from((x + 1) as u8),
                     x + 1,
                 )]),
@@ -678,9 +678,6 @@ mod tests {
     fn test_integral() {
         let a = Monomial::new(5, 2);
         let integral = a.integral();
-        assert_eq!(
-            Polynomial::from_terms(vec![(5 / 3, 3)]),
-            integral.polynomial
-        );
+        assert_eq!(Polynomial::from_terms(&[(5 / 3, 3)]), integral.polynomial);
     }
 }
