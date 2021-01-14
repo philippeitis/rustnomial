@@ -9,7 +9,9 @@ mod bench {
 
     use self::test::{black_box, Bencher};
 
-    use rustnomial::{Evaluable, Polynomial, SizedPolynomial, SparsePolynomial};
+    use rustnomial::{
+        Evaluable, FreeSizePolynomial, Polynomial, SizedPolynomial, SparsePolynomial,
+    };
 
     #[bench]
     fn bench_init(b: &mut Bencher) {
@@ -160,22 +162,18 @@ mod bench {
 
     #[bench]
     fn bench_eval_poly(b: &mut Bencher) {
-        let a = Polynomial::new(vec![1i32, 2, 3, 4, 5]);
-        b.iter(|| {
-            black_box({
-                a.eval(5);
-            })
-        });
+        let a = black_box(Polynomial::new(vec![
+            1f32, 2., 3., 4., 5., 6., 7., 8., 9., 10.,
+        ]));
+        b.iter(|| black_box(a.eval(5.)));
     }
 
     #[bench]
     fn bench_eval_sparse(b: &mut Bencher) {
-        let a = SparsePolynomial::from(vec![1i32, 2, 3, 4, 5]);
-        b.iter(|| {
-            black_box({
-                a.eval(5);
-            })
-        });
+        let a = black_box(SparsePolynomial::from(vec![
+            1f32, 2., 3., 4., 5., 6., 7., 8., 9., 10.,
+        ]));
+        b.iter(|| black_box(a.eval(5.)));
     }
 
     #[bench]
@@ -190,5 +188,15 @@ mod bench {
         let a = Polynomial::new(vec![1i32, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
         let c = Polynomial::new(vec![1i32, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
         b.iter(|| a == c);
+    }
+
+    #[bench]
+    fn bench_add_term(b: &mut Bencher) {
+        b.iter(|| Polynomial::zero().add_term(1u32, 6));
+    }
+
+    #[bench]
+    fn bench_from_terms(b: &mut Bencher) {
+        b.iter(|| Polynomial::from_terms(&[(4u32, 0), (4u32, 1), (1u32, 2), (2u32, 3)]));
     }
 }

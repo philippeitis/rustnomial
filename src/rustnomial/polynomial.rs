@@ -278,7 +278,8 @@ where
     /// ```
     /// use rustnomial::{FreeSizePolynomial, Polynomial};
     /// // Corresponds to 1.0x^2 + 4.0x + 4.0
-    /// let polynomial = Polynomial::from_terms(&[(1.0, 2), (4.0, 1), (4.0, 1)]);
+    /// let polynomial = Polynomial::from_terms(&[(1.0, 2), (4.0, 1), (4.0, 0)]);
+    /// assert_eq!(Polynomial::new(vec![1., 4., 4.]), polynomial);
     /// ```
     fn from_terms(terms: &[(N, usize)]) -> Self {
         let mut a = Polynomial::zero();
@@ -290,9 +291,9 @@ where
 
     fn add_term(&mut self, coeff: N, degree: usize) {
         if self.len() < degree + 1 {
-            let mut terms = vec![N::zero(); degree + 1 - self.len()];
-            terms.extend(&self.terms);
-            self.terms = terms;
+            let added_zeros = degree + 1 - self.terms.len();
+            self.terms
+                .splice(0..0, std::iter::repeat(N::zero()).take(added_zeros));
         }
         let index = self.len() - degree - 1;
         self.terms[index] += coeff;
@@ -301,7 +302,7 @@ where
 
 impl<N> Evaluable<N> for Polynomial<N>
 where
-    N: Zero + One + Copy + AddAssign + MulAssign + Mul<Output = N>,
+    N: Zero + Copy + AddAssign + MulAssign + Mul<Output = N>,
 {
     /// Returns the value of the `Polynomial` at the given point.
     ///
@@ -311,13 +312,27 @@ where
     ///
     /// ```
     fn eval(&self, point: N) -> N {
-        let mut sum = N::zero();
-        let mut pow = N::one();
-        for &val in self.terms.iter().rev() {
-            sum += pow * val;
-            pow *= point;
+        if let Some((&last, first)) = self.terms.split_last() {
+            if point.is_zero() {
+                return last;
+            }
+
+            // Equivalent to
+            // sum = (a(x^n) + b(x^(n-1)) + ... + z
+            // but instead of having explicit x^n, we do
+            // sum = (((ax) + b)x + ..)x + z
+            // which allows the same result with
+            // the same number of adds, and
+            // n - 1 multiplies vs 2n muls.
+            let mut sum = N::zero();
+            for &val in first.iter() {
+                sum += val;
+                sum *= point;
+            }
+            sum + last
+        } else {
+            N::zero()
         }
-        sum
     }
 }
 
