@@ -6,6 +6,7 @@ use num::{Complex, One, Zero};
 
 use rustnomial::find_roots::{discriminant_trinomial, trinomial_roots};
 use rustnomial::numerics::{Abs, AbsSqrt, IsNegativeOne, IsPositive};
+use rustnomial::polynomial::term_with_deg;
 use {
     Degree, Derivable, Evaluable, LinearBinomial, MutablePolynomial, Roots, SizedPolynomial, Term,
     TryAddError,
@@ -111,23 +112,19 @@ impl<N: Copy + Zero> SizedPolynomial<N> for QuadraticTrinomial<N> {
         }
     }
 
-    /// Returns the nth term of the `QuadraticTrinomial`.
+    /// Returns the term with the given `degree` of the `QuadraticTrinomial`.
     ///
     /// # Example
     ///
     /// ```
     /// use rustnomial::{QuadraticTrinomial, SizedPolynomial, Term};
     /// let trinomial = QuadraticTrinomial::new([1, 0, 3]);
-    /// assert_eq!(Some(Term::Term(1, 2)), trinomial.nth_term(0));
-    /// assert_eq!(Some(Term::ZeroTerm), trinomial.nth_term(1));
-    /// assert_eq!(Some(Term::Term(3, 0)), trinomial.nth_term(2));
+    /// assert_eq!(Term::Term(1, 2), trinomial.term_with_degree(2));
+    /// assert_eq!(Term::ZeroTerm, trinomial.term_with_degree(1));
+    /// assert_eq!(Term::Term(3, 0), trinomial.term_with_degree(0));
     /// ```
-    fn nth_term(&self, index: usize) -> Option<Term<N>> {
-        if index <= 2 {
-            Some(Term::new(self.coefficients[index], 2 - index))
-        } else {
-            None
-        }
+    fn term_with_degree(&self, degree: usize) -> Term<N> {
+        term_with_deg(&self.coefficients, degree)
     }
 
     /// Returns the degree of the `QuadraticTrinomial`.

@@ -5,6 +5,7 @@ use std::ops::{
 use num::{One, Zero};
 
 use rustnomial::numerics::{Abs, IsNegativeOne, IsPositive};
+use rustnomial::polynomial::term_with_deg;
 use {Degree, Derivable, Evaluable, MutablePolynomial, Roots, SizedPolynomial, Term, TryAddError};
 
 #[derive(Debug, Clone)]
@@ -77,22 +78,18 @@ impl<N: Copy + Zero> SizedPolynomial<N> for LinearBinomial<N> {
         }
     }
 
-    /// Returns the nth term of the `LinearBinomial`.
+    /// Returns the term with the given `degree` of the `LinearBinomial`.
     ///
     /// # Example
     ///
     /// ```
     /// use rustnomial::{LinearBinomial, SizedPolynomial, Term};
     /// let binomial = LinearBinomial::new([5, 0]);
-    /// assert_eq!(Some(Term::Term(5, 1)), binomial.nth_term(0));
-    /// assert_eq!(Some(Term::ZeroTerm), binomial.nth_term(1));
+    /// assert_eq!(Term::Term(5, 1), binomial.term_with_degree(1));
+    /// assert_eq!(Term::ZeroTerm, binomial.term_with_degree(0));
     /// ```
-    fn nth_term(&self, index: usize) -> Option<Term<N>> {
-        if index <= 1 {
-            Some(Term::new(self.coefficients[index], 1 - index))
-        } else {
-            None
-        }
+    fn term_with_degree(&self, degree: usize) -> Term<N> {
+        term_with_deg(&self.coefficients, degree)
     }
 
     /// Returns the degree of the `LinearBinomial`.

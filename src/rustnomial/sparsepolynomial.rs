@@ -105,28 +105,11 @@ impl<N: Zero + Copy> SizedPolynomial<N> for SparsePolynomial<N> {
         }
     }
 
-    fn nth_term(&self, index: usize) -> Option<Term<N>> {
-        let degree = match self.degree() {
-            Degree::NegInf => {
-                return if index == 0 {
-                    Some(Term::ZeroTerm)
-                } else {
-                    None
-                };
-            }
-            Degree::Num(x) => {
-                if x >= index {
-                    x - index
-                } else {
-                    return None;
-                }
-            }
-        };
-
-        Some(match self.terms.get(&degree) {
+    fn term_with_degree(&self, degree: usize) -> Term<N> {
+        match self.terms.get(&degree) {
             None => Term::ZeroTerm,
-            Some(&val) => Term::new(val, degree),
-        })
+            Some(&coeff) => Term::new(coeff, degree),
+        }
     }
 
     /// Returns the degree of the `SparsePolynomial` it is called on, corresponding to the

@@ -36,6 +36,12 @@ impl<N> Monomial<N> {
     }
 }
 
+impl<N: Copy + Zero> Monomial<N> {
+    fn as_term(&self) -> Term<N> {
+        Term::new(self.coefficient, self.deg)
+    }
+}
+
 impl<N: Copy + Zero> SizedPolynomial<N> for Monomial<N> {
     /// Return the number of terms in `Monomial`.
     ///
@@ -55,21 +61,21 @@ impl<N: Copy + Zero> SizedPolynomial<N> for Monomial<N> {
         }
     }
 
-    /// Returns the nth term of the `Monomial`.
+    /// Returns the term with the given `degree` of the `Monomial`.
     ///
     /// # Example
     ///
     /// ```
     /// use rustnomial::{Monomial, SizedPolynomial, Term};
     /// let monomial = Monomial::new(5, 2);
-    /// assert_eq!(Some(Term::Term(5, 2)), monomial.nth_term(0));
-    /// assert_eq!(None, monomial.nth_term(1));
+    /// assert_eq!(Term::Term(5, 2), monomial.term_with_degree(2));
+    /// assert_eq!(Term::ZeroTerm, monomial.term_with_degree(1));
     /// ```
-    fn nth_term(&self, index: usize) -> Option<Term<N>> {
-        if index != 0 {
-            None
+    fn term_with_degree(&self, degree: usize) -> Term<N> {
+        if degree != self.deg {
+            Term::ZeroTerm
         } else {
-            Some(Term::new(self.coefficient, self.deg))
+            Term::new(self.coefficient, self.deg)
         }
     }
 
@@ -269,7 +275,7 @@ where
     /// assert_ne!(a, c);
     /// ```
     fn eq(&self, other: &Self) -> bool {
-        self.nth_term(0) == other.nth_term(0)
+        self.as_term() == other.as_term()
     }
 }
 

@@ -7,9 +7,10 @@ use {Degree, Term, TryAddError};
 pub trait SizedPolynomial<N> {
     fn len(&self) -> usize;
 
-    /// Returns the `index`th term in order of decreasing degree from `SizedPolynomial`,
-    /// if it exists.
-    fn nth_term(&self, index: usize) -> Option<Term<N>>;
+    /// Returns the term with the given degree from `SizedPolynomial`.
+    /// If the term degree is larger than the actual degree, ZeroTerm will be returned.
+    /// However, terms which are zero will also be returned as ZeroTerm.
+    fn term_with_degree(&self, degree: usize) -> Term<N>;
 
     /// Returns an iterator for the `Polynomial`, yielding the coefficient and degree of each
     /// non-zero term, in descending degree order.
@@ -86,14 +87,14 @@ pub trait Evaluable<N> {
 
 pub struct TermIterator<'a, N> {
     polynomial: &'a dyn SizedPolynomial<N>,
-    index: usize,
+    top: Degree,
 }
 
 impl<N> TermIterator<'_, N> {
     pub(crate) fn new(polynomial: &dyn SizedPolynomial<N>) -> TermIterator<N> {
         TermIterator {
+            top: polynomial.degree(),
             polynomial,
-            index: 0,
         }
     }
 }
@@ -102,10 +103,14 @@ impl<N: Zero + Copy> Iterator for TermIterator<'_, N> {
     type Item = (N, usize);
 
     fn next(&mut self) -> Option<Self::Item> {
-        while self.index < self.polynomial.len() {
-            let nth_term = self.polynomial.nth_term(self.index);
-            self.index += 1;
-            if let Some(Term::Term(coeff, deg)) = nth_term {
+        while let Degree::Num(deg) = self.top {
+            let term = self.polynomial.term_with_degree(deg);
+            self.top = if deg != 0 {
+                Degree::Num(deg - 1)
+            } else {
+                Degree::NegInf
+            };
+            if let Term::Term(coeff, deg) = term {
                 return Some((coeff, deg));
             }
         }

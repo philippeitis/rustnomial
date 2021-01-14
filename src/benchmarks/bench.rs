@@ -21,6 +21,18 @@ mod bench {
     }
 
     #[bench]
+    fn bench_term_iter(b: &mut Bencher) {
+        let ap = Polynomial::from(vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+        b.iter(|| ap.term_iter().for_each(drop));
+    }
+
+    #[bench]
+    fn bench_term_iter_sparse(b: &mut Bencher) {
+        let ap = SparsePolynomial::from(vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+        b.iter(|| ap.term_iter().for_each(drop));
+    }
+
+    #[bench]
     fn bench_inits(b: &mut Bencher) {
         b.iter(|| {
             SparsePolynomial::from(vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);

@@ -121,6 +121,14 @@ where
     Term::ZeroTerm
 }
 
+pub(crate) fn term_with_deg<N: Zero + Copy>(terms: &[N], degree: usize) -> Term<N> {
+    if degree < terms.len() {
+        Term::new(terms[terms.len() - degree - 1], degree)
+    } else {
+        Term::ZeroTerm
+    }
+}
+
 impl<N> Polynomial<N>
 where
     N: Zero + Copy,
@@ -175,12 +183,8 @@ impl<N: Copy + Zero> SizedPolynomial<N> for Polynomial<N> {
         self.terms.len()
     }
 
-    fn nth_term(&self, index: usize) -> Option<Term<N>> {
-        if let Some(&val) = self.terms.get(index) {
-            Some(Term::new(val, self.len() - index - 1))
-        } else {
-            None
-        }
+    fn term_with_degree(&self, degree: usize) -> Term<N> {
+        term_with_deg(&self.terms, degree)
     }
 
     /// Returns the degree of the `Polynomial` it is called on, corresponding to the
