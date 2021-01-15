@@ -14,6 +14,7 @@ pub enum TermFromStringError {
     UnexpectedChar(char),
     CaretWithoutXInFront,
     CaretWithoutDegree,
+    MultipleCarets,
     DegreeCouldNotBeParsed,
 }
 
@@ -35,6 +36,7 @@ impl fmt::Display for TermFromStringError {
                 "Unexpected char ({}) (legal characters include +, -, ., x, ^, 0..9).",
                 c
             ),
+            TermFromStringError::MultipleCarets => write!(f, "^ appears more than once."),
             TermFromStringError::CaretWithoutDegree => write!(f, "^ without ensuing degree!"),
             TermFromStringError::DegreeCouldNotBeParsed => write!(f, "Degree could not be parsed"),
         }

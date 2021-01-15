@@ -61,6 +61,9 @@ where
                     seen_x = true;
                 }
                 '^' => {
+                    if seen_caret {
+                        return Err(TermFromStringError::MultipleCarets);
+                    }
                     if !seen_x {
                         return Err(TermFromStringError::CaretWithoutXInFront);
                     }
@@ -148,14 +151,12 @@ mod test {
 
     #[test]
     fn test_to_str_easy() {
-        let a = Term::Term(5, 2);
-        assert_eq!(Ok(a), Term::<i32>::from_str("5x^2"));
+        assert_eq!(Ok(Term::Term(5i32, 2)), Term::from_str("5x^2"));
     }
 
     #[test]
     fn test_to_str_harder() {
-        let a = Term::Term(5, 2);
-        assert_eq!(Ok(a), Term::<i32>::from_str("+5 x ^ 2"));
+        assert_eq!(Ok(Term::Term(5i32, 2)), Term::from_str("+5 x ^ 2"));
     }
 
     #[test]
@@ -164,15 +165,18 @@ mod test {
     }
 
     #[test]
+    fn test_to_str_multiple_carets() {
+        assert!(Term::<i32>::from_str("5x^^2").is_err());
+    }
+
+    #[test]
     fn test_to_str_no_degree() {
-        let a = Term::Term(5, 1);
-        assert_eq!(Ok(a), Term::<i32>::from_str("+5 x "));
+        assert_eq!(Ok(Term::Term(5i32, 1)), Term::from_str("+5 x "));
     }
 
     #[test]
     fn test_to_str_no_x() {
-        let a = Term::Term(5, 0);
-        assert_eq!(Ok(a), Term::<i32>::from_str("+5 "));
+        assert_eq!(Ok(Term::Term(5i32, 0)), Term::from_str("+5 "));
     }
 
     #[test]
@@ -182,44 +186,37 @@ mod test {
 
     #[test]
     fn test_to_str_negative() {
-        let a = Term::Term(-1, 0);
-        assert_eq!(Ok(a), Term::<i32>::from_str("-1"));
+        assert_eq!(Ok(Term::Term(-1i32, 0)), Term::from_str("-1"));
     }
 
     #[test]
     fn x_no_coeff() {
-        let a = Term::Term(1, 1);
-        assert_eq!(Ok(a), Term::<i32>::from_str("x"));
+        assert_eq!(Ok(Term::Term(1i32, 1)), Term::from_str("x"));
     }
 
     #[test]
     fn neg_x_no_coeff_neg() {
-        let a = Term::Term(-1, 1);
-        assert_eq!(Ok(a), Term::<i32>::from_str("-x"));
+        assert_eq!(Ok(Term::Term(-1i32, 1)), Term::from_str("-x"));
     }
 
     #[test]
     fn neg_x_no_coeff_pos() {
-        let a = Term::Term(1, 1);
-        assert_eq!(Ok(a), Term::<i32>::from_str("+x"));
+        assert_eq!(Ok(Term::Term(1i32, 1)), Term::from_str("+x"));
     }
 
     #[test]
     fn x_no_coeff_float() {
-        let a = Term::Term(1.0, 1);
-        assert_eq!(Ok(a), Term::<f32>::from_str("x"));
+        assert_eq!(Ok(Term::Term(1.0f32, 1)), Term::from_str("x"));
     }
 
     #[test]
     fn neg_x_no_coeff_neg_float() {
-        let a = Term::Term(-1.0, 1);
-        assert_eq!(Ok(a), Term::<f32>::from_str("-x"));
+        assert_eq!(Ok(Term::Term(-1.0f32, 1)), Term::from_str("-x"));
     }
 
     #[test]
     fn neg_x_no_coeff_pos_float() {
-        let a = Term::Term(1.0, 1);
-        assert_eq!(Ok(a), Term::<f32>::from_str("+x"));
+        assert_eq!(Ok(Term::Term(1.0f32, 1)), Term::from_str("+x"));
     }
 
     #[test]
