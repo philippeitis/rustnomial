@@ -184,11 +184,20 @@ impl<N: Copy + Zero> SizedPolynomial<N> for QuadraticTrinomial<N> {
 
 impl<N> MutablePolynomial<N> for QuadraticTrinomial<N>
 where
-    N: Zero + AddAssign + Copy,
+    N: Zero + SubAssign + AddAssign + Copy,
 {
     fn try_add_term(&mut self, coeff: N, degree: usize) -> Result<(), TryAddError> {
         if degree <= 2 {
             self.coefficients[2 - degree] += coeff;
+            Ok(())
+        } else {
+            Err(TryAddError::DegreeOutOfBounds)
+        }
+    }
+
+    fn try_sub_term(&mut self, coeff: N, degree: usize) -> Result<(), TryAddError> {
+        if degree <= 2 {
+            self.coefficients[2 - degree] -= coeff;
             Ok(())
         } else {
             Err(TryAddError::DegreeOutOfBounds)

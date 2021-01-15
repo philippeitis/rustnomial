@@ -32,12 +32,19 @@ macro_rules! fmt_poly {
 macro_rules! poly_from_str {
     ($T:ident) => {
         use std::str::FromStr;
+
         use $crate::rustnomial::err::PolynomialFromStringError;
         use $crate::rustnomial::terms::TermTokenizer;
 
         impl<N> FromStr for $T<N>
         where
-            N: Zero + One + Copy + AddAssign + FromStr,
+            N: Zero
+                + One
+                + Copy
+                + SubAssign
+                + AddAssign
+                + FromStr
+                + $crate::rustnomial::numerics::CanNegate,
         {
             type Err = PolynomialFromStringError;
 

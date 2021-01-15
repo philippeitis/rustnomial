@@ -147,11 +147,20 @@ impl<N: Copy + Zero> SizedPolynomial<N> for LinearBinomial<N> {
 
 impl<N> MutablePolynomial<N> for LinearBinomial<N>
 where
-    N: Zero + AddAssign + Copy,
+    N: Zero + SubAssign + AddAssign + Copy,
 {
     fn try_add_term(&mut self, coeff: N, degree: usize) -> Result<(), TryAddError> {
         if degree <= 1 {
             self.coefficients[1 - degree] += coeff;
+            Ok(())
+        } else {
+            Err(TryAddError::DegreeOutOfBounds)
+        }
+    }
+
+    fn try_sub_term(&mut self, coeff: N, degree: usize) -> Result<(), TryAddError> {
+        if degree <= 1 {
+            self.coefficients[1 - degree] -= coeff;
             Ok(())
         } else {
             Err(TryAddError::DegreeOutOfBounds)

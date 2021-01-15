@@ -238,3 +238,32 @@ impl Cbrt for f64 {
         self.cbrt()
     }
 }
+
+pub trait CanNegate {
+    fn can_negate() -> bool;
+}
+
+macro_rules! can_negate {
+    ($T:ty, $C:expr) => {
+        impl CanNegate for $T {
+            fn can_negate() -> bool {
+                $C
+            }
+        }
+    };
+}
+
+can_negate!(u8, false);
+can_negate!(u16, false);
+can_negate!(u32, false);
+can_negate!(u64, false);
+can_negate!(u128, false);
+can_negate!(usize, false);
+can_negate!(i8, true);
+can_negate!(i16, true);
+can_negate!(i32, true);
+can_negate!(i64, true);
+can_negate!(i128, true);
+can_negate!(isize, true);
+can_negate!(f32, true);
+can_negate!(f64, true);

@@ -6,7 +6,7 @@ use std::ops::{
 use num::{One, Zero};
 
 use rustnomial::find_roots::{find_roots, Roots};
-use rustnomial::numerics::{Abs, IsNegativeOne, IsPositive};
+use rustnomial::numerics::{Abs, CanNegate, IsNegativeOne, IsPositive};
 use {
     Degree, Derivable, Evaluable, FreeSizePolynomial, Integrable, Integral, MutablePolynomial,
     SizedPolynomial, Term, TryAddError,
@@ -234,10 +234,25 @@ impl<N: Copy + Zero> SizedPolynomial<N> for Polynomial<N> {
 
 impl<N> MutablePolynomial<N> for Polynomial<N>
 where
-    N: Zero + Copy + AddAssign,
+    N: Zero + Copy + AddAssign + SubAssign + CanNegate,
 {
     fn try_add_term(&mut self, coeff: N, degree: usize) -> Result<(), TryAddError> {
         Ok(self.add_term(coeff, degree))
+    }
+
+    fn try_sub_term(&mut self, coeff: N, degree: usize) -> Result<(), TryAddError> {
+        if self.len() < degree + 1 {
+            if !N::can_negate() {
+                return Err(TryAddError::CanNotNegate);
+            }
+            let added_zeros = degree + 1 - self.terms.len();
+            self.terms
+                .splice(0..0, std::iter::repeat(N::zero()).take(added_zeros));
+        }
+        let index = self.len() - degree - 1;
+        self.terms[index] -= coeff;
+
+        Ok(())
     }
 }
 

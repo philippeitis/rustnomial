@@ -1,6 +1,8 @@
 use std::fmt;
 use std::fmt::Display;
-use std::ops::{AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Shl, ShlAssign, Shr, ShrAssign};
+use std::ops::{
+    AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Shl, ShlAssign, Shr, ShrAssign, SubAssign,
+};
 
 use num::{One, Zero};
 
@@ -130,7 +132,7 @@ impl<N: Copy + Zero> SizedPolynomial<N> for Monomial<N> {
 
 impl<N> MutablePolynomial<N> for Monomial<N>
 where
-    N: AddAssign + Copy + Zero,
+    N: SubAssign + AddAssign + Copy + Zero,
 {
     fn try_add_term(&mut self, coeff: N, degree: usize) -> Result<(), TryAddError> {
         if self.is_zero() {
@@ -141,6 +143,19 @@ where
             Err(TryAddError::TooManyTerms)
         } else {
             self.coefficient += coeff;
+            Ok(())
+        }
+    }
+
+    fn try_sub_term(&mut self, coeff: N, degree: usize) -> Result<(), TryAddError> {
+        if self.is_zero() {
+            self.coefficient -= coeff;
+            self.deg = degree;
+            Ok(())
+        } else if degree != self.deg {
+            Err(TryAddError::TooManyTerms)
+        } else {
+            self.coefficient -= coeff;
             Ok(())
         }
     }

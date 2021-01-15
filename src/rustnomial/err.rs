@@ -4,6 +4,7 @@ use std::fmt;
 pub enum TryAddError {
     DegreeOutOfBounds,
     TooManyTerms,
+    CanNotNegate,
 }
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]

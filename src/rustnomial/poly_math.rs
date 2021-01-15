@@ -1,5 +1,8 @@
+use std::ops::{AddAssign, Mul, SubAssign};
+
 use num::Zero;
-use std::ops::{AddAssign, Mul};
+
+use rustnomial::numerics::CanNegate;
 use TryAddError;
 use {MutablePolynomial, SizedPolynomial};
 
@@ -12,12 +15,13 @@ macro_rules! poly_add {
         let _ = poly_add!(sink; $mand $(,$x)*);
         sink
     }};
-
-    ($sink:expr; $( $x:expr ),+) => {{
+    // sink += (x_0 + x_1 + ... + x_z)
+    ($sink:expr; $x0:expr $(,$x:expr ),*) => {{
         use $crate::poly_math::add_poly;
 
         let res: Result<Vec<_>, _> = vec![
-            $(add_poly(&$x, &mut $sink),)*
+            add_poly(&$x0, &mut $sink)
+            $(,add_poly(&$x, &mut $sink))*
         ].into_iter().collect();
 
         if let Err(x) = res {
@@ -106,40 +110,76 @@ where
     Ok(())
 }
 
+pub fn sub_poly<N, P: SizedPolynomial<N>, S: MutablePolynomial<N>>(
+    poly: &P,
+    sink: &mut S,
+) -> Result<(), TryAddError>
+where
+    N: Zero + SubAssign + Copy + CanNegate,
+{
+    for (coeff, deg) in poly.term_iter() {
+        sink.try_sub_term(coeff, deg)?;
+    }
+
+    Ok(())
+}
+
 #[macro_export]
 macro_rules! poly_sub {
+    // lhs - (x_1 + x_2 + ... + x_z)
     ($lhs:expr $(,$x:expr )+) => {{
-        use $crate::Polynomial;
+        use $crate::{Polynomial, SizedPolynomial};
         let mut sink = Polynomial::zero();
-        poly_add!(sink; $lhs);
-        poly_sub!(sink;$($x,)*);
+        let _ = poly_add!(sink; $lhs);
+        let _ = poly_sub!(sink; $($x),*);
         sink
     }};
+    // sink -= (x_0 + x_1 + ... + x_z)
+    ($sink:expr; $x0:expr $(,$x:expr )*) => {{
+        use $crate::poly_math::sub_poly;
 
-    ($sink:expr; $lhs:expr $(,$x:expr )+) => {{
-        use $crate::{FreeSizePolynomial, GenericPolynomial, MutablePolynomial};
-        for (coeff, deg) in $lhs.term_iter() {
-            $sink.try_add_term(-coeff, deg);
+        let res: Result<Vec<_>, _> = vec![
+            sub_poly(&$x0, &mut $sink)
+            $(,sub_poly(&$x, &mut $sink))*
+        ].into_iter().collect();
+
+        if let Err(x) = res {
+            Err(x)
+        } else {
+            Ok(())
         }
-        $(
-            for (coeff, deg) in $x.term_iter() {
-                $sink.try_add_term(-coeff, deg);
-            }
-        )*
     }};
 }
 
 #[cfg(test)]
 mod test {
-    use crate::Polynomial;
-    use SizedPolynomial;
+    /// Tests macro usage as it would happen outside of this crate,
+    /// since we do not know what items have been imported outside.
+
+    fn zero_poly<N: num::Zero + Copy>() -> crate::Polynomial<N> {
+        use SizedPolynomial;
+        crate::Polynomial::zero()
+    }
+
+    fn poly<N: num::Zero + Copy>(v: Vec<N>) -> crate::Polynomial<N> {
+        crate::Polynomial::new(v)
+    }
 
     #[test]
     fn test_poly_add() {
-        let mut base = Polynomial::zero();
-        let new = Polynomial::from(vec![1u32, 2u32, 3u32]);
+        let mut base = zero_poly();
+        let new = poly(vec![1u32, 2u32, 3u32]);
         assert_eq!(poly_add!(base, new), new);
         assert!(poly_add!(base; new).is_ok());
         assert_eq!(base, new);
+    }
+
+    #[test]
+    fn test_poly_sub() {
+        let mut base = zero_poly();
+        let new = poly(vec![1i32, 2, 3]);
+        assert_eq!(poly_sub!(base, new), -new.clone());
+        assert!(poly_sub!(base; new).is_ok());
+        assert_eq!(base, -new);
     }
 }

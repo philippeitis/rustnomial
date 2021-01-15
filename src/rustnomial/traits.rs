@@ -66,6 +66,10 @@ pub trait MutablePolynomial<N> {
     /// Adds the term with given coefficient and `degree` to self, returning an error
     /// if the particular term can not be added to self without violating constraints.
     fn try_add_term(&mut self, coeff: N, degree: usize) -> Result<(), TryAddError>;
+
+    /// Subtracts the term with given coefficient and `degree` from self, returning an error
+    /// if the particular term can not be subtracted from self without violating constraints.
+    fn try_sub_term(&mut self, coeff: N, degree: usize) -> Result<(), TryAddError>;
 }
 
 pub trait FreeSizePolynomial<N>

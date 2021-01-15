@@ -7,7 +7,7 @@ use std::ops::{
 use num::{One, Zero};
 
 use rustnomial::find_roots::find_roots;
-use rustnomial::numerics::{Abs, IsNegativeOne, IsPositive, PowUsize};
+use rustnomial::numerics::{Abs, CanNegate, IsNegativeOne, IsPositive, PowUsize};
 use {
     Degree, Derivable, Evaluable, FreeSizePolynomial, MutablePolynomial, Polynomial, Roots,
     SizedPolynomial, Term, TryAddError,
@@ -161,10 +161,31 @@ impl<N: Zero + Copy> SizedPolynomial<N> for SparsePolynomial<N> {
 
 impl<N> MutablePolynomial<N> for SparsePolynomial<N>
 where
-    N: Zero + Copy + AddAssign,
+    N: Zero + Copy + AddAssign + SubAssign + CanNegate,
 {
     fn try_add_term(&mut self, coeff: N, degree: usize) -> Result<(), TryAddError> {
         Ok(self.add_term(coeff, degree))
+    }
+
+    fn try_sub_term(&mut self, coeff: N, degree: usize) -> Result<(), TryAddError> {
+        if coeff.is_zero() {
+            return Ok(());
+        }
+
+        match self.terms.get_mut(&degree) {
+            None => {
+                if !N::can_negate() {
+                    return Err(TryAddError::CanNotNegate);
+                }
+                let mut c = N::zero();
+                c -= coeff;
+                self.terms.insert(degree, c);
+            }
+            Some(val) => {
+                *val -= coeff;
+            }
+        }
+        Ok(())
     }
 }
 
