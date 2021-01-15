@@ -11,8 +11,6 @@ This crate provides utilities for operating on polynomials, including:
 - Parsing polynomials from / to strings:
 
 ```rust
-extern crate rustnomial;
-
 use std::str::FromStr;
 
 use rustnomial::{GenericPolynomial, Polynomial};
@@ -26,8 +24,6 @@ fn main() {
 
 - Integration
 ```rust
-extern crate rustnomial;
-
 use rustnomial::integral;
 
 fn main() {
@@ -41,8 +37,6 @@ fn main() {
 
 - Derivation
 ```rust
-extern crate rustnomial;
-
 use rustnomial::derivative;
 
 fn main() {
@@ -54,8 +48,6 @@ fn main() {
 
 - Rootfinding
 ```rust
-extern crate rustnomial;
-
 use rustnomial::{GenericPolynomial, Polynomial};
 
 fn main() {
