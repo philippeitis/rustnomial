@@ -6,9 +6,9 @@ use std::ops::{
 
 use num::{One, Zero};
 
-use rustnomial::numerics::{IsNegativeOne, PowUsize};
-use rustnomial::strings::write_leading_term;
-use {
+use crate::numerics::{IsNegativeOne, PowUsize};
+use crate::strings::write_leading_term;
+use crate::{
     Degree, Derivable, Evaluable, FreeSizePolynomial, Integrable, Integral, MutablePolynomial,
     Polynomial, Roots, SizedPolynomial, Term, TryAddError,
 };
@@ -542,8 +542,8 @@ impl<N: Zero + Copy> ShrAssign<i32> for Monomial<N> {
 }
 
 #[cfg(test)]
-mod tests {
-    use {
+mod test {
+    use crate::{
         Derivable, Evaluable, FreeSizePolynomial, Integrable, Monomial, Polynomial, Roots,
         SizedPolynomial,
     };

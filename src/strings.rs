@@ -2,12 +2,12 @@ use std::fmt;
 
 use num::One;
 
-use rustnomial::numerics::{Abs, IsNegativeOne, IsPositive};
+use crate::numerics::{Abs, IsNegativeOne, IsPositive};
 
 macro_rules! fmt_poly {
     ($T:ident) => {
         use std::fmt;
-        use $crate::rustnomial::strings::{write_leading_term, write_trailing_term};
+        use $crate::strings::{write_leading_term, write_trailing_term};
 
         impl<N> fmt::Display for $T<N>
         where
@@ -33,18 +33,12 @@ macro_rules! poly_from_str {
     ($T:ident) => {
         use std::str::FromStr;
 
-        use $crate::rustnomial::err::PolynomialFromStringError;
-        use $crate::rustnomial::terms::TermTokenizer;
+        use $crate::err::PolynomialFromStringError;
+        use $crate::terms::TermTokenizer;
 
         impl<N> FromStr for $T<N>
         where
-            N: Zero
-                + One
-                + Copy
-                + SubAssign
-                + AddAssign
-                + FromStr
-                + $crate::rustnomial::numerics::CanNegate,
+            N: Zero + One + Copy + SubAssign + AddAssign + FromStr + $crate::numerics::CanNegate,
         {
             type Err = PolynomialFromStringError;
 
@@ -119,9 +113,9 @@ where
 }
 
 #[cfg(test)]
-mod tests {
+mod test {
+    use crate::{Integrable, Monomial, Polynomial, SizedPolynomial, SparsePolynomial};
     use std::str::FromStr;
-    use {Integrable, Monomial, Polynomial, SizedPolynomial, SparsePolynomial};
 
     #[test]
     fn test_from_str_all_terms() {

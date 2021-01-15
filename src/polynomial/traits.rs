@@ -2,7 +2,7 @@ use std::ops::AddAssign;
 
 use num::Zero;
 
-use {Degree, Term, TryAddError};
+use crate::{Degree, Term, TryAddError};
 
 pub trait SizedPolynomial<N> {
     fn len(&self) -> usize;

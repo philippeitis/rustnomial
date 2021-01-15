@@ -5,9 +5,9 @@ use std::ops::{
 
 use num::{One, Zero};
 
-use rustnomial::find_roots::{find_roots, Roots};
-use rustnomial::numerics::{Abs, CanNegate, IsNegativeOne, IsPositive};
-use {
+use crate::numerics::{Abs, CanNegate, IsNegativeOne, IsPositive};
+use crate::polynomial::find_roots::{find_roots, Roots};
+use crate::{
     Degree, Derivable, Evaluable, FreeSizePolynomial, Integrable, Integral, MutablePolynomial,
     SizedPolynomial, Term, TryAddError,
 };
@@ -16,7 +16,7 @@ use {
 macro_rules! polynomial {
     ( $( $x:expr ),* ) => {
         {
-            use rustnomial::Polynomial;
+            use $crate::rustnomial::Polynomial;
             Polynomial::new(vec![$($x,)*])
         }
     };
@@ -909,9 +909,8 @@ impl<N: Zero + Copy> ShrAssign<i32> for Polynomial<N> {
 /// TODO:
 /// modulo floordiv
 #[cfg(test)]
-mod tests {
-    use SizedPolynomial;
-    use {Degree, Derivable, Evaluable, Integrable, Polynomial};
+mod test {
+    use crate::{Degree, Derivable, Evaluable, Integrable, Polynomial, SizedPolynomial};
 
     #[test]
     fn test_eval() {

@@ -4,8 +4,8 @@ use std::ops::{AddAssign, Mul, MulAssign, Sub};
 
 use num::{One, Zero};
 
-use rustnomial::numerics::{Abs, IsNegativeOne, IsPositive};
-use {Evaluable, FreeSizePolynomial, Polynomial, SizedPolynomial};
+use crate::numerics::{Abs, IsNegativeOne, IsPositive};
+use crate::{Evaluable, FreeSizePolynomial, Polynomial, SizedPolynomial};
 
 #[macro_export]
 macro_rules! integral {
@@ -70,7 +70,7 @@ where
 
 #[cfg(test)]
 mod test {
-    use integral;
+    use crate::integral;
 
     #[test]
     fn test_integral_empty_polynomial() {

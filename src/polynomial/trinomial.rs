@@ -4,10 +4,10 @@ use std::ops::{
 
 use num::{Complex, One, Zero};
 
-use rustnomial::find_roots::{discriminant_trinomial, trinomial_roots};
-use rustnomial::numerics::{Abs, AbsSqrt, IsNegativeOne, IsPositive};
-use rustnomial::polynomial::term_with_deg;
-use {
+use crate::numerics::{Abs, AbsSqrt, IsNegativeOne, IsPositive};
+use crate::polynomial::find_roots::{discriminant_trinomial, trinomial_roots};
+use crate::polynomial::polynomial::term_with_deg;
+use crate::{
     Degree, Derivable, Evaluable, LinearBinomial, MutablePolynomial, Roots, SizedPolynomial, Term,
     TryAddError,
 };
@@ -247,7 +247,7 @@ where
 //     /// # Example
 //     ///
 //     /// ```
-//     /// use rustnomial::{Monomial, Polynomial, Integrable};
+//     /// use polynomial::{Monomial, Polynomial, Integrable};
 //     /// let monomial = Monomial::new(3.0, 2);
 //     /// let integral = monomial.integral();
 //     /// assert_eq!(Polynomial::new(vec![1.0, 0.0, 0.0, 0.0]), integral.polynomial);
@@ -273,7 +273,7 @@ where
 //     /// # Example
 //     ///
 //     /// ```
-//     /// use rustnomial::Monomial;
+//     /// use polynomial::Monomial;
 //     /// let monomial = Monomial::new(2, 1);
 //     /// let monomial_sqr = monomial.pow(2);
 //     /// let monomial_cub = monomial.pow(3);
@@ -537,9 +537,9 @@ impl<N: Zero + Copy> ShrAssign<u32> for QuadraticTrinomial<N> {
 }
 
 #[cfg(test)]
-mod tests {
+mod test {
+    use crate::{Derivable, Evaluable, QuadraticTrinomial, Roots, SizedPolynomial};
     use num::Complex;
-    use {Derivable, Evaluable, QuadraticTrinomial, Roots, SizedPolynomial};
 
     #[test]
     fn test_eval() {

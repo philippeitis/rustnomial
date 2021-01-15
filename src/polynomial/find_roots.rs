@@ -3,9 +3,9 @@ use std::ops::{Add, AddAssign, Div, DivAssign, Mul, Neg, Sub, SubAssign};
 use num::{Complex, One, Zero};
 use roots::find_roots_sturm;
 
-use rustnomial::numerics::{AbsSqrt, Cbrt, IsPositive, PowUsize};
-use rustnomial::polynomial::{first_nonzero_index, first_term};
-use {Degree, SizedPolynomial, Term};
+use crate::numerics::{AbsSqrt, Cbrt, IsPositive, PowUsize};
+use crate::polynomial::polynomial::{first_nonzero_index, first_term};
+use crate::{Degree, SizedPolynomial, Term};
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Roots<N> {
@@ -271,8 +271,8 @@ pub(crate) fn find_roots<S: SizedPolynomial<f64>>(poly: &S) -> Roots<f64> {
 
 #[cfg(test)]
 mod test {
-    use rustnomial::find_roots::{cubic_roots, find_roots};
-    use {LinearBinomial, Monomial, Polynomial, Roots, SizedPolynomial};
+    use crate::polynomial::find_roots::{cubic_roots, find_roots};
+    use crate::{LinearBinomial, Monomial, Polynomial, Roots, SizedPolynomial};
 
     #[test]
     fn test_roots_empty() {

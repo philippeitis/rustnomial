@@ -1,6 +1,8 @@
-use num::{One, Zero};
-use rustnomial::err::TermFromStringError;
 use std::str::FromStr;
+
+use num::{One, Zero};
+
+use crate::err::TermFromStringError;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Degree {
@@ -141,8 +143,8 @@ impl Iterator for TermTokenizer {
 
 #[cfg(test)]
 mod test {
+    use crate::Term;
     use std::str::FromStr;
-    use Term;
 
     #[test]
     fn test_to_str_easy() {

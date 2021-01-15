@@ -2,9 +2,9 @@ use std::ops::{AddAssign, Mul, SubAssign};
 
 use num::Zero;
 
-use rustnomial::numerics::CanNegate;
-use TryAddError;
-use {MutablePolynomial, SizedPolynomial};
+use crate::numerics::CanNegate;
+use crate::TryAddError;
+use crate::{MutablePolynomial, SizedPolynomial};
 
 #[macro_export]
 macro_rules! poly_add {
@@ -157,7 +157,7 @@ mod test {
     /// since we do not know what items have been imported outside.
 
     fn zero_poly<N: num::Zero + Copy>() -> crate::Polynomial<N> {
-        use SizedPolynomial;
+        use crate::SizedPolynomial;
         crate::Polynomial::zero()
     }
 

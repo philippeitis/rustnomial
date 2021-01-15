@@ -2,7 +2,7 @@
 macro_rules! derivative {
     ( $( $x:expr ),* ) => {
         {
-            use $crate::{polynomial, Derivable};
+            use $crate::rustnomial::{polynomial, Derivable};
             polynomial!($($x),*).derivative()
         }
     };

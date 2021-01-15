@@ -6,9 +6,9 @@ use std::ops::{
 
 use num::{One, Zero};
 
-use rustnomial::find_roots::find_roots;
-use rustnomial::numerics::{Abs, CanNegate, IsNegativeOne, IsPositive, PowUsize};
-use {
+use crate::numerics::{Abs, CanNegate, IsNegativeOne, IsPositive, PowUsize};
+use crate::polynomial::find_roots::find_roots;
+use crate::{
     Degree, Derivable, Evaluable, FreeSizePolynomial, MutablePolynomial, Polynomial, Roots,
     SizedPolynomial, Term, TryAddError,
 };
@@ -224,7 +224,7 @@ impl SparsePolynomial<f64> {
 // # Example
 //
 // ```
-// use rustnomial::SparsePolynomial;
+// use polynomial::SparsePolynomial;
 // use std::str::FromStr;
 // // Corresponds to 1.0x^2 + 4.0x + 4.0
 // let polynomial = SparsePolynomial::from_str("5x^2 + 11x + 2").unwrap();
@@ -384,7 +384,7 @@ where
 //     /// # Example
 //     ///
 //     /// ```
-//     /// use rustnomial::{Polynomial, Integrable};
+//     /// use polynomial::{Polynomial, Integrable};
 //     /// let polynomial = Polynomial::new(vec![1.0, 2.0, 5.0]);
 //     /// let integral = polynomial.integral();
 //     /// assert_eq!(Polynomial::new(vec![1.0/3.0, 1.0, 5.0, 0.0]), integral.polynomial);
@@ -927,8 +927,8 @@ impl<N: Copy> ShrAssign<i32> for SparsePolynomial<N> {
 /// TODO:
 /// modulo floordiv
 #[cfg(test)]
-mod tests {
-    use {Degree, Derivable, Evaluable, Polynomial, SizedPolynomial, SparsePolynomial};
+mod test {
+    use crate::{Degree, Derivable, Evaluable, Polynomial, SizedPolynomial, SparsePolynomial};
 
     #[test]
     fn test_from() {
