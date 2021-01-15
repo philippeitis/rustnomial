@@ -244,6 +244,7 @@ where
     /// let monomial = Monomial::new(3.0, 2);
     /// let integral = monomial.integral();
     /// assert_eq!(&SparsePolynomial::from_terms(&[(1.0, 3)]), integral.inner());
+    /// assert_eq!(1., integral.eval(0., 1.));
     /// ```
     fn integral(&self) -> Integral<N, SparsePolynomial<N>> {
         match self.degree() {

@@ -39,7 +39,13 @@ where
         let mut seen_caret = false;
         for c in s.chars() {
             match c {
+                // Allow mixing commas, underscores, and spaces in separating numbers:
+                // eg. 123 456 789 x ^ 123 456 is ok
+                // eg. 123_456_789
+                // Only +, - considered separators.
                 ' ' | ',' | '_' => {}
+                // Assume that number parser handles +, -, .'s if they shouldn't
+                // be there.
                 '+' | '-' | '.' | '0'..='9' => num_vec.push(c),
                 'x' => {
                     if seen_x {

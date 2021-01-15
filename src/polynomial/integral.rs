@@ -21,14 +21,14 @@ macro_rules! integral {
 #[derive(Debug, Clone)]
 pub struct Integral<N, P: FreeSizePolynomial<N> + Evaluable<N>> {
     polynomial: P,
-    _x: PhantomData<N>,
+    phantom: PhantomData<N>,
 }
 
 impl<N, P: FreeSizePolynomial<N> + Evaluable<N>> Integral<N, P> {
     pub fn new(polynomial: P) -> Self {
         Integral {
             polynomial,
-            _x: PhantomData,
+            phantom: PhantomData,
         }
     }
 
