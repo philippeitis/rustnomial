@@ -10,7 +10,7 @@ use crate::numerics::{IsNegativeOne, PowUsize};
 use crate::strings::write_leading_term;
 use crate::{
     Degree, Derivable, Evaluable, FreeSizePolynomial, Integrable, Integral, MutablePolynomial,
-    Polynomial, Roots, SizedPolynomial, Term, TryAddError,
+    Roots, SizedPolynomial, SparsePolynomial, Term, TryAddError,
 };
 
 #[derive(Debug, Clone)]
@@ -224,31 +224,34 @@ where
     }
 }
 
-impl<N> Integrable<N> for Monomial<N>
+impl<N> Integrable<N, SparsePolynomial<N>> for Monomial<N>
 where
-    N: Zero + Copy + AddAssign + Div<Output = N> + From<u8>,
+    N: Zero
+        + Copy
+        + Mul<Output = N>
+        + AddAssign
+        + PowUsize
+        + Mul<Output = N>
+        + Div<Output = N>
+        + From<u8>,
 {
     /// Returns the integral of the `Monomial`.
     ///
     /// # Example
     ///
     /// ```
-    /// use rustnomial::{Monomial, Polynomial, Integrable};
+    /// use rustnomial::{Monomial, SparsePolynomial, Integrable, FreeSizePolynomial};
     /// let monomial = Monomial::new(3.0, 2);
     /// let integral = monomial.integral();
-    /// assert_eq!(Polynomial::new(vec![1.0, 0.0, 0.0, 0.0]), integral.polynomial);
+    /// assert_eq!(&SparsePolynomial::from_terms(&[(1.0, 3)]), integral.inner());
     /// ```
-    fn integral(&self) -> Integral<N> {
+    fn integral(&self) -> Integral<N, SparsePolynomial<N>> {
         match self.degree() {
-            Degree::NegInf => Integral {
-                polynomial: Polynomial::new(vec![N::zero()]),
-            },
-            Degree::Num(x) => Integral {
-                polynomial: Polynomial::from_terms(&[(
-                    self.coefficient / N::from((x + 1) as u8),
-                    x + 1,
-                )]),
-            },
+            Degree::NegInf => Integral::new(SparsePolynomial::zero()),
+            Degree::Num(x) => Integral::new(SparsePolynomial::from_terms(&[(
+                self.coefficient / N::from((x + 1) as u8),
+                x + 1,
+            )])),
         }
     }
 }
@@ -544,8 +547,8 @@ impl<N: Zero + Copy> ShrAssign<i32> for Monomial<N> {
 #[cfg(test)]
 mod test {
     use crate::{
-        Derivable, Evaluable, FreeSizePolynomial, Integrable, Monomial, Polynomial, Roots,
-        SizedPolynomial,
+        Derivable, Evaluable, FreeSizePolynomial, Integrable, Monomial, Roots, SizedPolynomial,
+        SparsePolynomial,
     };
 
     #[test]
@@ -667,6 +670,9 @@ mod test {
     fn test_integral() {
         let a = Monomial::new(5, 2);
         let integral = a.integral();
-        assert_eq!(Polynomial::from_terms(&[(5 / 3, 3)]), integral.polynomial);
+        assert_eq!(
+            &SparsePolynomial::from_terms(&[(5 / 3, 3)]),
+            integral.inner()
+        );
     }
 }

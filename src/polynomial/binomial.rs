@@ -7,7 +7,8 @@ use num::{One, Zero};
 use crate::numerics::{Abs, IsNegativeOne, IsPositive};
 use crate::polynomial::polynomial::term_with_deg;
 use crate::{
-    Degree, Derivable, Evaluable, MutablePolynomial, Roots, SizedPolynomial, Term, TryAddError,
+    Degree, Derivable, Evaluable, Integrable, Integral, MutablePolynomial, Polynomial, Roots,
+    SizedPolynomial, Term, TryAddError,
 };
 
 #[derive(Debug, Clone)]
@@ -207,34 +208,35 @@ where
     }
 }
 
-// impl<N> Integrable<N> for QuadraticTrinomial<N>
-// where
-//     N: Zero + Copy + AddAssign + Div<Output = N> + From<u8>,
-// {
-//     /// Returns the integral of the `Monomial`.
-//     ///
-//     /// # Example
-//     ///
-//     /// ```
-//     /// use polynomial::{Monomial, Polynomial, Integrable};
-//     /// let monomial = Monomial::new(3.0, 2);
-//     /// let integral = monomial.integral();
-//     /// assert_eq!(Polynomial::new(vec![1.0, 0.0, 0.0, 0.0]), integral.polynomial);
-//     /// ```
-//     fn integral(&self) -> Integral<N> {
-//         match self.degree() {
-//             Degree::NegInf => Integral {
-//                 polynomial: Polynomial::new(vec![N::zero()]),
-//             },
-//             Degree::Num(x) => Integral {
-//                 polynomial: Polynomial::from_terms(vec![(
-//                     self.coefficient / N::from((x + 1) as u8),
-//                     x + 1,
-//                 )]),
-//             },
-//         }
-//     }
-// }
+impl<N> Integrable<N, Polynomial<N>> for LinearBinomial<N>
+where
+    N: Zero
+        + From<u8>
+        + Copy
+        + DivAssign
+        + Mul<Output = N>
+        + MulAssign
+        + AddAssign
+        + Div<Output = N>,
+{
+    /// Returns the integral of the `Monomial`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use rustnomial::{LinearBinomial, Integrable, Polynomial};
+    /// let binomial = LinearBinomial::new([2.0, 0.]);
+    /// let integral = binomial.integral();
+    /// assert_eq!(&Polynomial::new(vec![1.0, 0.0, 0.0]), integral.inner());
+    /// ```
+    fn integral(&self) -> Integral<N, Polynomial<N>> {
+        Integral::new(Polynomial::new(vec![
+            self.coefficients[0] / N::from(2),
+            self.coefficients[1],
+            N::zero(),
+        ]))
+    }
+}
 
 // impl<N: PowUsize + Copy> QuadraticTrinomial<N> {
 //     /// Raises the `Monomial` to the power of exp.

@@ -1,5 +1,3 @@
-use std::ops::AddAssign;
-
 use num::Zero;
 
 use crate::{Degree, Term, TryAddError};
@@ -72,10 +70,7 @@ pub trait MutablePolynomial<N> {
     fn try_sub_term(&mut self, coeff: N, degree: usize) -> Result<(), TryAddError>;
 }
 
-pub trait FreeSizePolynomial<N>
-where
-    N: Zero + Copy + AddAssign,
-{
+pub trait FreeSizePolynomial<N> {
     /// Creates an instance of `Self` with the provided terms
     fn from_terms(terms: &[(N, usize)]) -> Self
     where

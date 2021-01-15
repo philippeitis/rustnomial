@@ -8,8 +8,8 @@ use crate::numerics::{Abs, AbsSqrt, IsNegativeOne, IsPositive};
 use crate::polynomial::find_roots::{discriminant_trinomial, trinomial_roots};
 use crate::polynomial::polynomial::term_with_deg;
 use crate::{
-    Degree, Derivable, Evaluable, LinearBinomial, MutablePolynomial, Roots, SizedPolynomial, Term,
-    TryAddError,
+    Degree, Derivable, Evaluable, Integrable, Integral, LinearBinomial, MutablePolynomial,
+    Polynomial, Roots, SizedPolynomial, Term, TryAddError,
 };
 
 #[derive(Debug, Clone)]
@@ -266,6 +266,36 @@ where
 //         }
 //     }
 // }
+impl<N> Integrable<N, Polynomial<N>> for QuadraticTrinomial<N>
+where
+    N: Zero
+        + From<u8>
+        + Copy
+        + DivAssign
+        + Mul<Output = N>
+        + MulAssign
+        + AddAssign
+        + Div<Output = N>,
+{
+    /// Returns the integral of the `Monomial`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use rustnomial::{QuadraticTrinomial, Integrable, Polynomial};
+    /// let trinomial = QuadraticTrinomial::new([3.0, 0., 0.]);
+    /// let integral = trinomial.integral();
+    /// assert_eq!(&Polynomial::new(vec![1.0, 0.0, 0.0, 0.0]), integral.inner());
+    /// ```
+    fn integral(&self) -> Integral<N, Polynomial<N>> {
+        Integral::new(Polynomial::new(vec![
+            self.coefficients[0] / N::from(3),
+            self.coefficients[1] / N::from(2),
+            self.coefficients[2],
+            N::zero(),
+        ]))
+    }
+}
 
 // impl<N: PowUsize + Copy> QuadraticTrinomial<N> {
 //     /// Raises the `Monomial` to the power of exp.

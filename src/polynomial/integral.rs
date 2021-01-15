@@ -1,11 +1,12 @@
 use std::fmt;
 use std::fmt::{Debug, Display};
-use std::ops::{AddAssign, Mul, MulAssign, Sub};
+use std::marker::PhantomData;
+use std::ops::Sub;
 
 use num::{One, Zero};
 
 use crate::numerics::{Abs, IsNegativeOne, IsPositive};
-use crate::{Evaluable, FreeSizePolynomial, Polynomial, SizedPolynomial};
+use crate::{Evaluable, FreeSizePolynomial, SizedPolynomial};
 
 #[macro_export]
 macro_rules! integral {
@@ -18,15 +19,30 @@ macro_rules! integral {
 }
 
 #[derive(Debug, Clone)]
-pub struct Integral<N> {
-    pub polynomial: Polynomial<N>,
+pub struct Integral<N, P: FreeSizePolynomial<N> + Evaluable<N>> {
+    polynomial: P,
+    _x: PhantomData<N>,
 }
 
-pub trait Integrable<N> {
-    fn integral(&self) -> Integral<N>;
+impl<N, P: FreeSizePolynomial<N> + Evaluable<N>> Integral<N, P> {
+    pub fn new(polynomial: P) -> Self {
+        Integral {
+            polynomial,
+            _x: PhantomData,
+        }
+    }
+
+    pub fn inner(&self) -> &P {
+        &self.polynomial
+    }
 }
 
-impl<N> Display for Integral<N>
+pub trait Integrable<N, P: FreeSizePolynomial<N> + Evaluable<N>> {
+    fn integral(&self) -> Integral<N, P>;
+}
+
+impl<N, P: FreeSizePolynomial<N> + Evaluable<N> + SizedPolynomial<N> + Display> Display
+    for Integral<N, P>
 where
     N: IsPositive + Zero + One + Copy + IsNegativeOne + PartialEq + Display + Abs,
 {
@@ -39,19 +55,16 @@ where
     }
 }
 
-impl<N: Zero + Copy + AddAssign> Integral<N> {
-    pub fn replace_c(&self, c: N) -> Polynomial<N> {
+impl<N, P: FreeSizePolynomial<N> + Evaluable<N> + Clone> Integral<N, P> {
+    pub fn replace_c(&self, c: N) -> P {
         let mut p = self.polynomial.clone();
         p.add_term(c, 0);
         p
     }
 }
 
-impl<N> Integral<N>
-where
-    N: Zero + One + Copy + AddAssign + MulAssign + Mul<Output = N> + Sub<Output = N>,
-{
-    /// Returns the area of the underlying `Polynomial` from the first point to the second point.
+impl<N: Sub<Output = N>, P: FreeSizePolynomial<N> + Evaluable<N>> Integral<N, P> {
+    /// Returns the area of the integral from the first point to the second point.
     ///
     /// # Example
     ///

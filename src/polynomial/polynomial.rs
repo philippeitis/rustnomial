@@ -381,9 +381,9 @@ where
     }
 }
 
-impl<N> Integrable<N> for Polynomial<N>
+impl<N> Integrable<N, Polynomial<N>> for Polynomial<N>
 where
-    N: Zero + From<u8> + Copy + DivAssign,
+    N: Zero + From<u8> + Copy + DivAssign + Mul<Output = N> + MulAssign + AddAssign,
 {
     /// Returns the integral of the `Polynomial`.
     ///
@@ -393,9 +393,9 @@ where
     /// use rustnomial::{Polynomial, Integrable};
     /// let polynomial = Polynomial::new(vec![1.0, 2.0, 5.0]);
     /// let integral = polynomial.integral();
-    /// assert_eq!(Polynomial::new(vec![1.0/3.0, 1.0, 5.0, 0.0]), integral.polynomial);
+    /// assert_eq!(&Polynomial::new(vec![1.0/3.0, 1.0, 5.0, 0.0]), integral.inner());
     /// ```
-    fn integral(&self) -> Integral<N> {
+    fn integral(&self) -> Integral<N, Polynomial<N>> {
         let index = first_nonzero_index(&self.terms);
         // TODO: Fix for degrees of arbitrary size.
         let mut degree = (self.len() - index + 1) as u8;
@@ -405,9 +405,7 @@ where
             *term /= N::from(degree);
         }
         terms.push(N::zero());
-        Integral {
-            polynomial: Polynomial { terms },
-        }
+        Integral::new(Polynomial { terms })
     }
 }
 
@@ -943,7 +941,7 @@ mod test {
     fn test_integral() {
         let a = Polynomial::new(vec![3, 2, 1]);
         let b = Polynomial::new(vec![1, 1, 1, 0]);
-        assert_eq!(b, a.integral().polynomial);
+        assert_eq!(&b, a.integral().inner());
     }
 
     #[test]

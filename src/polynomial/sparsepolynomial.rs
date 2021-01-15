@@ -9,8 +9,8 @@ use num::{One, Zero};
 use crate::numerics::{Abs, CanNegate, IsNegativeOne, IsPositive, PowUsize};
 use crate::polynomial::find_roots::find_roots;
 use crate::{
-    Degree, Derivable, Evaluable, FreeSizePolynomial, MutablePolynomial, Polynomial, Roots,
-    SizedPolynomial, Term, TryAddError,
+    Degree, Derivable, Evaluable, FreeSizePolynomial, Integrable, Integral, MutablePolynomial,
+    Polynomial, Roots, SizedPolynomial, Term, TryAddError,
 };
 
 #[derive(Debug, Clone)]
@@ -376,34 +376,36 @@ where
     }
 }
 
-// TODO: Make Integral generic over Polynomial, SparsePolynomial
-// impl<N> Integrable<N> for SparsePolynomial<N>
-//     where N: PartialEq + Zero + From<u8> + Copy + DivAssign + fmt::Display {
-//     /// Returns the integral of the `Polynomial`.
-//     ///
-//     /// # Example
-//     ///
-//     /// ```
-//     /// use polynomial::{Polynomial, Integrable};
-//     /// let polynomial = Polynomial::new(vec![1.0, 2.0, 5.0]);
-//     /// let integral = polynomial.integral();
-//     /// assert_eq!(Polynomial::new(vec![1.0/3.0, 1.0, 5.0, 0.0]), integral.polynomial);
-//     /// ```
-//     fn integral(&self) -> Integral<N> {
-//         let index = first_nonzero_index(&self.terms);
-//         // TODO: Fix for degrees of arbitrary size.
-//         let mut degree = (self.len() - index + 1) as u8;
-//         let mut terms = self.terms[index..].to_vec();
-//         for term in terms.iter_mut() {
-//             degree -= 1;
-//             *term /= N::from(degree);
-//         }
-//         terms.push(N::zero());
-//         Integral {
-//             polynomial: Polynomial { terms }
-//         }
-//     }
-// }
+impl<N> Integrable<N, SparsePolynomial<N>> for SparsePolynomial<N>
+where
+    N: PartialEq
+        + Zero
+        + From<u8>
+        + Copy
+        + Div<Output = N>
+        + Mul<Output = N>
+        + PowUsize
+        + AddAssign,
+{
+    /// Returns the integral of the `Polynomial`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use rustnomial::{SparsePolynomial, Integrable};
+    /// let polynomial = SparsePolynomial::from(vec![1.0, 2.0, 5.0]);
+    /// let integral = polynomial.integral();
+    /// assert_eq!(&SparsePolynomial::from(vec![1.0/3.0, 1.0, 5.0, 0.0]), integral.inner());
+    /// ```
+    fn integral(&self) -> Integral<N, SparsePolynomial<N>> {
+        let mut new_terms = HashMap::with_capacity(self.terms.len());
+        for (&deg, &coeff) in self.terms.iter() {
+            new_terms.insert(deg + 1, coeff / N::from((deg + 1) as u8));
+        }
+
+        Integral::new(SparsePolynomial::new(new_terms))
+    }
+}
 
 impl<N> SparsePolynomial<N>
 where
