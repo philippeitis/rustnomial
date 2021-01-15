@@ -16,7 +16,7 @@ use crate::{
 macro_rules! polynomial {
     ( $( $x:expr ),* ) => {
         {
-            use $crate::rustnomial::Polynomial;
+            use $crate::Polynomial;
             Polynomial::new(vec![$($x,)*])
         }
     };
@@ -910,7 +910,14 @@ impl<N: Zero + Copy> ShrAssign<i32> for Polynomial<N> {
 /// modulo floordiv
 #[cfg(test)]
 mod test {
-    use crate::{Degree, Derivable, Evaluable, Integrable, Polynomial, SizedPolynomial};
+    use crate::{
+        polynomial, Degree, Derivable, Evaluable, Integrable, Polynomial, SizedPolynomial,
+    };
+
+    #[test]
+    fn test_polynomial_macro() {
+        assert_eq!(polynomial!(1, 2, 3, 4), Polynomial::new(vec![1, 2, 3, 4]));
+    }
 
     #[test]
     fn test_eval() {
