@@ -1,6 +1,6 @@
 [package]
 name = "rustnomial"
-version = "0.1.0"
+version = "0.2.0"
 authors = ["Philippe Solodov <solop1906@gmail.com>"]
 license = "MIT"
 description = "A crate for working with polynomials."
@@ -12,7 +12,7 @@ include = [
     "**/*.md",
 ]
 edition = "2018"
-keywords = ["polynomials"]
+keywords = ["polynomials", "no_std", "polynomial"]
 
 [lib]
 name = "rustnomial"
