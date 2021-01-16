@@ -1,11 +1,10 @@
-mod numerics;
-
 #[macro_use]
 mod macros;
 #[macro_use]
 mod strings;
 
 pub mod err;
+mod numerics;
 mod polynomial;
 pub mod terms;
 

@@ -267,3 +267,233 @@ can_negate!(i128, true);
 can_negate!(isize, true);
 can_negate!(f32, true);
 can_negate!(f64, true);
+
+// /// Specifies a conversion from N to self such that any number
+// /// below N also has an exact representation.
+// pub trait TryFromExact<N>: Sized {
+//     type Error;
+//     fn try_from_exact(num: N) -> Result<Self, Self::Error>;
+// }
+//
+// pub enum ConversionError {
+//     NotRepresentable,
+//     Overflow,
+// }
+//
+// macro_rules! try_from_exact_big_from_small {
+//     ($B:ty, $S:ty) => {
+//         impl TryFromExact<$S> for $B {
+//             type Error = ConversionError;
+//             fn try_from_exact(num: $S) -> Result<Self, Self::Error> {
+//                 Ok(num as $B)
+//             }
+//         }
+//     };
+// }
+//
+// upcast!(try_from_exact_big_from_small);
+//
+// macro_rules! try_from_exact_target_to_float {
+//     ($N:ty, $F:ty) => {
+//         impl TryFromExact<$N> for $F {
+//             type Error = ConversionError;
+//             fn try_from_exact(num: $N) -> Result<Self, Self::Error> {
+//                 let conv = num as $F;
+//                 if (conv as $N) != num {
+//                     Err(ConversionError::NotRepresentable)
+//                 } else {
+//                     Ok(conv)
+//                 }
+//             }
+//         }
+//     };
+// }
+//
+// try_from_exact_target_to_float!(u32, f32);
+// try_from_exact_target_to_float!(u64, f32);
+// try_from_exact_target_to_float!(u128, f32);
+// try_from_exact_target_to_float!(i32, f32);
+// try_from_exact_target_to_float!(i64, f32);
+// try_from_exact_target_to_float!(i128, f32);
+//
+// try_from_exact_target_to_float!(u64, f64);
+// try_from_exact_target_to_float!(u128, f64);
+// try_from_exact_target_to_float!(i64, f64);
+// try_from_exact_target_to_float!(i128, f64);
+//
+// macro_rules! try_from_exact_big_to_small {
+//     ($B:ty, $S:ty) => {
+//         impl TryFromExact<$B> for $S {
+//             type Error = ConversionError;
+//             fn try_from_exact(num: $B) -> Result<Self, Self::Error> {
+//                 if num > <$S>::MAX as $B {
+//                     Err(ConversionError::Overflow)
+//                 } else if num < <$S>::MIN as $B {
+//                     Err(ConversionError::Overflow)
+//                 } else {
+//                     Ok(num as $S)
+//                 }
+//             }
+//         }
+//     };
+// }
+//
+// try_from_exact_big_to_small!(usize, u8);
+// try_from_exact_big_to_small!(usize, u16);
+// try_from_exact_big_to_small!(usize, u32);
+// try_from_exact_big_to_small!(usize, u64);
+// try_from_exact_big_to_small!(usize, i8);
+// try_from_exact_big_to_small!(usize, i16);
+// try_from_exact_big_to_small!(usize, i32);
+// try_from_exact_big_to_small!(usize, i64);
+
+/// Specifies a conversion from usize to self such that subtracting by one will yield
+/// an exact representation in usize, down to 0.
+pub trait TryFromUsizeContinuous: Sized {
+    fn try_from_usize_cont(num: usize) -> Result<Self, ConversionError>;
+}
+
+#[derive(Debug)]
+pub enum ConversionError {
+    Overflow,
+}
+
+impl TryFromUsizeContinuous for f32 {
+    fn try_from_usize_cont(num: usize) -> Result<Self, ConversionError> {
+        if num > 2 << 23 {
+            Err(ConversionError::Overflow)
+        } else {
+            Ok(num as f32)
+        }
+    }
+}
+
+impl TryFromUsizeContinuous for f64 {
+    fn try_from_usize_cont(num: usize) -> Result<Self, ConversionError> {
+        if num > 2 << 51 {
+            Err(ConversionError::Overflow)
+        } else {
+            Ok(num as f64)
+        }
+    }
+}
+
+macro_rules! try_from_continuous_unsigned {
+    ($S:ty) => {
+        impl TryFromUsizeContinuous for $S {
+            fn try_from_usize_cont(num: usize) -> Result<Self, ConversionError> {
+                if std::mem::size_of::<Self>() >= std::mem::size_of::<usize>() {
+                    Ok(num as $S)
+                } else if num > <$S>::MAX as usize {
+                    Err(ConversionError::Overflow)
+                } else {
+                    Ok(num as $S)
+                }
+            }
+        }
+    };
+}
+
+macro_rules! try_from_continuous_signed {
+    ($S:ty) => {
+        impl TryFromUsizeContinuous for $S {
+            fn try_from_usize_cont(num: usize) -> Result<Self, ConversionError> {
+                if std::mem::size_of::<Self>() > std::mem::size_of::<usize>() {
+                    Ok(num as $S)
+                } else if num > <$S>::MAX as usize {
+                    Err(ConversionError::Overflow)
+                } else {
+                    Ok(num as $S)
+                }
+            }
+        }
+    };
+}
+
+try_from_continuous_unsigned!(u8);
+try_from_continuous_unsigned!(u16);
+try_from_continuous_unsigned!(u32);
+try_from_continuous_unsigned!(u64);
+try_from_continuous_unsigned!(u128);
+try_from_continuous_signed!(i8);
+try_from_continuous_signed!(i16);
+try_from_continuous_signed!(i32);
+try_from_continuous_signed!(i64);
+try_from_continuous_signed!(i128);
+
+/// Specifies a conversion from usize to self such that an exact representation of the usize
+/// is returned.
+pub trait TryFromUsizeExact: Sized {
+    fn try_from_usize_exact(num: usize) -> Result<Self, ExactConversionError>;
+}
+
+#[derive(Debug)]
+pub enum ExactConversionError {
+    Overflow,
+    Unrepresentable,
+}
+
+impl TryFromUsizeExact for f32 {
+    fn try_from_usize_exact(num: usize) -> Result<Self, ExactConversionError> {
+        let conv = num as f32;
+        if conv as usize == num {
+            Ok(conv)
+        } else {
+            Err(ExactConversionError::Unrepresentable)
+        }
+    }
+}
+
+impl TryFromUsizeExact for f64 {
+    fn try_from_usize_exact(num: usize) -> Result<Self, ExactConversionError> {
+        let conv = num as f64;
+        if conv as usize == num {
+            Ok(conv)
+        } else {
+            Err(ExactConversionError::Unrepresentable)
+        }
+    }
+}
+
+macro_rules! try_from_exact_unsigned {
+    ($S:ty) => {
+        impl TryFromUsizeExact for $S {
+            fn try_from_usize_exact(num: usize) -> Result<Self, ExactConversionError> {
+                if std::mem::size_of::<Self>() >= std::mem::size_of::<usize>() {
+                    Ok(num as $S)
+                } else if num > <$S>::MAX as usize {
+                    Err(ExactConversionError::Overflow)
+                } else {
+                    Ok(num as $S)
+                }
+            }
+        }
+    };
+}
+
+macro_rules! try_from_exact_signed {
+    ($S:ty) => {
+        impl TryFromUsizeExact for $S {
+            fn try_from_usize_exact(num: usize) -> Result<Self, ExactConversionError> {
+                if std::mem::size_of::<Self>() > std::mem::size_of::<usize>() {
+                    Ok(num as $S)
+                } else if num > <$S>::MAX as usize {
+                    Err(ExactConversionError::Overflow)
+                } else {
+                    Ok(num as $S)
+                }
+            }
+        }
+    };
+}
+
+try_from_exact_unsigned!(u8);
+try_from_exact_unsigned!(u16);
+try_from_exact_unsigned!(u32);
+try_from_exact_unsigned!(u64);
+try_from_exact_unsigned!(u128);
+try_from_exact_signed!(i8);
+try_from_exact_signed!(i16);
+try_from_exact_signed!(i32);
+try_from_exact_signed!(i64);
+try_from_exact_signed!(i128);

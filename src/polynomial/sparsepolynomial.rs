@@ -6,7 +6,7 @@ use std::ops::{
 
 use num::{One, Zero};
 
-use crate::numerics::{Abs, CanNegate, IsNegativeOne, IsPositive, PowUsize};
+use crate::numerics::{Abs, CanNegate, IsNegativeOne, IsPositive, PowUsize, TryFromUsizeExact};
 use crate::polynomial::find_roots::find_roots;
 use crate::{
     Degree, Derivable, Evaluable, FreeSizePolynomial, Integrable, Integral, MutablePolynomial,
@@ -380,12 +380,12 @@ impl<N> Integrable<N, SparsePolynomial<N>> for SparsePolynomial<N>
 where
     N: PartialEq
         + Zero
-        + From<u8>
         + Copy
         + Div<Output = N>
         + Mul<Output = N>
         + PowUsize
-        + AddAssign,
+        + AddAssign
+        + TryFromUsizeExact,
 {
     /// Returns the integral of the `Polynomial`.
     ///
@@ -400,7 +400,7 @@ where
     fn integral(&self) -> Integral<N, SparsePolynomial<N>> {
         let mut new_terms = HashMap::with_capacity(self.terms.len());
         for (&deg, &coeff) in self.terms.iter() {
-            new_terms.insert(deg + 1, coeff / N::from((deg + 1) as u8));
+            new_terms.insert(deg + 1, coeff / N::try_from_usize_exact(deg + 1).unwrap());
         }
 
         Integral::new(SparsePolynomial::new(new_terms))

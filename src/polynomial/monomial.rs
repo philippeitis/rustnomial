@@ -6,7 +6,7 @@ use std::ops::{
 
 use num::{One, Zero};
 
-use crate::numerics::{IsNegativeOne, PowUsize};
+use crate::numerics::{IsNegativeOne, PowUsize, TryFromUsizeExact};
 use crate::strings::write_leading_term;
 use crate::{
     Degree, Derivable, Evaluable, FreeSizePolynomial, Integrable, Integral, MutablePolynomial,
@@ -233,7 +233,7 @@ where
         + PowUsize
         + Mul<Output = N>
         + Div<Output = N>
-        + From<u8>,
+        + TryFromUsizeExact,
 {
     /// Returns the integral of the `Monomial`.
     ///
@@ -250,7 +250,7 @@ where
         match self.degree() {
             Degree::NegInf => Integral::new(SparsePolynomial::zero()),
             Degree::Num(x) => Integral::new(SparsePolynomial::from_terms(&[(
-                self.coefficient / N::from((x + 1) as u8),
+                self.coefficient / N::try_from_usize_exact(x + 1).unwrap(),
                 x + 1,
             )])),
         }

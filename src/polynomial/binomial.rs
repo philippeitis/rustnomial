@@ -4,7 +4,7 @@ use std::ops::{
 
 use num::{One, Zero};
 
-use crate::numerics::{Abs, IsNegativeOne, IsPositive};
+use crate::numerics::{Abs, IsNegativeOne, IsPositive, TryFromUsizeContinuous};
 use crate::polynomial::polynomial::term_with_deg;
 use crate::{
     Degree, Derivable, Evaluable, Integrable, Integral, MutablePolynomial, Polynomial, Roots,
@@ -211,13 +211,13 @@ where
 impl<N> Integrable<N, Polynomial<N>> for LinearBinomial<N>
 where
     N: Zero
-        + From<u8>
         + Copy
         + DivAssign
         + Mul<Output = N>
         + MulAssign
         + AddAssign
-        + Div<Output = N>,
+        + Div<Output = N>
+        + TryFromUsizeContinuous,
 {
     /// Returns the integral of the `Monomial`.
     ///
@@ -231,7 +231,7 @@ where
     /// ```
     fn integral(&self) -> Integral<N, Polynomial<N>> {
         Integral::new(Polynomial::new(vec![
-            self.coefficients[0] / N::from(2),
+            self.coefficients[0] / N::try_from_usize_cont(2).unwrap(),
             self.coefficients[1],
             N::zero(),
         ]))

@@ -5,7 +5,7 @@ use std::ops::{
 
 use num::{One, Zero};
 
-use crate::numerics::{Abs, CanNegate, IsNegativeOne, IsPositive};
+use crate::numerics::{Abs, CanNegate, IsNegativeOne, IsPositive, TryFromUsizeContinuous};
 use crate::polynomial::find_roots::{find_roots, Roots};
 use crate::{
     Degree, Derivable, Evaluable, FreeSizePolynomial, Integrable, Integral, MutablePolynomial,
@@ -383,7 +383,15 @@ where
 
 impl<N> Integrable<N, Polynomial<N>> for Polynomial<N>
 where
-    N: Zero + From<u8> + Copy + DivAssign + Mul<Output = N> + MulAssign + AddAssign,
+    N: Zero
+        + One
+        + Copy
+        + DivAssign
+        + Mul<Output = N>
+        + MulAssign
+        + AddAssign
+        + TryFromUsizeContinuous
+        + SubAssign,
 {
     /// Returns the integral of the `Polynomial`.
     ///
@@ -397,12 +405,11 @@ where
     /// ```
     fn integral(&self) -> Integral<N, Polynomial<N>> {
         let index = first_nonzero_index(&self.terms);
-        // TODO: Fix for degrees of arbitrary size.
-        let mut degree = (self.len() - index + 1) as u8;
+        let mut degree = N::try_from_usize_cont(self.len() - index).unwrap();
         let mut terms = self.terms[index..].to_vec();
         for term in terms.iter_mut() {
-            degree -= 1;
-            *term /= N::from(degree);
+            *term /= degree;
+            degree -= N::one();
         }
         terms.push(N::zero());
         Integral::new(Polynomial { terms })
@@ -622,11 +629,7 @@ macro_rules! from_poly_a_to_b {
     ($A:ty, $B:ty) => {
         impl From<Polynomial<$A>> for Polynomial<$B> {
             fn from(item: Polynomial<$A>) -> Self {
-                let mut vec = vec![<$B>::zero(); item.terms.len()];
-                for (&val, dest) in item.terms.iter().zip(vec.iter_mut()) {
-                    *dest = val as $B;
-                }
-                Polynomial::new(vec)
+                Polynomial::new(item.terms.into_iter().map(|x| x as $B).collect())
             }
         }
     };
