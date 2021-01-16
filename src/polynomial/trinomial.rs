@@ -4,7 +4,7 @@ use std::ops::{
 
 use num::{Complex, One, Zero};
 
-use crate::numerics::{Abs, AbsSqrt, IsNegativeOne, IsPositive};
+use crate::numerics::{Abs, AbsSqrt, IsNegativeOne, IsPositive, TryFromUsizeExact};
 use crate::polynomial::find_roots::{discriminant_trinomial, trinomial_roots};
 use crate::polynomial::polynomial::term_with_deg;
 use crate::{
@@ -226,50 +226,31 @@ where
 
 impl<N> Derivable<N> for QuadraticTrinomial<N>
 where
-    N: Zero + One + Copy + Mul<Output = N> + From<u8>,
+    N: Zero + One + Copy + Mul<Output = N> + TryFromUsizeExact,
 {
     /// Returns the derivative of the `QuadraticTrinomial`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use rustnomial::{QuadraticTrinomial, Derivable};
+    /// let binomial = QuadraticTrinomial::new([3.0, 2.0, 1.0]);
+    /// assert_eq!(QuadraticTrinomial::new([0.0, 6.0, 2.0]), binomial.derivative());
+    /// ```
     fn derivative(&self) -> QuadraticTrinomial<N> {
         QuadraticTrinomial::new([
             N::zero(),
-            self.coefficients[0] * N::from(2),
+            self.coefficients[0]
+                * N::try_from_usize_exact(2).expect("Failed to convert 2usize to N."),
             self.coefficients[1],
         ])
     }
 }
 
-// impl<N> Integrable<N> for QuadraticTrinomial<N>
-// where
-//     N: Zero + Copy + AddAssign + Div<Output = N> + From<u8>,
-// {
-//     /// Returns the integral of the `Monomial`.
-//     ///
-//     /// # Example
-//     ///
-//     /// ```
-//     /// use polynomial::{Monomial, Polynomial, Integrable};
-//     /// let monomial = Monomial::new(3.0, 2);
-//     /// let integral = monomial.integral();
-//     /// assert_eq!(Polynomial::new(vec![1.0, 0.0, 0.0, 0.0]), integral.polynomial);
-//     /// ```
-//     fn integral(&self) -> Integral<N> {
-//         match self.degree() {
-//             Degree::NegInf => Integral {
-//                 polynomial: Polynomial::new(vec![N::zero()]),
-//             },
-//             Degree::Num(x) => Integral {
-//                 polynomial: Polynomial::from_terms(vec![(
-//                     self.coefficient / N::from((x + 1) as u8),
-//                     x + 1,
-//                 )]),
-//             },
-//         }
-//     }
-// }
 impl<N> Integrable<N, Polynomial<N>> for QuadraticTrinomial<N>
 where
     N: Zero
-        + From<u8>
+        + TryFromUsizeExact
         + Copy
         + DivAssign
         + Mul<Output = N>
@@ -287,10 +268,15 @@ where
     /// let integral = trinomial.integral();
     /// assert_eq!(&Polynomial::new(vec![1.0, 0.0, 0.0, 0.0]), integral.inner());
     /// ```
+    ///
+    /// # Errors
+    /// Will panic if `N` can not losslessly represent `2usize` or `3usize`.
     fn integral(&self) -> Integral<N, Polynomial<N>> {
         Integral::new(Polynomial::new(vec![
-            self.coefficients[0] / N::from(3),
-            self.coefficients[1] / N::from(2),
+            self.coefficients[0]
+                / N::try_from_usize_exact(3).expect("Failed to convert 3usize to N."),
+            self.coefficients[1]
+                / N::try_from_usize_exact(2).expect("Failed to convert 2usize to N."),
             self.coefficients[2],
             N::zero(),
         ]))

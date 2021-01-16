@@ -357,7 +357,7 @@ where
 
 impl<N> Derivable<N> for Polynomial<N>
 where
-    N: Zero + From<u8> + Copy + MulAssign,
+    N: Zero + One + TryFromUsizeContinuous + Copy + MulAssign + SubAssign,
 {
     /// Returns the derivative of the `Polynomial`.
     ///
@@ -368,14 +368,23 @@ where
     /// let polynomial = Polynomial::new(vec![4, 1, 5]);
     /// assert_eq!(Polynomial::new(vec![8, 1]), polynomial.derivative());
     /// ```
+    ///
+    /// # Errors
+    /// Will panic if `N` can not losslessly encode the numbers from 0 to the degree of `self`.
     fn derivative(&self) -> Polynomial<N> {
         let index = first_nonzero_index(&self.terms);
-        // TODO: Fix for degrees of arbitrary size.
-        let mut degree = (self.len() - index) as u8;
-        let mut terms = self.terms[0..self.len() - 1].to_vec();
+        let mut degree = N::try_from_usize_cont(self.len() - index)
+            .expect("Degree has no lossless representation in N.");
+        let mut terms = {
+            if let Some((_, terms)) = self.terms.split_at(index).1.split_last() {
+                terms.to_vec()
+            } else {
+                return Polynomial::zero();
+            }
+        };
         for term in terms.iter_mut() {
-            degree -= 1;
-            *term *= N::from(degree);
+            degree -= N::one();
+            *term *= degree;
         }
         Polynomial { terms }
     }
@@ -403,9 +412,13 @@ where
     /// let integral = polynomial.integral();
     /// assert_eq!(&Polynomial::new(vec![1.0/3.0, 1.0, 5.0, 0.0]), integral.inner());
     /// ```
+    ///
+    /// # Errors
+    /// Will panic if `N` can not losslessly encode the numbers from 0 to the degree of self `self`.
     fn integral(&self) -> Integral<N, Polynomial<N>> {
         let index = first_nonzero_index(&self.terms);
-        let mut degree = N::try_from_usize_cont(self.len() - index).unwrap();
+        let mut degree = N::try_from_usize_cont(self.len() - index)
+            .expect("Degree can not be losslessly represented.");
         let mut terms = self.terms[index..].to_vec();
         for term in terms.iter_mut() {
             *term /= degree;
@@ -938,6 +951,8 @@ mod test {
         let a = Polynomial::new(vec![1, 2, 3, 4]);
         let b = Polynomial::new(vec![3, 4, 3]);
         assert_eq!(b, a.derivative());
+
+        assert_eq!(Polynomial::<i32>::zero(), Polynomial::zero().derivative());
     }
 
     #[test]

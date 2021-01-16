@@ -4,7 +4,7 @@ use std::ops::{
 
 use num::{One, Zero};
 
-use crate::numerics::{Abs, IsNegativeOne, IsPositive, TryFromUsizeContinuous};
+use crate::numerics::{Abs, IsNegativeOne, IsPositive, TryFromUsizeContinuous, TryFromUsizeExact};
 use crate::polynomial::polynomial::term_with_deg;
 use crate::{
     Degree, Derivable, Evaluable, Integrable, Integral, MutablePolynomial, Polynomial, Roots,
@@ -192,7 +192,7 @@ where
 
 impl<N> Derivable<N> for LinearBinomial<N>
 where
-    N: Zero + One + Copy + Mul<Output = N> + From<u8>,
+    N: Zero + One + Copy + Mul<Output = N> + TryFromUsizeExact,
 {
     /// Returns the derivative of the `LinearBinomial`.
     ///
@@ -219,7 +219,7 @@ where
         + Div<Output = N>
         + TryFromUsizeContinuous,
 {
-    /// Returns the integral of the `Monomial`.
+    /// Returns the integral of the `LinearBinomial`.
     ///
     /// # Example
     ///
@@ -229,9 +229,12 @@ where
     /// let integral = binomial.integral();
     /// assert_eq!(&Polynomial::new(vec![1.0, 0.0, 0.0]), integral.inner());
     /// ```
+    ///
+    /// Will panic if `N` can not losslessly represent `2usize`.
     fn integral(&self) -> Integral<N, Polynomial<N>> {
         Integral::new(Polynomial::new(vec![
-            self.coefficients[0] / N::try_from_usize_cont(2).unwrap(),
+            self.coefficients[0]
+                / N::try_from_usize_cont(2).expect("Failed to convert 2usize to N."),
             self.coefficients[1],
             N::zero(),
         ]))

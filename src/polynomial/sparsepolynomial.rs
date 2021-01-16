@@ -353,7 +353,7 @@ where
 
 impl<N> Derivable<N> for SparsePolynomial<N>
 where
-    N: Zero + From<u8> + Copy + Mul<Output = N>,
+    N: Zero + TryFromUsizeExact + Copy + Mul<Output = N>,
 {
     /// Returns the derivative of the `SparsePolynomial`.
     ///
@@ -364,12 +364,20 @@ where
     /// let polynomial = SparsePolynomial::from(vec![4, 1, 5]);
     /// assert_eq!(SparsePolynomial::from(vec![8, 1]), polynomial.derivative());
     /// ```
+    ///
+    /// # Errors
+    /// Will panic if a term has a degree which does not have a lossless
+    /// representation in `N`.
     fn derivative(&self) -> SparsePolynomial<N> {
         let mut terms = HashMap::with_capacity(self.terms.len());
-        // TODO: Fix for degrees of arbitrary size.
         for (&degree, &coeff) in self.terms.iter() {
             if !coeff.is_zero() && degree != 0 {
-                terms.insert(degree - 1, coeff * N::from(degree as u8));
+                terms.insert(
+                    degree - 1,
+                    coeff
+                        * N::try_from_usize_exact(degree)
+                            .expect("Degree has no lossless representation in N."),
+                );
             }
         }
         SparsePolynomial { terms }
@@ -397,10 +405,18 @@ where
     /// let integral = polynomial.integral();
     /// assert_eq!(&SparsePolynomial::from(vec![1.0/3.0, 1.0, 5.0, 0.0]), integral.inner());
     /// ```
+    /// # Errors
+    /// Will panic if a term has a degree, which when incremented by one, does not
+    /// have a lossless representation in `N`.
     fn integral(&self) -> Integral<N, SparsePolynomial<N>> {
         let mut new_terms = HashMap::with_capacity(self.terms.len());
         for (&deg, &coeff) in self.terms.iter() {
-            new_terms.insert(deg + 1, coeff / N::try_from_usize_exact(deg + 1).unwrap());
+            new_terms.insert(
+                deg + 1,
+                coeff
+                    / N::try_from_usize_exact(deg + 1)
+                        .expect("Degree has no lossless representation in N."),
+            );
         }
 
         Integral::new(SparsePolynomial::new(new_terms))

@@ -205,7 +205,7 @@ impl<N: Copy + Zero> Monomial<N> {
 
 impl<N> Derivable<N> for Monomial<N>
 where
-    N: Zero + Copy + Mul<Output = N> + From<u8>,
+    N: Zero + Copy + Mul<Output = N> + TryFromUsizeExact,
 {
     /// Returns the derivative of the `Monomial`.
     ///
@@ -216,10 +216,18 @@ where
     /// let monomial = Monomial::new(3.0, 2);
     /// assert_eq!(Monomial::new(6.0, 1), monomial.derivative());
     /// ```
+    ///
+    /// # Errors
+    /// Will panic if `N` can not losslessly represent the degree of `self`.
     fn derivative(&self) -> Monomial<N> {
         match self.degree() {
             Degree::NegInf | Degree::Num(0) => Monomial::zero(),
-            Degree::Num(x) => Monomial::new(self.coefficient * N::from(x as u8), x - 1),
+            Degree::Num(x) => Monomial::new(
+                self.coefficient
+                    * N::try_from_usize_exact(x)
+                        .expect("Degree has no lossless representation in N."),
+                x - 1,
+            ),
         }
     }
 }
