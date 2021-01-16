@@ -1,5 +1,6 @@
-use std::collections::HashMap;
-use std::ops::{
+use alloc::collections::BTreeMap;
+use alloc::vec::Vec;
+use core::ops::{
     Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Rem, RemAssign, Shl, ShlAssign, Shr,
     ShrAssign, Sub, SubAssign,
 };
@@ -18,14 +19,14 @@ use crate::{
 /// but with a very small number of internal terms. However, it is significantly slower
 /// than Polynomial in the case where the number of non-zero terms is close to the degree.
 pub struct SparsePolynomial<N> {
-    pub terms: HashMap<usize, N>,
+    pub terms: BTreeMap<usize, N>,
 }
 
-fn map_mul<N>(_lhs: &HashMap<usize, N>, _rhs: &HashMap<usize, N>) -> HashMap<usize, N>
+fn map_mul<N>(_lhs: &BTreeMap<usize, N>, _rhs: &BTreeMap<usize, N>) -> BTreeMap<usize, N>
 where
     N: Mul<Output = N> + AddAssign + Copy + Zero,
 {
-    let mut terms = HashMap::new();
+    let mut terms = BTreeMap::new();
     for (&rhs_deg, &rterm) in _rhs {
         if rterm.is_zero() {
             continue;
@@ -45,7 +46,7 @@ where
     terms
 }
 
-fn map_sub_w_scale<N>(_lhs: &mut HashMap<usize, N>, _rhs: &HashMap<usize, N>, _rhs_scale: N)
+fn map_sub_w_scale<N>(_lhs: &mut BTreeMap<usize, N>, _rhs: &BTreeMap<usize, N>, _rhs_scale: N)
 where
     N: Copy + Neg<Output = N> + Sub<Output = N> + Mul<Output = N> + SubAssign,
 {
@@ -61,7 +62,7 @@ where
     }
 }
 
-fn degree<N: Zero + Copy>(terms: &HashMap<usize, N>) -> Degree {
+fn degree<N: Zero + Copy>(terms: &BTreeMap<usize, N>) -> Degree {
     let mut term_iter = terms.iter();
     let (mut max_term, mut max_degree) = match term_iter.next() {
         None => {
@@ -84,7 +85,7 @@ fn degree<N: Zero + Copy>(terms: &HashMap<usize, N>) -> Degree {
     }
 }
 
-fn first_term<N: Zero + Copy>(terms: &HashMap<usize, N>) -> Term<N> {
+fn first_term<N: Zero + Copy>(terms: &BTreeMap<usize, N>) -> Term<N> {
     let degree = match degree(terms) {
         Degree::NegInf => {
             return Term::ZeroTerm;
@@ -139,7 +140,7 @@ impl<N: Zero + Copy> SizedPolynomial<N> for SparsePolynomial<N> {
     /// ```
     fn zero() -> SparsePolynomial<N> {
         SparsePolynomial {
-            terms: HashMap::new(),
+            terms: BTreeMap::new(),
         }
     }
 
@@ -235,11 +236,11 @@ macro_rules! from_sparse_a_to_b {
     ($A:ty, $B:ty) => {
         impl From<SparsePolynomial<$A>> for SparsePolynomial<$B> {
             fn from(item: SparsePolynomial<$A>) -> Self {
-                let mut hashmap = HashMap::<usize, $B>::new();
+                let mut map = BTreeMap::<usize, $B>::new();
                 for (&deg, &val) in item.terms.iter() {
-                    hashmap.insert(deg, val as $B);
+                    map.insert(deg, val as $B);
                 }
-                SparsePolynomial::new(hashmap)
+                SparsePolynomial::new(map)
             }
         }
     };
@@ -267,7 +268,7 @@ where
     /// let polynomial = SparsePolynomial::from_terms(&[(1.0, 2), (4.0, 1), (4.0, 1)]);
     /// ```
     fn from_terms(terms: &[(N, usize)]) -> Self {
-        let mut a = SparsePolynomial::new(HashMap::with_capacity(terms.len()));
+        let mut a = SparsePolynomial::new(BTreeMap::new());
         for &(term, degree) in terms {
             a.add_term(term, degree);
         }
@@ -291,7 +292,7 @@ where
 }
 
 impl<N> SparsePolynomial<N> {
-    pub fn new(terms: HashMap<usize, N>) -> SparsePolynomial<N> {
+    pub fn new(terms: BTreeMap<usize, N>) -> SparsePolynomial<N> {
         SparsePolynomial { terms }
     }
 }
@@ -315,7 +316,7 @@ where
     /// let polynomial = SparsePolynomial::from(vec![1.0, 4.0, 4.0]);
     /// ```
     fn from(term_vec: Vec<N>) -> Self {
-        let mut terms = HashMap::new();
+        let mut terms = BTreeMap::new();
         if !term_vec.is_empty() {
             let degree = term_vec.len() - 1;
             for (index, &val) in term_vec.iter().enumerate() {
@@ -328,15 +329,15 @@ where
     }
 }
 
-impl<N> SparsePolynomial<N>
-where
-    N: Zero + Copy,
-{
-    /// Reduces the size of the `SparsePolynomial` in memory by removing zero terms.
-    pub fn trim(&mut self) {
-        self.terms.retain(|_, coeff| !coeff.is_zero());
-    }
-}
+// impl<N> SparsePolynomial<N>
+// where
+//     N: Zero + Copy,
+// {
+//     /// Reduces the size of the `SparsePolynomial` in memory by removing zero terms.
+//     pub fn trim(&mut self) {
+//         self.terms.retain(|_, coeff| !coeff.is_zero());
+//     }
+// }
 
 impl<N> Evaluable<N> for SparsePolynomial<N>
 where
@@ -369,7 +370,7 @@ where
     /// Will panic if a term has a degree which does not have a lossless
     /// representation in `N`.
     fn derivative(&self) -> SparsePolynomial<N> {
-        let mut terms = HashMap::with_capacity(self.terms.len());
+        let mut terms = BTreeMap::new();
         for (&degree, &coeff) in self.terms.iter() {
             if !coeff.is_zero() && degree != 0 {
                 terms.insert(
@@ -409,7 +410,7 @@ where
     /// Will panic if a term has a degree, which when incremented by one, does not
     /// have a lossless representation in `N`.
     fn integral(&self) -> Integral<N, SparsePolynomial<N>> {
-        let mut new_terms = HashMap::with_capacity(self.terms.len());
+        let mut new_terms = BTreeMap::new();
         for (&deg, &coeff) in self.terms.iter() {
             new_terms.insert(
                 deg + 1,
@@ -449,7 +450,7 @@ where
         if exp == 0 {
             SparsePolynomial {
                 terms: {
-                    let mut terms = HashMap::new();
+                    let mut terms = BTreeMap::new();
                     terms.insert(0, N::one());
                     terms
                 },
@@ -674,7 +675,7 @@ where
     type Output = SparsePolynomial<N>;
 
     fn neg(self) -> SparsePolynomial<N> {
-        let mut terms = HashMap::new();
+        let mut terms = BTreeMap::new();
         for (&deg, &coeff) in self.terms.iter() {
             terms.insert(deg, -coeff);
         }
@@ -751,7 +752,7 @@ where
     type Output = SparsePolynomial<N>;
 
     fn add(self, _rhs: SparsePolynomial<N>) -> SparsePolynomial<N> {
-        let mut terms = HashMap::new();
+        let mut terms = BTreeMap::new();
         for (deg, coeff) in _rhs.terms {
             terms.insert(deg, coeff);
         }
@@ -830,7 +831,7 @@ impl<N: Copy + Mul<Output = N>> Mul<N> for SparsePolynomial<N> {
     type Output = SparsePolynomial<N>;
 
     fn mul(self, _rhs: N) -> SparsePolynomial<N> {
-        let mut terms = HashMap::new();
+        let mut terms = BTreeMap::new();
         for (&deg, &coeff) in self.terms.iter() {
             terms.insert(deg, coeff * _rhs);
         }
@@ -854,7 +855,7 @@ where
     type Output = SparsePolynomial<N>;
 
     fn div(self, _rhs: N) -> SparsePolynomial<N> {
-        let mut terms = HashMap::new();
+        let mut terms = BTreeMap::new();
         for (&deg, &coeff) in self.terms.iter() {
             terms.insert(deg, coeff / _rhs);
         }
@@ -881,7 +882,7 @@ impl<N: Copy> Shl<i32> for SparsePolynomial<N> {
         if _rhs < 0 {
             self >> -_rhs
         } else {
-            let mut terms = HashMap::new();
+            let mut terms = BTreeMap::new();
             let _rhs = _rhs as usize;
             for (&deg, &coeff) in self.terms.iter() {
                 terms.insert(deg + _rhs, coeff);
@@ -896,7 +897,7 @@ impl<N: Copy> ShlAssign<i32> for SparsePolynomial<N> {
         if _rhs < 0 {
             *self >>= -_rhs;
         } else {
-            let mut terms = HashMap::new();
+            let mut terms = BTreeMap::new();
             let _rhs = _rhs as usize;
             for (&deg, &coeff) in self.terms.iter() {
                 terms.insert(deg + _rhs, coeff);
@@ -913,7 +914,7 @@ impl<N: Copy> Shr<i32> for SparsePolynomial<N> {
         if _rhs < 0 {
             self << -_rhs
         } else {
-            let mut terms = HashMap::new();
+            let mut terms = BTreeMap::new();
             let _rhs = _rhs as usize;
             for (&deg, &coeff) in self.terms.iter() {
                 if deg >= _rhs {
@@ -930,7 +931,7 @@ impl<N: Copy> ShrAssign<i32> for SparsePolynomial<N> {
         if _rhs < 0 {
             *self <<= -_rhs;
         } else {
-            let mut terms = HashMap::new();
+            let mut terms = BTreeMap::new();
             let _rhs = _rhs as usize;
             for (&deg, &coeff) in self.terms.iter() {
                 if deg >= _rhs {

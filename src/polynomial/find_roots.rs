@@ -1,4 +1,6 @@
-use std::ops::{Add, AddAssign, Div, DivAssign, Mul, Neg, Sub, SubAssign};
+use alloc::vec::Vec;
+
+use core::ops::{Add, AddAssign, Div, DivAssign, Mul, Neg, Sub, SubAssign};
 
 use num::{Complex, One, Zero};
 use roots::find_roots_sturm;

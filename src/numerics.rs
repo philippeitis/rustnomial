@@ -382,7 +382,7 @@ macro_rules! try_from_continuous_unsigned {
     ($S:ty) => {
         impl TryFromUsizeContinuous for $S {
             fn try_from_usize_cont(num: usize) -> Result<Self, ConversionError> {
-                if std::mem::size_of::<Self>() >= std::mem::size_of::<usize>() {
+                if core::mem::size_of::<Self>() >= core::mem::size_of::<usize>() {
                     Ok(num as $S)
                 } else if num > <$S>::MAX as usize {
                     Err(ConversionError::Overflow)
@@ -398,7 +398,7 @@ macro_rules! try_from_continuous_signed {
     ($S:ty) => {
         impl TryFromUsizeContinuous for $S {
             fn try_from_usize_cont(num: usize) -> Result<Self, ConversionError> {
-                if std::mem::size_of::<Self>() > std::mem::size_of::<usize>() {
+                if core::mem::size_of::<Self>() > core::mem::size_of::<usize>() {
                     Ok(num as $S)
                 } else if num > <$S>::MAX as usize {
                     Err(ConversionError::Overflow)
@@ -459,7 +459,7 @@ macro_rules! try_from_exact_unsigned {
     ($S:ty) => {
         impl TryFromUsizeExact for $S {
             fn try_from_usize_exact(num: usize) -> Result<Self, ExactConversionError> {
-                if std::mem::size_of::<Self>() >= std::mem::size_of::<usize>() {
+                if core::mem::size_of::<Self>() >= core::mem::size_of::<usize>() {
                     Ok(num as $S)
                 } else if num > <$S>::MAX as usize {
                     Err(ExactConversionError::Overflow)
@@ -475,7 +475,7 @@ macro_rules! try_from_exact_signed {
     ($S:ty) => {
         impl TryFromUsizeExact for $S {
             fn try_from_usize_exact(num: usize) -> Result<Self, ExactConversionError> {
-                if std::mem::size_of::<Self>() > std::mem::size_of::<usize>() {
+                if core::mem::size_of::<Self>() > core::mem::size_of::<usize>() {
                     Ok(num as $S)
                 } else if num > <$S>::MAX as usize {
                     Err(ExactConversionError::Overflow)

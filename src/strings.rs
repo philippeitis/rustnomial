@@ -1,4 +1,4 @@
-use std::fmt;
+use core::fmt;
 
 use num::One;
 
@@ -6,7 +6,7 @@ use crate::numerics::{Abs, IsNegativeOne, IsPositive};
 
 macro_rules! fmt_poly {
     ($T:ident) => {
-        use std::fmt;
+        use core::fmt;
         use $crate::strings::{write_leading_term, write_trailing_term};
 
         impl<N> fmt::Display for $T<N>
@@ -31,7 +31,7 @@ macro_rules! fmt_poly {
 
 macro_rules! poly_from_str {
     ($T:ident) => {
-        use std::str::FromStr;
+        use core::str::FromStr;
 
         use $crate::err::PolynomialFromStringError;
         use $crate::terms::TermTokenizer;
@@ -115,7 +115,8 @@ where
 #[cfg(test)]
 mod test {
     use crate::{Integrable, Monomial, Polynomial, SizedPolynomial, SparsePolynomial};
-    use std::str::FromStr;
+    use alloc::string::ToString;
+    use core::str::FromStr;
 
     #[test]
     fn test_from_str_all_terms() {

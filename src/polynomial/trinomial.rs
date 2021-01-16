@@ -1,4 +1,4 @@
-use std::ops::{
+use core::ops::{
     Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Shr, ShrAssign, Sub, SubAssign,
 };
 

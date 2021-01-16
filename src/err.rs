@@ -1,4 +1,4 @@
-use std::fmt;
+use core::fmt;
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub enum TryAddError {

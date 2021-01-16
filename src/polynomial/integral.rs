@@ -1,7 +1,7 @@
-use std::fmt;
-use std::fmt::{Debug, Display};
-use std::marker::PhantomData;
-use std::ops::Sub;
+use core::fmt;
+use core::fmt::{Debug, Display};
+use core::marker::PhantomData;
+use core::ops::Sub;
 
 use num::{One, Zero};
 
@@ -84,6 +84,7 @@ impl<N: Sub<Output = N>, P: FreeSizePolynomial<N> + Evaluable<N>> Integral<N, P>
 #[cfg(test)]
 mod test {
     use crate::integral;
+    use alloc::string::ToString;
 
     #[test]
     fn test_integral_empty_polynomial() {

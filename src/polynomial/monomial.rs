@@ -1,6 +1,6 @@
-use std::fmt;
-use std::fmt::Display;
-use std::ops::{
+use core::fmt;
+use core::fmt::Display;
+use core::ops::{
     AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Shl, ShlAssign, Shr, ShrAssign, SubAssign,
 };
 

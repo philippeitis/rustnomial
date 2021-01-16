@@ -1,4 +1,6 @@
-use std::str::FromStr;
+use alloc::string::String;
+use alloc::vec::Vec;
+use core::str::FromStr;
 
 use num::{One, Zero};
 
@@ -153,7 +155,7 @@ impl Iterator for TermTokenizer {
 #[cfg(test)]
 mod test {
     use crate::Term;
-    use std::str::FromStr;
+    use core::str::FromStr;
 
     #[test]
     fn test_to_str_easy() {

@@ -1,4 +1,5 @@
-use std::ops::{
+use alloc::vec::Vec;
+use core::ops::{
     Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Rem, RemAssign, Shl, ShlAssign, Shr,
     ShrAssign, Sub, SubAssign,
 };
@@ -247,7 +248,7 @@ where
             }
             let added_zeros = degree + 1 - self.terms.len();
             self.terms
-                .splice(0..0, std::iter::repeat(N::zero()).take(added_zeros));
+                .splice(0..0, core::iter::repeat(N::zero()).take(added_zeros));
         }
         let index = self.len() - degree - 1;
         self.terms[index] -= coeff;
@@ -312,7 +313,7 @@ where
         if self.len() < degree + 1 {
             let added_zeros = degree + 1 - self.terms.len();
             self.terms
-                .splice(0..0, std::iter::repeat(N::zero()).take(added_zeros));
+                .splice(0..0, core::iter::repeat(N::zero()).take(added_zeros));
         }
         let index = self.len() - degree - 1;
         self.terms[index] += coeff;

@@ -1,4 +1,5 @@
-use std::ops::{AddAssign, Mul, SubAssign};
+use alloc::vec::Vec;
+use core::ops::{AddAssign, Mul, SubAssign};
 
 use num::Zero;
 
@@ -153,6 +154,7 @@ macro_rules! poly_sub {
 
 #[cfg(test)]
 mod test {
+    use alloc::vec::Vec;
     /// Tests macro usage as it would happen outside of this crate,
     /// since we do not know what items have been imported outside.
 
