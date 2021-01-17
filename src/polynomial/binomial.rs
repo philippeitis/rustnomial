@@ -298,10 +298,10 @@ where
 {
     type Output = LinearBinomial<N>;
 
-    fn sub(self, _rhs: LinearBinomial<N>) -> LinearBinomial<N> {
+    fn sub(self, rhs: LinearBinomial<N>) -> LinearBinomial<N> {
         LinearBinomial::new([
-            self.coefficients[0] - _rhs.coefficients[0],
-            self.coefficients[1] - _rhs.coefficients[1],
+            self.coefficients[0] - rhs.coefficients[0],
+            self.coefficients[1] - rhs.coefficients[1],
         ])
     }
 }
@@ -310,9 +310,9 @@ impl<N> SubAssign<LinearBinomial<N>> for LinearBinomial<N>
 where
     N: SubAssign + Copy,
 {
-    fn sub_assign(&mut self, _rhs: LinearBinomial<N>) {
-        self.coefficients[0] -= _rhs.coefficients[0];
-        self.coefficients[1] -= _rhs.coefficients[1];
+    fn sub_assign(&mut self, rhs: LinearBinomial<N>) {
+        self.coefficients[0] -= rhs.coefficients[0];
+        self.coefficients[1] -= rhs.coefficients[1];
     }
 }
 
@@ -322,41 +322,41 @@ where
 {
     type Output = LinearBinomial<N>;
 
-    fn add(self, _rhs: LinearBinomial<N>) -> LinearBinomial<N> {
+    fn add(self, rhs: LinearBinomial<N>) -> LinearBinomial<N> {
         LinearBinomial::new([
-            self.coefficients[0] + _rhs.coefficients[0],
-            self.coefficients[1] + _rhs.coefficients[1],
+            self.coefficients[0] + rhs.coefficients[0],
+            self.coefficients[1] + rhs.coefficients[1],
         ])
     }
 }
 
 impl<N: Copy + AddAssign> AddAssign<LinearBinomial<N>> for LinearBinomial<N> {
-    fn add_assign(&mut self, _rhs: LinearBinomial<N>) {
-        self.coefficients[0] += _rhs.coefficients[0];
-        self.coefficients[1] += _rhs.coefficients[1];
+    fn add_assign(&mut self, rhs: LinearBinomial<N>) {
+        self.coefficients[0] += rhs.coefficients[0];
+        self.coefficients[1] += rhs.coefficients[1];
     }
 }
 
 // impl<N: Copy + Mul<Output = N>> Mul<Monomial<N>> for Monomial<N> {
 //     type Output = Monomial<N>;
 //
-//     fn mul(self, _rhs: Monomial<N>) -> Monomial<N> {
-//         Monomial::new(self.coefficient * _rhs.coefficient, self.deg + _rhs.deg)
+//     fn mul(self, rhs: Monomial<N>) -> Monomial<N> {
+//         Monomial::new(self.coefficient * rhs.coefficient, self.deg + rhs.deg)
 //     }
 // }
 //
 // impl<N: MulAssign + AddAssign> MulAssign<Monomial<N>> for Monomial<N> {
-//     fn mul_assign(&mut self, _rhs: Monomial<N>) {
-//         self.coefficient *= _rhs.coefficient;
-//         self.deg += _rhs.deg;
+//     fn mul_assign(&mut self, rhs: Monomial<N>) {
+//         self.coefficient *= rhs.coefficient;
+//         self.deg += rhs.deg;
 //     }
 // }
 //
 // impl<N: Copy + Mul<Output = N>> Mul<&Monomial<N>> for Monomial<N> {
 //     type Output = Monomial<N>;
 //
-//     fn mul(self, _rhs: &Monomial<N>) -> Monomial<N> {
-//         Monomial::new(self.coefficient * _rhs.coefficient, self.deg + _rhs.deg)
+//     fn mul(self, rhs: &Monomial<N>) -> Monomial<N> {
+//         Monomial::new(self.coefficient * rhs.coefficient, self.deg + rhs.deg)
 //     }
 // }
 //
@@ -364,50 +364,50 @@ impl<N: Copy + AddAssign> AddAssign<LinearBinomial<N>> for LinearBinomial<N> {
 // where
 //     N: MulAssign + AddAssign + Copy,
 // {
-//     fn mul_assign(&mut self, _rhs: &Monomial<N>) {
-//         self.coefficient *= _rhs.coefficient;
-//         self.deg += _rhs.deg;
+//     fn mul_assign(&mut self, rhs: &Monomial<N>) {
+//         self.coefficient *= rhs.coefficient;
+//         self.deg += rhs.deg;
 //     }
 // }
 //
 impl<N: Mul<Output = N> + Copy> Mul<N> for LinearBinomial<N> {
     type Output = LinearBinomial<N>;
 
-    fn mul(self, _rhs: N) -> LinearBinomial<N> {
-        LinearBinomial::new([self.coefficients[0] * _rhs, self.coefficients[1] * _rhs])
+    fn mul(self, rhs: N) -> LinearBinomial<N> {
+        LinearBinomial::new([self.coefficients[0] * rhs, self.coefficients[1] * rhs])
     }
 }
 
 impl<N: MulAssign + Copy> MulAssign<N> for LinearBinomial<N> {
-    fn mul_assign(&mut self, _rhs: N) {
-        self.coefficients[0] *= _rhs;
-        self.coefficients[1] *= _rhs;
+    fn mul_assign(&mut self, rhs: N) {
+        self.coefficients[0] *= rhs;
+        self.coefficients[1] *= rhs;
     }
 }
 
 impl<N: Div<Output = N> + Copy> Div<N> for LinearBinomial<N> {
     type Output = LinearBinomial<N>;
 
-    fn div(self, _rhs: N) -> LinearBinomial<N> {
-        LinearBinomial::new([self.coefficients[0] / _rhs, self.coefficients[1] / _rhs])
+    fn div(self, rhs: N) -> LinearBinomial<N> {
+        LinearBinomial::new([self.coefficients[0] / rhs, self.coefficients[1] / rhs])
     }
 }
 
 impl<N: DivAssign + Copy> DivAssign<N> for LinearBinomial<N> {
-    fn div_assign(&mut self, _rhs: N) {
-        self.coefficients[0] /= _rhs;
-        self.coefficients[1] /= _rhs;
+    fn div_assign(&mut self, rhs: N) {
+        self.coefficients[0] /= rhs;
+        self.coefficients[1] /= rhs;
     }
 }
 
 // impl<N: Zero + Copy> Shl<i32> for QuadraticTrinomial<N> {
 //     type Output = QuadraticTrinomial<N>;
 //
-//     fn shl(self, _rhs: i32) -> QuadraticTrinomial<N> {
-//         if _rhs < 0 {
-//             self >> -_rhs
+//     fn shl(self, rhs: i32) -> QuadraticTrinomial<N> {
+//         if rhs < 0 {
+//             self >> -rhs
 //         } else {
-//             match _rhs {
+//             match rhs {
 //                 0 => {
 //                     QuadraticTrinomial::new(self.coefficients.clone())
 //                 }
@@ -424,11 +424,11 @@ impl<N: DivAssign + Copy> DivAssign<N> for LinearBinomial<N> {
 // }
 //
 // impl<N: Zero + Copy> ShlAssign<i32> for QuadraticTrinomial<N> {
-//     fn shl_assign(&mut self, _rhs: i32) {
-//         if _rhs < 0 {
-//             *self >>= -_rhs;
+//     fn shl_assign(&mut self, rhs: i32) {
+//         if rhs < 0 {
+//             *self >>= -rhs;
 //         } else {
-//             match _rhs {
+//             match rhs {
 //                 0 => {}
 //                 1 => {
 //                     self.coefficients[0] = self.coefficients[1];
@@ -454,8 +454,8 @@ impl<N: DivAssign + Copy> DivAssign<N> for LinearBinomial<N> {
 impl<N: Zero + Copy> Shr<u32> for LinearBinomial<N> {
     type Output = LinearBinomial<N>;
 
-    fn shr(self, _rhs: u32) -> LinearBinomial<N> {
-        match _rhs {
+    fn shr(self, rhs: u32) -> LinearBinomial<N> {
+        match rhs {
             0 => LinearBinomial::new(self.coefficients),
             1 => LinearBinomial::new([N::zero(), self.coefficients[0]]),
             _ => LinearBinomial::zero(),
@@ -464,8 +464,8 @@ impl<N: Zero + Copy> Shr<u32> for LinearBinomial<N> {
 }
 
 impl<N: Zero + Copy> ShrAssign<u32> for LinearBinomial<N> {
-    fn shr_assign(&mut self, _rhs: u32) {
-        match _rhs {
+    fn shr_assign(&mut self, rhs: u32) {
+        match rhs {
             0 => {}
             1 => {
                 self.coefficients[1] = self.coefficients[0];

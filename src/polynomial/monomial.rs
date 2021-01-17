@@ -350,10 +350,10 @@ impl<N: Copy + Neg<Output = N>> Neg for Monomial<N> {
 //     where N: PartialEq + Zero + Copy + Sub<Output=N> + SubAssign + Neg<Output=N>{
 //     type Output = Polynomial<N>;
 //
-//     fn sub(self, _rhs: Polynomial<N>) -> Polynomial<N> {
-//         if _rhs.len() > self.len() {
-//             let mut terms = _rhs.terms.clone();
-//             let offset = _rhs.len() - self.len();
+//     fn sub(self, rhs: Polynomial<N>) -> Polynomial<N> {
+//         if rhs.len() > self.len() {
+//             let mut terms = rhs.terms.clone();
+//             let offset = rhs.len() - self.len();
 //
 //             for index in terms[..offset].iter_mut() {
 //                 *index = -*index;
@@ -365,8 +365,8 @@ impl<N: Copy + Neg<Output = N>> Neg for Monomial<N> {
 //             Polynomial::new(terms)
 //         } else {
 //             let mut terms = self.terms.clone();
-//             let offset = terms.len() - _rhs.len();
-//             for (index, val) in terms[offset..].iter_mut().zip(_rhs.terms) {
+//             let offset = terms.len() - rhs.len();
+//             for (index, val) in terms[offset..].iter_mut().zip(rhs.terms) {
 //                 *index -= val;
 //             }
 //             Polynomial::new(terms)
@@ -376,10 +376,10 @@ impl<N: Copy + Neg<Output = N>> Neg for Monomial<N> {
 
 // impl<N> ops::SubAssign<Polynomial<N>> for Polynomial<N>
 //     where N: Neg<Output=N> + Sub<Output=N> + SubAssign + Copy + Zero + PartialEq {
-//     fn sub_assign(&mut self, _rhs: Polynomial<N>) {
-//         if _rhs.len() > self.len() {
-//             let mut terms = _rhs.terms.clone();
-//             let offset = _rhs.len() - self.len();
+//     fn sub_assign(&mut self, rhs: Polynomial<N>) {
+//         if rhs.len() > self.len() {
+//             let mut terms = rhs.terms.clone();
+//             let offset = rhs.len() - self.len();
 //
 //             for index in terms[..offset].iter_mut() {
 //                 *index = -*index;
@@ -390,8 +390,8 @@ impl<N: Copy + Neg<Output = N>> Neg for Monomial<N> {
 //             }
 //             self.terms = terms;
 //         } else {
-//             let offset = self.len() - _rhs.len();
-//             for (index, val) in self.terms[offset..].iter_mut().zip(_rhs.terms) {
+//             let offset = self.len() - rhs.len();
+//             for (index, val) in self.terms[offset..].iter_mut().zip(rhs.terms) {
 //                 *index -= val;
 //             }
 //         }
@@ -402,11 +402,11 @@ impl<N: Copy + Neg<Output = N>> Neg for Monomial<N> {
 //     where N: PartialEq + Zero + Copy + AddAssign {
 //     type Output = Polynomial<N>;
 //
-//     fn add(self, _rhs: Polynomial<N>) -> Polynomial<N> {
-//         let (mut terms, small) = if _rhs.len() > self.len() {
-//             (_rhs.terms.clone(), &self.terms)
+//     fn add(self, rhs: Polynomial<N>) -> Polynomial<N> {
+//         let (mut terms, small) = if rhs.len() > self.len() {
+//             (rhs.terms.clone(), &self.terms)
 //         } else {
-//             (self.terms.clone(), &_rhs.terms)
+//             (self.terms.clone(), &rhs.terms)
 //         };
 //
 //         let offset = terms.len() - small.len();
@@ -420,17 +420,17 @@ impl<N: Copy + Neg<Output = N>> Neg for Monomial<N> {
 // }
 
 // impl<N: Copy + Zero + PartialEq + AddAssign> ops::AddAssign<Polynomial<N>> for Polynomial<N> {
-//     fn add_assign(&mut self, _rhs: Polynomial<N>) {
-//         if _rhs.len() > self.len() {
-//             let offset = _rhs.len() - self.len();
-//             let mut terms = _rhs.terms.clone();
+//     fn add_assign(&mut self, rhs: Polynomial<N>) {
+//         if rhs.len() > self.len() {
+//             let offset = rhs.len() - self.len();
+//             let mut terms = rhs.terms.clone();
 //             for (index, &val) in terms[offset..].iter_mut().zip(&self.terms) {
 //                 *index += val;
 //             }
 //             self.terms = terms;
 //         } else {
-//             let offset = self.len() - _rhs.len();
-//             for (index, val) in self.terms[offset..].iter_mut().zip(_rhs.terms) {
+//             let offset = self.len() - rhs.len();
+//             for (index, val) in self.terms[offset..].iter_mut().zip(rhs.terms) {
 //                 *index += val;
 //             }
 //         }
@@ -440,23 +440,23 @@ impl<N: Copy + Neg<Output = N>> Neg for Monomial<N> {
 impl<N: Copy + Mul<Output = N>> Mul<Monomial<N>> for Monomial<N> {
     type Output = Monomial<N>;
 
-    fn mul(self, _rhs: Monomial<N>) -> Monomial<N> {
-        Monomial::new(self.coefficient * _rhs.coefficient, self.deg + _rhs.deg)
+    fn mul(self, rhs: Monomial<N>) -> Monomial<N> {
+        Monomial::new(self.coefficient * rhs.coefficient, self.deg + rhs.deg)
     }
 }
 
 impl<N: MulAssign> MulAssign<Monomial<N>> for Monomial<N> {
-    fn mul_assign(&mut self, _rhs: Monomial<N>) {
-        self.coefficient *= _rhs.coefficient;
-        self.deg += _rhs.deg;
+    fn mul_assign(&mut self, rhs: Monomial<N>) {
+        self.coefficient *= rhs.coefficient;
+        self.deg += rhs.deg;
     }
 }
 
 impl<N: Copy + Mul<Output = N>> Mul<&Monomial<N>> for Monomial<N> {
     type Output = Monomial<N>;
 
-    fn mul(self, _rhs: &Monomial<N>) -> Monomial<N> {
-        Monomial::new(self.coefficient * _rhs.coefficient, self.deg + _rhs.deg)
+    fn mul(self, rhs: &Monomial<N>) -> Monomial<N> {
+        Monomial::new(self.coefficient * rhs.coefficient, self.deg + rhs.deg)
     }
 }
 
@@ -464,58 +464,58 @@ impl<N> MulAssign<&Monomial<N>> for Monomial<N>
 where
     N: MulAssign + AddAssign + Copy,
 {
-    fn mul_assign(&mut self, _rhs: &Monomial<N>) {
-        self.coefficient *= _rhs.coefficient;
-        self.deg += _rhs.deg;
+    fn mul_assign(&mut self, rhs: &Monomial<N>) {
+        self.coefficient *= rhs.coefficient;
+        self.deg += rhs.deg;
     }
 }
 
 impl<N: Mul<Output = N>> Mul<N> for Monomial<N> {
     type Output = Monomial<N>;
 
-    fn mul(self, _rhs: N) -> Monomial<N> {
-        Monomial::new(self.coefficient * _rhs, self.deg)
+    fn mul(self, rhs: N) -> Monomial<N> {
+        Monomial::new(self.coefficient * rhs, self.deg)
     }
 }
 
 impl<N: MulAssign> MulAssign<N> for Monomial<N> {
-    fn mul_assign(&mut self, _rhs: N) {
-        self.coefficient *= _rhs;
+    fn mul_assign(&mut self, rhs: N) {
+        self.coefficient *= rhs;
     }
 }
 
 impl<N: Div<Output = N>> Div<N> for Monomial<N> {
     type Output = Monomial<N>;
 
-    fn div(self, _rhs: N) -> Monomial<N> {
-        Monomial::new(self.coefficient / _rhs, self.deg)
+    fn div(self, rhs: N) -> Monomial<N> {
+        Monomial::new(self.coefficient / rhs, self.deg)
     }
 }
 
 impl<N: DivAssign> DivAssign<N> for Monomial<N> {
-    fn div_assign(&mut self, _rhs: N) {
-        self.coefficient /= _rhs;
+    fn div_assign(&mut self, rhs: N) {
+        self.coefficient /= rhs;
     }
 }
 
 impl<N: Zero + Copy> Shl<i32> for Monomial<N> {
     type Output = Monomial<N>;
 
-    fn shl(self, _rhs: i32) -> Monomial<N> {
-        if _rhs < 0 {
-            self >> -_rhs
+    fn shl(self, rhs: i32) -> Monomial<N> {
+        if rhs < 0 {
+            self >> -rhs
         } else {
-            Monomial::new(self.coefficient, self.deg + (_rhs as usize))
+            Monomial::new(self.coefficient, self.deg + (rhs as usize))
         }
     }
 }
 
 impl<N: Zero + Copy> ShlAssign<i32> for Monomial<N> {
-    fn shl_assign(&mut self, _rhs: i32) {
-        if _rhs < 0 {
-            *self >>= -_rhs;
+    fn shl_assign(&mut self, rhs: i32) {
+        if rhs < 0 {
+            *self >>= -rhs;
         } else {
-            self.deg += _rhs as usize;
+            self.deg += rhs as usize;
         }
     }
 }
@@ -523,31 +523,31 @@ impl<N: Zero + Copy> ShlAssign<i32> for Monomial<N> {
 impl<N: Zero + Copy> Shr<i32> for Monomial<N> {
     type Output = Monomial<N>;
 
-    fn shr(self, _rhs: i32) -> Monomial<N> {
-        if _rhs < 0 {
-            self << -_rhs
+    fn shr(self, rhs: i32) -> Monomial<N> {
+        if rhs < 0 {
+            self << -rhs
         } else {
-            let _rhs = _rhs as usize;
-            if _rhs > self.deg {
+            let rhs = rhs as usize;
+            if rhs > self.deg {
                 Monomial::zero()
             } else {
-                Monomial::new(self.coefficient, self.deg - _rhs)
+                Monomial::new(self.coefficient, self.deg - rhs)
             }
         }
     }
 }
 
 impl<N: Zero + Copy> ShrAssign<i32> for Monomial<N> {
-    fn shr_assign(&mut self, _rhs: i32) {
-        if _rhs < 0 {
-            *self <<= -_rhs;
+    fn shr_assign(&mut self, rhs: i32) {
+        if rhs < 0 {
+            *self <<= -rhs;
         } else {
-            let _rhs = _rhs as usize;
-            if _rhs > self.deg {
+            let rhs = rhs as usize;
+            if rhs > self.deg {
                 self.coefficient = N::zero();
                 self.deg = 0;
             } else {
-                self.deg -= _rhs;
+                self.deg -= rhs;
             }
         }
     }

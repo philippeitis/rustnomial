@@ -349,11 +349,11 @@ where
 {
     type Output = QuadraticTrinomial<N>;
 
-    fn sub(self, _rhs: QuadraticTrinomial<N>) -> QuadraticTrinomial<N> {
+    fn sub(self, rhs: QuadraticTrinomial<N>) -> QuadraticTrinomial<N> {
         QuadraticTrinomial::new([
-            self.coefficients[0] - _rhs.coefficients[0],
-            self.coefficients[1] - _rhs.coefficients[1],
-            self.coefficients[2] - _rhs.coefficients[2],
+            self.coefficients[0] - rhs.coefficients[0],
+            self.coefficients[1] - rhs.coefficients[1],
+            self.coefficients[2] - rhs.coefficients[2],
         ])
     }
 }
@@ -362,10 +362,10 @@ impl<N> SubAssign<QuadraticTrinomial<N>> for QuadraticTrinomial<N>
 where
     N: SubAssign + Copy,
 {
-    fn sub_assign(&mut self, _rhs: QuadraticTrinomial<N>) {
-        self.coefficients[0] -= _rhs.coefficients[0];
-        self.coefficients[1] -= _rhs.coefficients[1];
-        self.coefficients[2] -= _rhs.coefficients[2];
+    fn sub_assign(&mut self, rhs: QuadraticTrinomial<N>) {
+        self.coefficients[0] -= rhs.coefficients[0];
+        self.coefficients[1] -= rhs.coefficients[1];
+        self.coefficients[2] -= rhs.coefficients[2];
     }
 }
 
@@ -375,43 +375,43 @@ where
 {
     type Output = QuadraticTrinomial<N>;
 
-    fn add(self, _rhs: QuadraticTrinomial<N>) -> QuadraticTrinomial<N> {
+    fn add(self, rhs: QuadraticTrinomial<N>) -> QuadraticTrinomial<N> {
         QuadraticTrinomial::new([
-            self.coefficients[0] + _rhs.coefficients[0],
-            self.coefficients[1] + _rhs.coefficients[1],
-            self.coefficients[2] + _rhs.coefficients[2],
+            self.coefficients[0] + rhs.coefficients[0],
+            self.coefficients[1] + rhs.coefficients[1],
+            self.coefficients[2] + rhs.coefficients[2],
         ])
     }
 }
 
 impl<N: Copy + AddAssign> AddAssign<QuadraticTrinomial<N>> for QuadraticTrinomial<N> {
-    fn add_assign(&mut self, _rhs: QuadraticTrinomial<N>) {
-        self.coefficients[0] += _rhs.coefficients[0];
-        self.coefficients[1] += _rhs.coefficients[1];
-        self.coefficients[2] += _rhs.coefficients[2];
+    fn add_assign(&mut self, rhs: QuadraticTrinomial<N>) {
+        self.coefficients[0] += rhs.coefficients[0];
+        self.coefficients[1] += rhs.coefficients[1];
+        self.coefficients[2] += rhs.coefficients[2];
     }
 }
 
 // impl<N: Copy + Mul<Output = N>> Mul<Monomial<N>> for Monomial<N> {
 //     type Output = Monomial<N>;
 //
-//     fn mul(self, _rhs: Monomial<N>) -> Monomial<N> {
-//         Monomial::new(self.coefficient * _rhs.coefficient, self.deg + _rhs.deg)
+//     fn mul(self, rhs: Monomial<N>) -> Monomial<N> {
+//         Monomial::new(self.coefficient * rhs.coefficient, self.deg + rhs.deg)
 //     }
 // }
 //
 // impl<N: MulAssign + AddAssign> MulAssign<Monomial<N>> for Monomial<N> {
-//     fn mul_assign(&mut self, _rhs: Monomial<N>) {
-//         self.coefficient *= _rhs.coefficient;
-//         self.deg += _rhs.deg;
+//     fn mul_assign(&mut self, rhs: Monomial<N>) {
+//         self.coefficient *= rhs.coefficient;
+//         self.deg += rhs.deg;
 //     }
 // }
 //
 // impl<N: Copy + Mul<Output = N>> Mul<&Monomial<N>> for Monomial<N> {
 //     type Output = Monomial<N>;
 //
-//     fn mul(self, _rhs: &Monomial<N>) -> Monomial<N> {
-//         Monomial::new(self.coefficient * _rhs.coefficient, self.deg + _rhs.deg)
+//     fn mul(self, rhs: &Monomial<N>) -> Monomial<N> {
+//         Monomial::new(self.coefficient * rhs.coefficient, self.deg + rhs.deg)
 //     }
 // }
 //
@@ -419,60 +419,60 @@ impl<N: Copy + AddAssign> AddAssign<QuadraticTrinomial<N>> for QuadraticTrinomia
 // where
 //     N: MulAssign + AddAssign + Copy,
 // {
-//     fn mul_assign(&mut self, _rhs: &Monomial<N>) {
-//         self.coefficient *= _rhs.coefficient;
-//         self.deg += _rhs.deg;
+//     fn mul_assign(&mut self, rhs: &Monomial<N>) {
+//         self.coefficient *= rhs.coefficient;
+//         self.deg += rhs.deg;
 //     }
 // }
 //
 impl<N: Mul<Output = N> + Copy> Mul<N> for QuadraticTrinomial<N> {
     type Output = QuadraticTrinomial<N>;
 
-    fn mul(self, _rhs: N) -> QuadraticTrinomial<N> {
+    fn mul(self, rhs: N) -> QuadraticTrinomial<N> {
         QuadraticTrinomial::new([
-            self.coefficients[0] * _rhs,
-            self.coefficients[1] * _rhs,
-            self.coefficients[2] * _rhs,
+            self.coefficients[0] * rhs,
+            self.coefficients[1] * rhs,
+            self.coefficients[2] * rhs,
         ])
     }
 }
 
 impl<N: MulAssign + Copy> MulAssign<N> for QuadraticTrinomial<N> {
-    fn mul_assign(&mut self, _rhs: N) {
-        self.coefficients[0] *= _rhs;
-        self.coefficients[1] *= _rhs;
-        self.coefficients[2] *= _rhs;
+    fn mul_assign(&mut self, rhs: N) {
+        self.coefficients[0] *= rhs;
+        self.coefficients[1] *= rhs;
+        self.coefficients[2] *= rhs;
     }
 }
 
 impl<N: Div<Output = N> + Copy> Div<N> for QuadraticTrinomial<N> {
     type Output = QuadraticTrinomial<N>;
 
-    fn div(self, _rhs: N) -> QuadraticTrinomial<N> {
+    fn div(self, rhs: N) -> QuadraticTrinomial<N> {
         QuadraticTrinomial::new([
-            self.coefficients[0] / _rhs,
-            self.coefficients[1] / _rhs,
-            self.coefficients[2] / _rhs,
+            self.coefficients[0] / rhs,
+            self.coefficients[1] / rhs,
+            self.coefficients[2] / rhs,
         ])
     }
 }
 
 impl<N: DivAssign + Copy> DivAssign<N> for QuadraticTrinomial<N> {
-    fn div_assign(&mut self, _rhs: N) {
-        self.coefficients[0] /= _rhs;
-        self.coefficients[1] /= _rhs;
-        self.coefficients[2] /= _rhs;
+    fn div_assign(&mut self, rhs: N) {
+        self.coefficients[0] /= rhs;
+        self.coefficients[1] /= rhs;
+        self.coefficients[2] /= rhs;
     }
 }
 
 // impl<N: Zero + Copy> Shl<i32> for QuadraticTrinomial<N> {
 //     type Output = QuadraticTrinomial<N>;
 //
-//     fn shl(self, _rhs: i32) -> QuadraticTrinomial<N> {
-//         if _rhs < 0 {
-//             self >> -_rhs
+//     fn shl(self, rhs: i32) -> QuadraticTrinomial<N> {
+//         if rhs < 0 {
+//             self >> -rhs
 //         } else {
-//             match _rhs {
+//             match rhs {
 //                 0 => {
 //                     QuadraticTrinomial::new(self.coefficients.clone())
 //                 }
@@ -489,11 +489,11 @@ impl<N: DivAssign + Copy> DivAssign<N> for QuadraticTrinomial<N> {
 // }
 //
 // impl<N: Zero + Copy> ShlAssign<i32> for QuadraticTrinomial<N> {
-//     fn shl_assign(&mut self, _rhs: i32) {
-//         if _rhs < 0 {
-//             *self >>= -_rhs;
+//     fn shl_assign(&mut self, rhs: i32) {
+//         if rhs < 0 {
+//             *self >>= -rhs;
 //         } else {
-//             match _rhs {
+//             match rhs {
 //                 0 => {}
 //                 1 => {
 //                     self.coefficients[0] = self.coefficients[1];
@@ -519,8 +519,8 @@ impl<N: DivAssign + Copy> DivAssign<N> for QuadraticTrinomial<N> {
 impl<N: Zero + Copy> Shr<u32> for QuadraticTrinomial<N> {
     type Output = QuadraticTrinomial<N>;
 
-    fn shr(self, _rhs: u32) -> QuadraticTrinomial<N> {
-        match _rhs {
+    fn shr(self, rhs: u32) -> QuadraticTrinomial<N> {
+        match rhs {
             0 => QuadraticTrinomial::new(self.coefficients),
             1 => QuadraticTrinomial::new([N::zero(), self.coefficients[0], self.coefficients[1]]),
             2 => QuadraticTrinomial::new([N::zero(), N::zero(), self.coefficients[0]]),
@@ -530,8 +530,8 @@ impl<N: Zero + Copy> Shr<u32> for QuadraticTrinomial<N> {
 }
 
 impl<N: Zero + Copy> ShrAssign<u32> for QuadraticTrinomial<N> {
-    fn shr_assign(&mut self, _rhs: u32) {
-        match _rhs {
+    fn shr_assign(&mut self, rhs: u32) {
+        match rhs {
             0 => {}
             1 => {
                 self.coefficients[2] = self.coefficients[1];

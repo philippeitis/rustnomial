@@ -22,17 +22,17 @@ pub struct SparsePolynomial<N> {
     pub terms: BTreeMap<usize, N>,
 }
 
-fn map_mul<N>(_lhs: &BTreeMap<usize, N>, _rhs: &BTreeMap<usize, N>) -> BTreeMap<usize, N>
+fn map_mul<N>(lhs: &BTreeMap<usize, N>, rhs: &BTreeMap<usize, N>) -> BTreeMap<usize, N>
 where
     N: Mul<Output = N> + AddAssign + Copy + Zero,
 {
     let mut terms = BTreeMap::new();
-    for (&rhs_deg, &rterm) in _rhs {
+    for (&rhs_deg, &rterm) in rhs {
         if rterm.is_zero() {
             continue;
         }
 
-        for (&lhs_deg, &lterm) in _lhs.iter() {
+        for (&lhs_deg, &lterm) in lhs.iter() {
             match terms.get_mut(&(rhs_deg + lhs_deg)) {
                 None => {
                     terms.insert(rhs_deg + lhs_deg, rterm * lterm);
@@ -46,17 +46,17 @@ where
     terms
 }
 
-fn map_sub_w_scale<N>(_lhs: &mut BTreeMap<usize, N>, _rhs: &BTreeMap<usize, N>, _rhs_scale: N)
+fn map_sub_w_scale<N>(lhs: &mut BTreeMap<usize, N>, rhs: &BTreeMap<usize, N>, rhs_scale: N)
 where
     N: Copy + Neg<Output = N> + Sub<Output = N> + Mul<Output = N> + SubAssign,
 {
-    for (rdeg, &rcoeff) in _rhs.iter() {
-        match _lhs.get_mut(rdeg) {
+    for (rdeg, &rcoeff) in rhs.iter() {
+        match lhs.get_mut(rdeg) {
             None => {
-                _lhs.insert(*rdeg, -rcoeff * _rhs_scale);
+                lhs.insert(*rdeg, -rcoeff * rhs_scale);
             }
             Some(lcoeff) => {
-                *lcoeff -= rcoeff * _rhs_scale;
+                *lcoeff -= rcoeff * rhs_scale;
             }
         }
     }
@@ -428,9 +428,9 @@ impl<N> SparsePolynomial<N>
 where
     N: Mul<Output = N> + AddAssign + Copy + Zero + One,
 {
-    pub fn borrow_mul(&self, _rhs: &SparsePolynomial<N>) -> SparsePolynomial<N> {
+    pub fn borrow_mul(&self, rhs: &SparsePolynomial<N>) -> SparsePolynomial<N> {
         SparsePolynomial {
-            terms: map_mul(&self.terms, &_rhs.terms),
+            terms: map_mul(&self.terms, &rhs.terms),
         }
     }
 
@@ -486,11 +486,8 @@ where
     /// use rustnomial::SparsePolynomial;
     /// let polynomial = SparsePolynomial::from(vec![1.0, 2.0]);
     /// ```
-    pub fn div_mod(
-        &self,
-        _rhs: &SparsePolynomial<N>,
-    ) -> (SparsePolynomial<N>, SparsePolynomial<N>) {
-        let (_rhs_first, _rhs_deg) = match first_term(&_rhs.terms) {
+    pub fn div_mod(&self, rhs: &SparsePolynomial<N>) -> (SparsePolynomial<N>, SparsePolynomial<N>) {
+        let (rhs_first, rhs_deg) = match first_term(&rhs.terms) {
             Term::ZeroTerm => {
                 panic!("Can't divide by 0.");
             }
@@ -505,29 +502,29 @@ where
                 );
             }
             Term::Term(term, degree) => {
-                if degree < _rhs_deg {
+                if degree < rhs_deg {
                     return (
                         SparsePolynomial::zero(),
                         SparsePolynomial::new(self.terms.clone()),
                     );
                 }
-                (term / _rhs_first, degree)
+                (term / rhs_first, degree)
             }
         };
 
         let mut remainder = self.terms.clone();
-        let offset = self_degree - _rhs_deg;
+        let offset = self_degree - rhs_deg;
         let mut div = SparsePolynomial::from(Vec::new());
 
-        while self_degree >= _rhs_deg {
-            map_sub_w_scale(&mut remainder, &_rhs.terms, scale);
+        while self_degree >= rhs_deg {
+            map_sub_w_scale(&mut remainder, &rhs.terms, scale);
             div.add_term(scale, offset);
             match first_term(&remainder) {
                 Term::ZeroTerm => {
                     break;
                 }
                 Term::Term(coeff, degree) => {
-                    scale = coeff / _rhs_first;
+                    scale = coeff / rhs_first;
                     self_degree = degree;
                 }
             }
@@ -550,9 +547,9 @@ where
 {
     type Output = SparsePolynomial<N>;
 
-    /// Returns the remainder of dividing `self` by `_rhs`.
-    fn rem(self, _rhs: SparsePolynomial<N>) -> SparsePolynomial<N> {
-        let (_rhs_first, _rhs_deg) = match first_term(&_rhs.terms) {
+    /// Returns the remainder of dividing `self` by `rhs`.
+    fn rem(self, rhs: SparsePolynomial<N>) -> SparsePolynomial<N> {
+        let (rhs_first, rhs_deg) = match first_term(&rhs.terms) {
             Term::ZeroTerm => {
                 panic!("Can't divide by 0.");
             }
@@ -564,23 +561,23 @@ where
                 return SparsePolynomial::new(self.terms.clone());
             }
             Term::Term(term, degree) => {
-                if degree < _rhs_deg {
+                if degree < rhs_deg {
                     return SparsePolynomial::new(self.terms.clone());
                 }
-                (term / _rhs_first, degree)
+                (term / rhs_first, degree)
             }
         };
 
         let mut remainder = self.terms.clone();
 
-        while self_degree >= _rhs_deg {
-            map_sub_w_scale(&mut remainder, &_rhs.terms, scale);
+        while self_degree >= rhs_deg {
+            map_sub_w_scale(&mut remainder, &rhs.terms, scale);
             match first_term(&remainder) {
                 Term::ZeroTerm => {
                     break;
                 }
                 Term::Term(coeff, degree) => {
-                    scale = coeff / _rhs_first;
+                    scale = coeff / rhs_first;
                     self_degree = degree;
                 }
             }
@@ -601,9 +598,9 @@ where
         + Div<Output = N>
         + AddAssign,
 {
-    /// Assign the remainder of dividing `self` by `_rhs` to `self`.
-    fn rem_assign(&mut self, _rhs: SparsePolynomial<N>) {
-        let (_rhs_first, _rhs_deg) = match first_term(&_rhs.terms) {
+    /// Assign the remainder of dividing `self` by `rhs` to `self`.
+    fn rem_assign(&mut self, rhs: SparsePolynomial<N>) {
+        let (rhs_first, rhs_deg) = match first_term(&rhs.terms) {
             Term::ZeroTerm => {
                 panic!("Can't divide polynomial by 0.");
             }
@@ -615,21 +612,21 @@ where
                 return;
             }
             Term::Term(coeff, degree) => {
-                if degree < _rhs_deg {
+                if degree < rhs_deg {
                     return;
                 }
-                (coeff / _rhs_first, degree)
+                (coeff / rhs_first, degree)
             }
         };
 
-        while self_degree >= _rhs_deg {
-            map_sub_w_scale(&mut self.terms, &_rhs.terms, scale);
+        while self_degree >= rhs_deg {
+            map_sub_w_scale(&mut self.terms, &rhs.terms, scale);
             match first_term(&self.terms) {
                 Term::ZeroTerm => {
                     break;
                 }
                 Term::Term(coeff, degree) => {
-                    scale = coeff / _rhs_first;
+                    scale = coeff / rhs_first;
                     self_degree = degree;
                 }
             }
@@ -689,9 +686,9 @@ where
 {
     type Output = SparsePolynomial<N>;
 
-    fn sub(self, _rhs: SparsePolynomial<N>) -> SparsePolynomial<N> {
+    fn sub(self, rhs: SparsePolynomial<N>) -> SparsePolynomial<N> {
         let mut terms = self.terms.clone();
-        for (deg, coeff) in _rhs.terms {
+        for (deg, coeff) in rhs.terms {
             match terms.get_mut(&deg) {
                 None => {
                     terms.insert(deg, -coeff);
@@ -711,9 +708,9 @@ where
 {
     type Output = SparsePolynomial<N>;
 
-    fn sub(self, _rhs: Polynomial<N>) -> SparsePolynomial<N> {
+    fn sub(self, rhs: Polynomial<N>) -> SparsePolynomial<N> {
         let mut terms = self.terms.clone();
-        for (coeff, deg) in _rhs.term_iter() {
+        for (coeff, deg) in rhs.term_iter() {
             match terms.get_mut(&deg) {
                 None => {
                     terms.insert(deg, -coeff);
@@ -731,8 +728,8 @@ impl<N> SubAssign<SparsePolynomial<N>> for SparsePolynomial<N>
 where
     N: Neg<Output = N> + Sub<Output = N> + SubAssign + Copy,
 {
-    fn sub_assign(&mut self, _rhs: SparsePolynomial<N>) {
-        for (deg, coeff) in _rhs.terms {
+    fn sub_assign(&mut self, rhs: SparsePolynomial<N>) {
+        for (deg, coeff) in rhs.terms {
             match self.terms.get_mut(&deg) {
                 None => {
                     self.terms.insert(deg, -coeff);
@@ -751,9 +748,9 @@ where
 {
     type Output = SparsePolynomial<N>;
 
-    fn add(self, _rhs: SparsePolynomial<N>) -> SparsePolynomial<N> {
+    fn add(self, rhs: SparsePolynomial<N>) -> SparsePolynomial<N> {
         let mut terms = BTreeMap::new();
-        for (deg, coeff) in _rhs.terms {
+        for (deg, coeff) in rhs.terms {
             terms.insert(deg, coeff);
         }
         for (&deg, &coeff) in self.terms.iter() {
@@ -771,8 +768,8 @@ where
 }
 
 impl<N: Copy + AddAssign> AddAssign<SparsePolynomial<N>> for SparsePolynomial<N> {
-    fn add_assign(&mut self, _rhs: SparsePolynomial<N>) {
-        for (&deg, &coeff) in _rhs.terms.iter() {
+    fn add_assign(&mut self, rhs: SparsePolynomial<N>) {
+        for (&deg, &coeff) in rhs.terms.iter() {
             match self.terms.get_mut(&deg) {
                 None => {
                     self.terms.insert(deg, coeff);
@@ -791,9 +788,9 @@ where
 {
     type Output = SparsePolynomial<N>;
 
-    fn mul(self, _rhs: SparsePolynomial<N>) -> SparsePolynomial<N> {
+    fn mul(self, rhs: SparsePolynomial<N>) -> SparsePolynomial<N> {
         SparsePolynomial {
-            terms: map_mul(&self.terms, &_rhs.terms),
+            terms: map_mul(&self.terms, &rhs.terms),
         }
     }
 }
@@ -802,8 +799,8 @@ impl<N> MulAssign<SparsePolynomial<N>> for SparsePolynomial<N>
 where
     N: Mul<Output = N> + AddAssign + Copy + Zero,
 {
-    fn mul_assign(&mut self, _rhs: SparsePolynomial<N>) {
-        self.terms = map_mul(&self.terms, &_rhs.terms);
+    fn mul_assign(&mut self, rhs: SparsePolynomial<N>) {
+        self.terms = map_mul(&self.terms, &rhs.terms);
     }
 }
 
@@ -813,8 +810,8 @@ where
 {
     type Output = SparsePolynomial<N>;
 
-    fn mul(self, _rhs: &SparsePolynomial<N>) -> SparsePolynomial<N> {
-        SparsePolynomial::new(map_mul(&self.terms, &_rhs.terms))
+    fn mul(self, rhs: &SparsePolynomial<N>) -> SparsePolynomial<N> {
+        SparsePolynomial::new(map_mul(&self.terms, &rhs.terms))
     }
 }
 
@@ -822,18 +819,18 @@ impl<N> MulAssign<&SparsePolynomial<N>> for SparsePolynomial<N>
 where
     N: Mul<Output = N> + AddAssign + Copy + Zero,
 {
-    fn mul_assign(&mut self, _rhs: &SparsePolynomial<N>) {
-        self.terms = map_mul(&self.terms, &_rhs.terms);
+    fn mul_assign(&mut self, rhs: &SparsePolynomial<N>) {
+        self.terms = map_mul(&self.terms, &rhs.terms);
     }
 }
 
 impl<N: Copy + Mul<Output = N>> Mul<N> for SparsePolynomial<N> {
     type Output = SparsePolynomial<N>;
 
-    fn mul(self, _rhs: N) -> SparsePolynomial<N> {
+    fn mul(self, rhs: N) -> SparsePolynomial<N> {
         let mut terms = BTreeMap::new();
         for (&deg, &coeff) in self.terms.iter() {
-            terms.insert(deg, coeff * _rhs);
+            terms.insert(deg, coeff * rhs);
         }
 
         SparsePolynomial::new(terms)
@@ -841,9 +838,9 @@ impl<N: Copy + Mul<Output = N>> Mul<N> for SparsePolynomial<N> {
 }
 
 impl<N: Copy + MulAssign> MulAssign<N> for SparsePolynomial<N> {
-    fn mul_assign(&mut self, _rhs: N) {
+    fn mul_assign(&mut self, rhs: N) {
         for (_, coeff) in self.terms.iter_mut() {
-            *coeff *= _rhs;
+            *coeff *= rhs;
         }
     }
 }
@@ -854,10 +851,10 @@ where
 {
     type Output = SparsePolynomial<N>;
 
-    fn div(self, _rhs: N) -> SparsePolynomial<N> {
+    fn div(self, rhs: N) -> SparsePolynomial<N> {
         let mut terms = BTreeMap::new();
         for (&deg, &coeff) in self.terms.iter() {
-            terms.insert(deg, coeff / _rhs);
+            terms.insert(deg, coeff / rhs);
         }
 
         SparsePolynomial::new(terms)
@@ -868,9 +865,9 @@ impl<N> DivAssign<N> for SparsePolynomial<N>
 where
     N: Copy + DivAssign,
 {
-    fn div_assign(&mut self, _rhs: N) {
+    fn div_assign(&mut self, rhs: N) {
         for (_, coeff) in self.terms.iter_mut() {
-            *coeff /= _rhs;
+            *coeff /= rhs;
         }
     }
 }
@@ -878,14 +875,14 @@ where
 impl<N: Copy> Shl<i32> for SparsePolynomial<N> {
     type Output = SparsePolynomial<N>;
 
-    fn shl(self, _rhs: i32) -> SparsePolynomial<N> {
-        if _rhs < 0 {
-            self >> -_rhs
+    fn shl(self, rhs: i32) -> SparsePolynomial<N> {
+        if rhs < 0 {
+            self >> -rhs
         } else {
             let mut terms = BTreeMap::new();
-            let _rhs = _rhs as usize;
+            let rhs = rhs as usize;
             for (&deg, &coeff) in self.terms.iter() {
-                terms.insert(deg + _rhs, coeff);
+                terms.insert(deg + rhs, coeff);
             }
             SparsePolynomial::new(terms)
         }
@@ -893,14 +890,14 @@ impl<N: Copy> Shl<i32> for SparsePolynomial<N> {
 }
 
 impl<N: Copy> ShlAssign<i32> for SparsePolynomial<N> {
-    fn shl_assign(&mut self, _rhs: i32) {
-        if _rhs < 0 {
-            *self >>= -_rhs;
+    fn shl_assign(&mut self, rhs: i32) {
+        if rhs < 0 {
+            *self >>= -rhs;
         } else {
             let mut terms = BTreeMap::new();
-            let _rhs = _rhs as usize;
+            let rhs = rhs as usize;
             for (&deg, &coeff) in self.terms.iter() {
-                terms.insert(deg + _rhs, coeff);
+                terms.insert(deg + rhs, coeff);
             }
             self.terms = terms;
         }
@@ -910,15 +907,15 @@ impl<N: Copy> ShlAssign<i32> for SparsePolynomial<N> {
 impl<N: Copy> Shr<i32> for SparsePolynomial<N> {
     type Output = SparsePolynomial<N>;
 
-    fn shr(self, _rhs: i32) -> SparsePolynomial<N> {
-        if _rhs < 0 {
-            self << -_rhs
+    fn shr(self, rhs: i32) -> SparsePolynomial<N> {
+        if rhs < 0 {
+            self << -rhs
         } else {
             let mut terms = BTreeMap::new();
-            let _rhs = _rhs as usize;
+            let rhs = rhs as usize;
             for (&deg, &coeff) in self.terms.iter() {
-                if deg >= _rhs {
-                    terms.insert(deg - _rhs, coeff);
+                if deg >= rhs {
+                    terms.insert(deg - rhs, coeff);
                 }
             }
             SparsePolynomial::new(terms)
@@ -927,15 +924,15 @@ impl<N: Copy> Shr<i32> for SparsePolynomial<N> {
 }
 
 impl<N: Copy> ShrAssign<i32> for SparsePolynomial<N> {
-    fn shr_assign(&mut self, _rhs: i32) {
-        if _rhs < 0 {
-            *self <<= -_rhs;
+    fn shr_assign(&mut self, rhs: i32) {
+        if rhs < 0 {
+            *self <<= -rhs;
         } else {
             let mut terms = BTreeMap::new();
-            let _rhs = _rhs as usize;
+            let rhs = rhs as usize;
             for (&deg, &coeff) in self.terms.iter() {
-                if deg >= _rhs {
-                    terms.insert(deg - _rhs, coeff);
+                if deg >= rhs {
+                    terms.insert(deg - rhs, coeff);
                 }
             }
             self.terms = terms;

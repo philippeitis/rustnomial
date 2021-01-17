@@ -122,7 +122,7 @@ fn div<
     root: N,
 ) -> Vec<N> {
     let zero = N::zero();
-    let _rhs_first = N::one();
+    let rhs_first = N::one();
 
     let (mut coeff, mut self_degree) = match first_term(&values) {
         Term::ZeroTerm => return vec![],
@@ -134,9 +134,9 @@ fn div<
     let offset = self_degree;
 
     while self_degree >= 1 {
-        let scale = coeff / _rhs_first;
+        let scale = coeff / rhs_first;
         let loc = values.len() - self_degree - 1;
-        values[loc] -= _rhs_first * scale;
+        values[loc] -= rhs_first * scale;
         values[loc + 1] += root * scale;
         div[offset - self_degree] = scale;
         match first_term(&values) {

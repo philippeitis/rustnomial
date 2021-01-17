@@ -51,39 +51,34 @@ where
     len
 }
 
-fn slice_mul<N>(_lhs: &[N], _rhs: &[N]) -> Vec<N>
+fn slice_mul<N>(lhs: &[N], rhs: &[N]) -> Vec<N>
 where
     N: Mul<Output = N> + AddAssign + Copy + Zero,
 {
-    let _rhs = &_rhs[first_nonzero_index(&_rhs)..];
-    let _lhs = &_lhs[first_nonzero_index(&_lhs)..];
-    let mut terms = vec![N::zero(); _rhs.len() + _lhs.len() - 1];
-    for (index, &rterm) in _rhs.iter().enumerate() {
+    let rhs = &rhs[first_nonzero_index(&rhs)..];
+    let lhs = &lhs[first_nonzero_index(&lhs)..];
+    let mut terms = vec![N::zero(); rhs.len() + lhs.len() - 1];
+    for (index, &rterm) in rhs.iter().enumerate() {
         if rterm.is_zero() {
             continue;
         }
-        for (&lterm, term) in _lhs.iter().zip(terms[index..].iter_mut()) {
+        for (&lterm, term) in lhs.iter().zip(terms[index..].iter_mut()) {
             *term += rterm * lterm;
         }
     }
     terms
 }
 
-fn vec_sub_w_scale<N>(
-    _lhs: &mut [N],
-    _lhs_degree: usize,
-    _rhs: &[N],
-    _rhs_deg: usize,
-    _rhs_scale: N,
-) where
+fn vec_sub_w_scale<N>(lhs: &mut [N], lhs_degree: usize, rhs: &[N], rhs_deg: usize, rhs_scale: N)
+where
     N: Copy + Mul<Output = N> + SubAssign,
 {
-    let loc = _lhs.len() - _lhs_degree - 1;
-    for (_lhs_t, _rhs_t) in _lhs[loc..]
+    let loc = lhs.len() - lhs_degree - 1;
+    for (lhs_t, rhs_t) in lhs[loc..]
         .iter_mut()
-        .zip(_rhs[_rhs.len() - _rhs_deg - 1..].iter())
+        .zip(rhs[rhs.len() - rhs_deg - 1..].iter())
     {
-        *_lhs_t -= (*_rhs_t) * _rhs_scale;
+        *lhs_t -= (*rhs_t) * rhs_scale;
     }
 }
 
@@ -468,10 +463,10 @@ where
     N: Copy + Zero + SubAssign + Mul<Output = N> + Div<Output = N>,
 {
     /// Divides self by the given `Polynomial`, and returns the quotient and remainder.
-    pub fn div_mod(&self, _rhs: &Polynomial<N>) -> (Polynomial<N>, Polynomial<N>) {
+    pub fn div_mod(&self, rhs: &Polynomial<N>) -> (Polynomial<N>, Polynomial<N>) {
         let zero = N::zero();
 
-        let (_rhs_first, _rhs_deg) = match first_term(&_rhs.terms) {
+        let (rhs_first, rhs_deg) = match first_term(&rhs.terms) {
             Term::ZeroTerm => panic!("Can't divide polynomial by 0."),
             Term::Term(coeff, deg) => (coeff, deg),
         };
@@ -481,7 +476,7 @@ where
                 return (Polynomial::zero(), self.clone());
             }
             Term::Term(coeff, degree) => {
-                if degree < _rhs_deg {
+                if degree < rhs_deg {
                     return (Polynomial::zero(), self.clone());
                 }
                 (coeff, degree)
@@ -489,12 +484,12 @@ where
         };
 
         let mut remainder = self.terms.clone();
-        let mut div = vec![zero; self_degree - _rhs_deg + 1];
+        let mut div = vec![zero; self_degree - rhs_deg + 1];
         let offset = self_degree;
 
-        while self_degree >= _rhs_deg {
-            let scale = coeff / _rhs_first;
-            vec_sub_w_scale(&mut remainder, self_degree, &_rhs.terms, _rhs_deg, scale);
+        while self_degree >= rhs_deg {
+            let scale = coeff / rhs_first;
+            vec_sub_w_scale(&mut remainder, self_degree, &rhs.terms, rhs_deg, scale);
             div[offset - self_degree] = scale;
             match first_term(&remainder) {
                 Term::ZeroTerm => break,
@@ -514,8 +509,8 @@ where
     N: Copy + Zero + SubAssign + Mul<Output = N> + Div<Output = N>,
 {
     /// Divides self by the given `Polynomial`, and returns the quotient.
-    pub fn floor_div(&self, _rhs: &Polynomial<N>) -> Polynomial<N> {
-        self.div_mod(_rhs).0
+    pub fn floor_div(&self, rhs: &Polynomial<N>) -> Polynomial<N> {
+        self.div_mod(rhs).0
     }
 }
 
@@ -525,9 +520,9 @@ where
 {
     type Output = Polynomial<N>;
 
-    /// Returns the remainder of dividing `self` by `_rhs`.
-    fn rem(self, _rhs: Polynomial<N>) -> Polynomial<N> {
-        let (_rhs_first, _rhs_deg) = match first_term(&_rhs.terms) {
+    /// Returns the remainder of dividing `self` by `rhs`.
+    fn rem(self, rhs: Polynomial<N>) -> Polynomial<N> {
+        let (rhs_first, rhs_deg) = match first_term(&rhs.terms) {
             Term::ZeroTerm => panic!("Can't divide polynomial by 0."),
             Term::Term(coeff, deg) => (coeff, deg),
         };
@@ -535,21 +530,21 @@ where
         let (mut scale, mut self_degree) = match first_term(&self.terms) {
             Term::ZeroTerm => return self.clone(),
             Term::Term(coeff, degree) => {
-                if degree < _rhs_deg {
+                if degree < rhs_deg {
                     return self.clone();
                 }
-                (coeff / _rhs_first, degree)
+                (coeff / rhs_first, degree)
             }
         };
 
         let mut remainder = self.terms.clone();
 
-        while self_degree >= _rhs_deg {
-            vec_sub_w_scale(&mut remainder, self_degree, &_rhs.terms, _rhs_deg, scale);
+        while self_degree >= rhs_deg {
+            vec_sub_w_scale(&mut remainder, self_degree, &rhs.terms, rhs_deg, scale);
             match first_term(&self.terms) {
                 Term::ZeroTerm => break,
                 Term::Term(coeff, degree) => {
-                    scale = coeff / _rhs_first;
+                    scale = coeff / rhs_first;
                     self_degree = degree;
                 }
             }
@@ -563,9 +558,9 @@ impl<N> RemAssign<Polynomial<N>> for Polynomial<N>
 where
     N: Copy + Zero + SubAssign + Mul<Output = N> + Div<Output = N>,
 {
-    /// Assign the remainder of dividing `self` by `_rhs` to `self`.
-    fn rem_assign(&mut self, _rhs: Polynomial<N>) {
-        let (_rhs_first, _rhs_deg) = match first_term(&_rhs.terms) {
+    /// Assign the remainder of dividing `self` by `rhs` to `self`.
+    fn rem_assign(&mut self, rhs: Polynomial<N>) {
+        let (rhs_first, rhs_deg) = match first_term(&rhs.terms) {
             Term::ZeroTerm => panic!("Can't divide polynomial by 0."),
             Term::Term(coeff, deg) => (coeff, deg),
         };
@@ -573,19 +568,19 @@ where
         let (mut scale, mut self_degree) = match first_term(&self.terms) {
             Term::ZeroTerm => return,
             Term::Term(coeff, degree) => {
-                if degree < _rhs_deg {
+                if degree < rhs_deg {
                     return;
                 }
-                (coeff / _rhs_first, degree)
+                (coeff / rhs_first, degree)
             }
         };
 
-        while self_degree >= _rhs_deg {
-            vec_sub_w_scale(&mut self.terms, self_degree, &_rhs.terms, _rhs_deg, scale);
+        while self_degree >= rhs_deg {
+            vec_sub_w_scale(&mut self.terms, self_degree, &rhs.terms, rhs_deg, scale);
             match first_term(&self.terms) {
                 Term::ZeroTerm => break,
                 Term::Term(coeff, degree) => {
-                    scale = coeff / _rhs_first;
+                    scale = coeff / rhs_first;
                     self_degree = degree;
                 }
             }
@@ -670,10 +665,10 @@ where
 {
     type Output = Polynomial<N>;
 
-    fn sub(self, _rhs: Polynomial<N>) -> Polynomial<N> {
-        if _rhs.len() > self.len() {
-            let mut terms = _rhs.terms.clone();
-            let offset = _rhs.len() - self.len();
+    fn sub(self, rhs: Polynomial<N>) -> Polynomial<N> {
+        if rhs.len() > self.len() {
+            let mut terms = rhs.terms.clone();
+            let offset = rhs.len() - self.len();
 
             terms[..offset].iter_mut().for_each(|term| *term = -*term);
             terms[offset..]
@@ -684,9 +679,9 @@ where
             Polynomial::new(terms)
         } else {
             let mut terms = self.terms.clone();
-            terms[self.terms.len() - _rhs.len()..]
+            terms[self.terms.len() - rhs.len()..]
                 .iter_mut()
-                .zip(_rhs.terms)
+                .zip(rhs.terms)
                 .for_each(|(term, val)| *term -= val);
             Polynomial::new(terms)
         }
@@ -697,10 +692,10 @@ impl<N> SubAssign<Polynomial<N>> for Polynomial<N>
 where
     N: Neg<Output = N> + Sub<Output = N> + SubAssign + Copy + Zero,
 {
-    fn sub_assign(&mut self, _rhs: Polynomial<N>) {
-        if _rhs.len() > self.len() {
-            let mut terms = _rhs.terms.clone();
-            let offset = _rhs.len() - self.len();
+    fn sub_assign(&mut self, rhs: Polynomial<N>) {
+        if rhs.len() > self.len() {
+            let mut terms = rhs.terms.clone();
+            let offset = rhs.len() - self.len();
 
             for index in terms[..offset].iter_mut() {
                 *index = -*index;
@@ -711,8 +706,8 @@ where
             }
             self.terms = terms;
         } else {
-            let offset = self.len() - _rhs.len();
-            for (index, val) in self.terms[offset..].iter_mut().zip(_rhs.terms) {
+            let offset = self.len() - rhs.len();
+            for (index, val) in self.terms[offset..].iter_mut().zip(rhs.terms) {
                 *index -= val;
             }
         }
@@ -725,11 +720,11 @@ where
 {
     type Output = Polynomial<N>;
 
-    fn add(self, _rhs: Polynomial<N>) -> Polynomial<N> {
-        let (mut terms, small) = if _rhs.len() > self.len() {
-            (_rhs.terms.clone(), &self.terms)
+    fn add(self, rhs: Polynomial<N>) -> Polynomial<N> {
+        let (mut terms, small) = if rhs.len() > self.len() {
+            (rhs.terms.clone(), &self.terms)
         } else {
-            (self.terms.clone(), &_rhs.terms)
+            (self.terms.clone(), &rhs.terms)
         };
 
         let offset = terms.len() - small.len();
@@ -743,17 +738,17 @@ where
 }
 
 impl<N: Copy + Zero + AddAssign> AddAssign<Polynomial<N>> for Polynomial<N> {
-    fn add_assign(&mut self, _rhs: Polynomial<N>) {
-        if _rhs.len() > self.len() {
-            let offset = _rhs.len() - self.len();
-            let mut terms = _rhs.terms.clone();
+    fn add_assign(&mut self, rhs: Polynomial<N>) {
+        if rhs.len() > self.len() {
+            let offset = rhs.len() - self.len();
+            let mut terms = rhs.terms.clone();
             for (index, &val) in terms[offset..].iter_mut().zip(&self.terms) {
                 *index += val;
             }
             self.terms = terms;
         } else {
-            let offset = self.len() - _rhs.len();
-            for (index, val) in self.terms[offset..].iter_mut().zip(_rhs.terms) {
+            let offset = self.len() - rhs.len();
+            for (index, val) in self.terms[offset..].iter_mut().zip(rhs.terms) {
                 *index += val;
             }
         }
@@ -766,9 +761,9 @@ where
 {
     type Output = Polynomial<N>;
 
-    fn mul(self, _rhs: Polynomial<N>) -> Polynomial<N> {
+    fn mul(self, rhs: Polynomial<N>) -> Polynomial<N> {
         Polynomial {
-            terms: slice_mul(&self.terms, &_rhs.terms),
+            terms: slice_mul(&self.terms, &rhs.terms),
         }
     }
 }
@@ -779,8 +774,8 @@ where
 {
     type Output = Polynomial<N>;
 
-    fn mul(self, _rhs: &Polynomial<N>) -> Polynomial<N> {
-        Polynomial::new(slice_mul(&self.terms, &_rhs.terms))
+    fn mul(self, rhs: &Polynomial<N>) -> Polynomial<N> {
+        Polynomial::new(slice_mul(&self.terms, &rhs.terms))
     }
 }
 
@@ -790,9 +785,9 @@ where
 {
     type Output = Polynomial<N>;
 
-    fn mul(self, _rhs: Polynomial<N>) -> Polynomial<N> {
+    fn mul(self, rhs: Polynomial<N>) -> Polynomial<N> {
         Polynomial {
-            terms: slice_mul(&self.terms, &_rhs.terms),
+            terms: slice_mul(&self.terms, &rhs.terms),
         }
     }
 }
@@ -803,8 +798,8 @@ where
 {
     type Output = Polynomial<N>;
 
-    fn mul(self, _rhs: &Polynomial<N>) -> Polynomial<N> {
-        Polynomial::new(slice_mul(&self.terms, &_rhs.terms))
+    fn mul(self, rhs: &Polynomial<N>) -> Polynomial<N> {
+        Polynomial::new(slice_mul(&self.terms, &rhs.terms))
     }
 }
 
@@ -812,8 +807,8 @@ impl<N> MulAssign<Polynomial<N>> for Polynomial<N>
 where
     N: Mul<Output = N> + AddAssign + Copy + Zero,
 {
-    fn mul_assign(&mut self, _rhs: Polynomial<N>) {
-        self.terms = slice_mul(&self.terms, &_rhs.terms);
+    fn mul_assign(&mut self, rhs: Polynomial<N>) {
+        self.terms = slice_mul(&self.terms, &rhs.terms);
     }
 }
 
@@ -821,23 +816,23 @@ impl<N> MulAssign<&Polynomial<N>> for Polynomial<N>
 where
     N: Mul<Output = N> + AddAssign + Copy + Zero,
 {
-    fn mul_assign(&mut self, _rhs: &Polynomial<N>) {
-        self.terms = slice_mul(&self.terms, &_rhs.terms);
+    fn mul_assign(&mut self, rhs: &Polynomial<N>) {
+        self.terms = slice_mul(&self.terms, &rhs.terms);
     }
 }
 
 impl<N: Zero + Copy + Mul<Output = N>> Mul<N> for Polynomial<N> {
     type Output = Polynomial<N>;
 
-    fn mul(self, _rhs: N) -> Polynomial<N> {
-        Polynomial::new(self.terms.iter().map(|&x| x * _rhs).collect())
+    fn mul(self, rhs: N) -> Polynomial<N> {
+        Polynomial::new(self.terms.iter().map(|&x| x * rhs).collect())
     }
 }
 
 impl<N: Copy + MulAssign> MulAssign<N> for Polynomial<N> {
-    fn mul_assign(&mut self, _rhs: N) {
+    fn mul_assign(&mut self, rhs: N) {
         for p in self.terms.iter_mut() {
-            *p *= _rhs;
+            *p *= rhs;
         }
     }
 }
@@ -848,15 +843,15 @@ where
 {
     type Output = Polynomial<N>;
 
-    fn div(self, _rhs: N) -> Polynomial<N> {
-        Polynomial::new(self.terms.iter().map(|&x| x / _rhs).collect())
+    fn div(self, rhs: N) -> Polynomial<N> {
+        Polynomial::new(self.terms.iter().map(|&x| x / rhs).collect())
     }
 }
 
 impl<N: Copy + DivAssign> DivAssign<N> for Polynomial<N> {
-    fn div_assign(&mut self, _rhs: N) {
+    fn div_assign(&mut self, rhs: N) {
         for p in self.terms.iter_mut() {
-            *p /= _rhs;
+            *p /= rhs;
         }
     }
 }
@@ -864,24 +859,24 @@ impl<N: Copy + DivAssign> DivAssign<N> for Polynomial<N> {
 impl<N: Zero + Copy> Shl<i32> for Polynomial<N> {
     type Output = Polynomial<N>;
 
-    fn shl(self, _rhs: i32) -> Polynomial<N> {
-        if _rhs < 0 {
-            self >> -_rhs
+    fn shl(self, rhs: i32) -> Polynomial<N> {
+        if rhs < 0 {
+            self >> -rhs
         } else {
             let index = first_nonzero_index(&self.terms);
             let mut terms = self.terms[index..].to_vec();
-            terms.extend(vec![N::zero(); _rhs as usize]);
+            terms.extend(vec![N::zero(); rhs as usize]);
             Polynomial { terms }
         }
     }
 }
 
 impl<N: Zero + Copy> ShlAssign<i32> for Polynomial<N> {
-    fn shl_assign(&mut self, _rhs: i32) {
-        if _rhs < 0 {
-            *self >>= -_rhs;
+    fn shl_assign(&mut self, rhs: i32) {
+        if rhs < 0 {
+            *self >>= -rhs;
         } else {
-            self.terms.extend(vec![N::zero(); _rhs as usize]);
+            self.terms.extend(vec![N::zero(); rhs as usize]);
         }
     }
 }
@@ -889,17 +884,17 @@ impl<N: Zero + Copy> ShlAssign<i32> for Polynomial<N> {
 impl<N: Zero + Copy> Shr<i32> for Polynomial<N> {
     type Output = Polynomial<N>;
 
-    fn shr(self, _rhs: i32) -> Polynomial<N> {
-        if _rhs < 0 {
-            self << -_rhs
+    fn shr(self, rhs: i32) -> Polynomial<N> {
+        if rhs < 0 {
+            self << -rhs
         } else {
-            let _rhs = _rhs as usize;
+            let rhs = rhs as usize;
             let index = first_nonzero_index(&self.terms);
             Polynomial {
-                terms: if _rhs > self.terms.len() {
+                terms: if rhs > self.terms.len() {
                     vec![]
                 } else {
-                    self.terms[index..self.terms.len() - _rhs].to_vec()
+                    self.terms[index..self.terms.len() - rhs].to_vec()
                 },
             }
         }
@@ -907,15 +902,15 @@ impl<N: Zero + Copy> Shr<i32> for Polynomial<N> {
 }
 
 impl<N: Zero + Copy> ShrAssign<i32> for Polynomial<N> {
-    fn shr_assign(&mut self, _rhs: i32) {
-        if _rhs < 0 {
-            *self <<= -_rhs;
+    fn shr_assign(&mut self, rhs: i32) {
+        if rhs < 0 {
+            *self <<= -rhs;
         } else {
-            let _rhs = _rhs as usize;
-            if _rhs > self.terms.len() {
+            let rhs = rhs as usize;
+            if rhs > self.terms.len() {
                 self.terms = vec![];
             } else {
-                self.terms = self.terms[..self.terms.len() - _rhs].to_vec();
+                self.terms = self.terms[..self.terms.len() - rhs].to_vec();
             }
         }
     }
