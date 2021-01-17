@@ -99,13 +99,6 @@ fn first_term<N: Zero + Copy>(terms: &BTreeMap<usize, N>) -> Term<N> {
 }
 
 impl<N: Zero + Copy> SizedPolynomial<N> for SparsePolynomial<N> {
-    fn len(&self) -> usize {
-        match self.degree() {
-            Degree::NegInf => 0,
-            Degree::Num(deg) => deg + 1,
-        }
-    }
-
     fn term_with_degree(&self, degree: usize) -> Term<N> {
         match self.terms.get(&degree) {
             None => Term::ZeroTerm,

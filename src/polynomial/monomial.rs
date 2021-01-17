@@ -45,24 +45,6 @@ impl<N: Copy + Zero> Monomial<N> {
 }
 
 impl<N: Copy + Zero> SizedPolynomial<N> for Monomial<N> {
-    /// Return the number of terms in `Monomial`.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use rustnomial::{Monomial, SizedPolynomial};
-    /// let monomial = Monomial::new(3.0, 2);
-    /// assert_eq!(1, monomial.len());
-    /// assert_eq!(0, Monomial::<i32>::zero().len());
-    /// ```
-    fn len(&self) -> usize {
-        if self.is_zero() {
-            0
-        } else {
-            1
-        }
-    }
-
     /// Returns the term with the given `degree` of the `Monomial`.
     ///
     /// # Example

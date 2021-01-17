@@ -174,11 +174,6 @@ where
 }
 
 impl<N: Copy + Zero> SizedPolynomial<N> for Polynomial<N> {
-    /// Returns the length of the `Polynomial`. Not equal to the number of terms.
-    fn len(&self) -> usize {
-        self.terms.len()
-    }
-
     fn term_with_degree(&self, degree: usize) -> Term<N> {
         term_with_deg(&self.terms, degree)
     }
@@ -237,7 +232,7 @@ where
     }
 
     fn try_sub_term(&mut self, coeff: N, degree: usize) -> Result<(), TryAddError> {
-        if self.len() < degree + 1 {
+        if self.terms.len() < degree + 1 {
             if !N::can_negate() {
                 return Err(TryAddError::CanNotNegate);
             }
@@ -245,7 +240,7 @@ where
             self.terms
                 .splice(0..0, core::iter::repeat(N::zero()).take(added_zeros));
         }
-        let index = self.len() - degree - 1;
+        let index = self.terms.len() - degree - 1;
         self.terms[index] -= coeff;
 
         Ok(())
@@ -305,12 +300,12 @@ where
     }
 
     fn add_term(&mut self, coeff: N, degree: usize) {
-        if self.len() < degree + 1 {
+        if self.terms.len() < degree + 1 {
             let added_zeros = degree + 1 - self.terms.len();
             self.terms
                 .splice(0..0, core::iter::repeat(N::zero()).take(added_zeros));
         }
-        let index = self.len() - degree - 1;
+        let index = self.terms.len() - degree - 1;
         self.terms[index] += coeff;
     }
 }
@@ -369,7 +364,7 @@ where
     /// Will panic if `N` can not losslessly encode the numbers from 0 to the degree of `self`.
     fn derivative(&self) -> Polynomial<N> {
         let index = first_nonzero_index(&self.terms);
-        let mut degree = N::try_from_usize_cont(self.len() - index)
+        let mut degree = N::try_from_usize_cont(self.terms.len() - index)
             .expect("Degree has no lossless representation in N.");
         let mut terms = {
             if let Some((_, terms)) = self.terms.split_at(index).1.split_last() {
@@ -413,7 +408,7 @@ where
     /// Will panic if `N` can not losslessly encode the numbers from 0 to the degree of self `self`.
     fn integral(&self) -> Integral<N, Polynomial<N>> {
         let index = first_nonzero_index(&self.terms);
-        let mut degree = N::try_from_usize_cont(self.len() - index)
+        let mut degree = N::try_from_usize_cont(self.terms.len() - index)
             .expect("Degree can not be losslessly represented.");
         let mut terms = self.terms[index..].to_vec();
         for term in terms.iter_mut() {
@@ -666,22 +661,24 @@ where
     type Output = Polynomial<N>;
 
     fn sub(self, rhs: Polynomial<N>) -> Polynomial<N> {
-        if rhs.len() > self.len() {
-            let mut terms = rhs.terms.clone();
-            let offset = rhs.len() - self.len();
+        let lhs = self.terms;
+        let rhs = rhs.terms;
+        if rhs.len() > lhs.len() {
+            let mut terms = rhs.clone();
+            let offset = rhs.len() - lhs.len();
 
             terms[..offset].iter_mut().for_each(|term| *term = -*term);
             terms[offset..]
                 .iter_mut()
-                .zip(self.terms)
+                .zip(lhs)
                 .for_each(|(term, val)| *term = val - *term);
 
             Polynomial::new(terms)
         } else {
-            let mut terms = self.terms.clone();
-            terms[self.terms.len() - rhs.len()..]
+            let mut terms = lhs.clone();
+            terms[lhs.len() - rhs.len()..]
                 .iter_mut()
-                .zip(rhs.terms)
+                .zip(rhs)
                 .for_each(|(term, val)| *term -= val);
             Polynomial::new(terms)
         }
@@ -693,21 +690,24 @@ where
     N: Neg<Output = N> + Sub<Output = N> + SubAssign + Copy + Zero,
 {
     fn sub_assign(&mut self, rhs: Polynomial<N>) {
-        if rhs.len() > self.len() {
-            let mut terms = rhs.terms.clone();
-            let offset = rhs.len() - self.len();
+        let lhs = &self.terms;
+        let rhs = rhs.terms;
+
+        if rhs.len() > lhs.len() {
+            let mut terms = rhs.clone();
+            let offset = rhs.len() - lhs.len();
 
             for index in terms[..offset].iter_mut() {
                 *index = -*index;
             }
 
-            for (index, &val) in terms[offset..].iter_mut().zip(&self.terms) {
+            for (index, &val) in terms[offset..].iter_mut().zip(lhs) {
                 *index = val - *index;
             }
             self.terms = terms;
         } else {
-            let offset = self.len() - rhs.len();
-            for (index, val) in self.terms[offset..].iter_mut().zip(rhs.terms) {
+            let offset = lhs.len() - rhs.len();
+            for (index, val) in self.terms[offset..].iter_mut().zip(rhs) {
                 *index -= val;
             }
         }
@@ -721,7 +721,7 @@ where
     type Output = Polynomial<N>;
 
     fn add(self, rhs: Polynomial<N>) -> Polynomial<N> {
-        let (mut terms, small) = if rhs.len() > self.len() {
+        let (mut terms, small) = if rhs.terms.len() > self.terms.len() {
             (rhs.terms.clone(), &self.terms)
         } else {
             (self.terms.clone(), &rhs.terms)
@@ -739,16 +739,18 @@ where
 
 impl<N: Copy + Zero + AddAssign> AddAssign<Polynomial<N>> for Polynomial<N> {
     fn add_assign(&mut self, rhs: Polynomial<N>) {
-        if rhs.len() > self.len() {
-            let offset = rhs.len() - self.len();
-            let mut terms = rhs.terms;
-            for (index, &val) in terms[offset..].iter_mut().zip(&self.terms) {
+        let lhs = &self.terms;
+        let mut rhs = rhs.terms;
+
+        if rhs.len() > lhs.len() {
+            let offset = rhs.len() - lhs.len();
+            for (index, &val) in rhs[offset..].iter_mut().zip(lhs) {
                 *index += val;
             }
-            self.terms = terms;
+            self.terms = rhs;
         } else {
-            let offset = self.len() - rhs.len();
-            for (index, val) in self.terms[offset..].iter_mut().zip(rhs.terms) {
+            let offset = lhs.len() - rhs.len();
+            for (index, val) in self.terms[offset..].iter_mut().zip(rhs) {
                 *index += val;
             }
         }

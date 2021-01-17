@@ -63,24 +63,6 @@ where
 }
 
 impl<N: Copy + Zero> SizedPolynomial<N> for LinearBinomial<N> {
-    /// Return the length of `LinearBinomial`. Not equal to the number of terms.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use rustnomial::{LinearBinomial, SizedPolynomial};
-    /// let binomial = LinearBinomial::new([3.0, 2.0]);
-    /// assert_eq!(2, binomial.len());
-    /// assert_eq!(0, LinearBinomial::<i32>::zero().len());
-    /// ```
-    fn len(&self) -> usize {
-        if self.is_zero() {
-            0
-        } else {
-            2
-        }
-    }
-
     /// Returns the term with the given `degree` of the `LinearBinomial`.
     ///
     /// # Example

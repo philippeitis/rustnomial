@@ -3,8 +3,6 @@ use num::Zero;
 use crate::{Degree, Term, TryAddError};
 
 pub trait SizedPolynomial<N> {
-    fn len(&self) -> usize;
-
     /// Returns the term with the given degree from `SizedPolynomial`.
     /// If the term degree is larger than the actual degree, `ZeroTerm` will be returned.
     /// However, terms which are zero will also be returned as `ZeroTerm`, so this does

@@ -94,24 +94,6 @@ where
 }
 
 impl<N: Copy + Zero> SizedPolynomial<N> for QuadraticTrinomial<N> {
-    /// Return the number of terms in `QuadraticTrinomial`.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use rustnomial::{QuadraticTrinomial, SizedPolynomial};
-    /// let trinomial = QuadraticTrinomial::new([1, 2, 3]);
-    /// assert_eq!(3, trinomial.len());
-    /// assert_eq!(0, QuadraticTrinomial::<i32>::zero().len());
-    /// ```
-    fn len(&self) -> usize {
-        if self.is_zero() {
-            0
-        } else {
-            3
-        }
-    }
-
     /// Returns the term with the given `degree` of the `QuadraticTrinomial`.
     ///
     /// # Example
