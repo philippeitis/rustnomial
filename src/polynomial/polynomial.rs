@@ -319,7 +319,10 @@ where
     /// # Example
     ///
     /// ```
-    ///
+    /// use rustnomial::{Polynomial, Evaluable};
+    /// let a = Polynomial::new(vec![1, 2, 3, 4]);
+    /// assert_eq!(10, a.eval(1));
+    /// assert_eq!(1234, a.eval(10));
     /// ```
     fn eval(&self, point: N) -> N {
         if let Some((&last, first)) = self.terms.split_last() {
