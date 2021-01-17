@@ -24,6 +24,7 @@ macro_rules! polynomial {
 }
 
 #[derive(Debug, Clone)]
+/// A type that stores terms of a polynomial in a Vec.
 pub struct Polynomial<N> {
     pub terms: Vec<N>,
 }

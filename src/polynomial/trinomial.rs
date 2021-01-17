@@ -13,6 +13,9 @@ use crate::{
 };
 
 #[derive(Debug, Clone)]
+/// A type that stores terms of a quadratic trinomial in a static array. Operations are
+/// much faster than on Polynomial for the same size polynomial, but terms can not
+/// be added freely.
 pub struct QuadraticTrinomial<N> {
     pub coefficients: [N; 3],
 }

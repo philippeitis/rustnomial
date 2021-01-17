@@ -14,6 +14,8 @@ use crate::{
 };
 
 #[derive(Debug, Clone)]
+/// A type that represents a monomial. Operations are much faster than on other types representing
+/// the same polynomial, but terms can not be added freely.
 pub struct Monomial<N> {
     pub coefficient: N,
     pub deg: usize,

@@ -19,6 +19,8 @@ macro_rules! integral {
 }
 
 #[derive(Debug, Clone)]
+/// A type which intreprets a polynomial as an integral, and ensures
+/// consistent use of the underlying polynomial as an integral.
 pub struct Integral<N, P: FreeSizePolynomial<N> + Evaluable<N>> {
     polynomial: P,
     phantom: PhantomData<N>,

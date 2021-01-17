@@ -15,9 +15,10 @@ use crate::{
 };
 
 #[derive(Debug, Clone)]
-/// This version of Polynomial is intended for use for polynomials of large degree,
-/// but with a very small number of internal terms. However, it is significantly slower
-/// than Polynomial in the case where the number of non-zero terms is close to the degree.
+/// A type which stores the terms of a polynomial in a map. It is intended to store the terms
+/// of polynomials where the degree is significantly larger than the number of non-zero terms.
+/// Operations are significantly slower than with `Polynomial` if the number of non-zero terms
+/// is very close to the degree.
 pub struct SparsePolynomial<N> {
     pub terms: BTreeMap<usize, N>,
 }

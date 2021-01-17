@@ -12,6 +12,9 @@ use crate::{
 };
 
 #[derive(Debug, Clone)]
+/// A type that stores terms of a linear binomial in a static array. Operations are
+/// much faster than on Polynomial for the same size polynomial, but terms can not
+/// be added freely.
 pub struct LinearBinomial<N> {
     pub coefficients: [N; 2],
 }

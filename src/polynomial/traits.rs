@@ -93,6 +93,7 @@ pub trait Evaluable<N> {
     fn eval(&self, point: N) -> N;
 }
 
+/// An iterator over terms.
 pub struct TermIterator<'a, N> {
     polynomial: &'a dyn SizedPolynomial<N>,
     top: Degree,

@@ -7,14 +7,20 @@ use num::{One, Zero};
 use crate::err::TermFromStringError;
 
 #[derive(Debug, Clone, PartialEq)]
+/// Degree is a type which represents the degree of a polynomial.
 pub enum Degree {
+    /// The degree of a zero-polynomial.
     NegInf,
+    /// The degree of a non-zero polynomial.
     Num(usize),
 }
 
 #[derive(Debug, Clone, PartialEq)]
+/// Term is a type which represents a term in a polynomial.
 pub enum Term<N> {
+    /// A term with coefficient zero. Has degree -inf.
     ZeroTerm,
+    /// A term with non-zero coefficient and a degree.
     Term(N, usize),
 }
 
