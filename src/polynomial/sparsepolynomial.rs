@@ -947,7 +947,9 @@ impl<N: Copy> ShrAssign<i32> for SparsePolynomial<N> {
 /// modulo floordiv
 #[cfg(test)]
 mod test {
-    use crate::{Degree, Derivable, Evaluable, Polynomial, SizedPolynomial, SparsePolynomial};
+    use crate::{
+        Degree, Derivable, Evaluable, Integrable, Polynomial, SizedPolynomial, SparsePolynomial,
+    };
 
     #[test]
     fn test_from() {
@@ -976,25 +978,25 @@ mod test {
         assert_eq!(b, a.derivative());
     }
 
-    // #[test]
-    // fn test_integral() {
-    //     let a = SparsePolynomial::from(vec![3, 2, 1]);
-    //     let b = SparsePolynomial::from(vec![1, 1, 1, 0]);
-    //     assert_eq!(a.integral().polynomial, b);
-    // }
-    //
-    // #[test]
-    // fn test_integral_eval() {
-    //     let a = SparsePolynomial::from(vec![3, 2, 1]);
-    //     assert_eq!(a.integral().eval(0, 1), 3);
-    // }
+    #[test]
+    fn test_integral() {
+        let a = SparsePolynomial::from(vec![3, 2, 1]);
+        let b = SparsePolynomial::from(vec![1, 1, 1, 0]);
+        assert_eq!(&b, a.integral().inner());
+    }
 
-    // #[test]
-    // fn test_integral_const_substitute() {
-    //     let a = SparsePolynomial::from(vec![3, 2, 1]);
-    //     let b = SparsePolynomial::from(vec![1, 1, 1, 5]);
-    //     assert_eq!(a.integral().replace_c(5), b);
-    // }
+    #[test]
+    fn test_integral_eval() {
+        let a = SparsePolynomial::from(vec![3, 2, 1]);
+        assert_eq!(3, a.integral().eval(0, 1));
+    }
+
+    #[test]
+    fn test_integral_const_substitute() {
+        let a = SparsePolynomial::from(vec![3, 2, 1]);
+        let b = SparsePolynomial::from(vec![1, 1, 1, 5]);
+        assert_eq!(b, a.integral().replace_c(5));
+    }
 
     #[test]
     fn test_add_lhs_bigger() {
