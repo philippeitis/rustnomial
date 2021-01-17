@@ -568,7 +568,7 @@ where
             }
         };
 
-        let mut remainder = self.terms.clone();
+        let mut remainder = self.terms;
 
         while self_degree >= rhs_deg {
             map_sub_w_scale(&mut remainder, &rhs.terms, scale);
@@ -686,19 +686,18 @@ where
 {
     type Output = SparsePolynomial<N>;
 
-    fn sub(self, rhs: SparsePolynomial<N>) -> SparsePolynomial<N> {
-        let mut terms = self.terms.clone();
+    fn sub(mut self, rhs: SparsePolynomial<N>) -> SparsePolynomial<N> {
         for (deg, coeff) in rhs.terms {
-            match terms.get_mut(&deg) {
+            match self.terms.get_mut(&deg) {
                 None => {
-                    terms.insert(deg, -coeff);
+                    self.terms.insert(deg, -coeff);
                 }
                 Some(val) => {
                     *val -= coeff;
                 }
             }
         }
-        SparsePolynomial::new(terms)
+        self
     }
 }
 
@@ -708,19 +707,18 @@ where
 {
     type Output = SparsePolynomial<N>;
 
-    fn sub(self, rhs: Polynomial<N>) -> SparsePolynomial<N> {
-        let mut terms = self.terms.clone();
+    fn sub(mut self, rhs: Polynomial<N>) -> SparsePolynomial<N> {
         for (coeff, deg) in rhs.term_iter() {
-            match terms.get_mut(&deg) {
+            match self.terms.get_mut(&deg) {
                 None => {
-                    terms.insert(deg, -coeff);
+                    self.terms.insert(deg, -coeff);
                 }
                 Some(val) => {
                     *val -= coeff;
                 }
             }
         }
-        SparsePolynomial::new(terms)
+        self
     }
 }
 

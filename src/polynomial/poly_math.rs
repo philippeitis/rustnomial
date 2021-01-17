@@ -33,6 +33,19 @@ macro_rules! poly_add {
     }};
 }
 
+/// Adds `poly` to `sink`.
+///
+/// # Examples
+/// ```
+/// use rustnomial::{poly_math::add_poly, SparsePolynomial, Polynomial, SizedPolynomial};
+/// let source = SparsePolynomial::from(vec![1, 2, 3, 4]);
+/// let mut sink = Polynomial::zero();
+/// assert!(add_poly(&source, &mut sink).is_ok());
+/// assert_eq!(Polynomial::new(vec![1, 2, 3, 4]), sink);
+/// ```
+///
+/// # Errors
+/// Returns an error if adding any of `poly`'s terms to `sink` fails.
 pub fn add_poly<N, P: SizedPolynomial<N>, S: MutablePolynomial<N>>(
     poly: &P,
     sink: &mut S,
@@ -77,6 +90,20 @@ macro_rules! poly_mul {
     }};
 }
 
+/// Multiplies `rhs` with the terms in `lhs`, storing the result in `sink`.
+///
+/// # Examples
+/// ```
+/// use rustnomial::{poly_math::mul_poly_vec, SparsePolynomial, Polynomial, SizedPolynomial};
+/// let source = SparsePolynomial::from(vec![1, 2, 3, 4]);
+/// let mut sink = Polynomial::zero();
+/// assert!(mul_poly_vec(&source, vec![], &mut sink).is_ok());
+/// assert_eq!(Polynomial::zero(), sink);
+/// ```
+///
+/// # Errors
+/// Returns an error if adding any of the terms resulting from multiplying `rhs` with `lhs` to
+/// `sink` fails.
 pub fn mul_poly_vec<N, R: SizedPolynomial<N>, S: MutablePolynomial<N>>(
     rhs: &R,
     lhs: Vec<(N, usize)>,
@@ -94,6 +121,20 @@ where
     Ok(())
 }
 
+/// Multiplies `rhs` with `lhs`, storing the result in `sink`.
+///
+/// # Examples
+/// ```
+/// use rustnomial::{poly_math::mul_poly, SparsePolynomial, Polynomial, SizedPolynomial};
+/// let source = SparsePolynomial::from(vec![1, 2, 3, 4]);
+/// let mut sink = Polynomial::zero();
+/// assert!(mul_poly(&source, &Polynomial::zero(), &mut sink).is_ok());
+/// assert_eq!(Polynomial::zero(), sink);
+/// ```
+///
+/// # Errors
+/// Returns an error if adding any of the terms resulting from multiplying `rhs` with `lhs` to
+/// `sink` fails.
 pub fn mul_poly<N, R: SizedPolynomial<N>, L: SizedPolynomial<N>, S: MutablePolynomial<N>>(
     rhs: &R,
     lhs: &L,
@@ -111,6 +152,19 @@ where
     Ok(())
 }
 
+/// Subtracts the terms of `poly` from `sink`.
+///
+/// # Examples
+/// ```
+/// use rustnomial::{poly_math::sub_poly, SparsePolynomial, Polynomial, SizedPolynomial};
+/// let source = SparsePolynomial::from(vec![1, 2, 3, 4]);
+/// let mut sink = Polynomial::zero();
+/// assert!(sub_poly(&source, &mut sink).is_ok());
+/// assert_eq!(Polynomial::from(vec![-1, -2, -3, -4]), sink);
+/// ```
+///
+/// # Errors
+/// Returns an error if subtracting any of the terms from `poly` fails.
 pub fn sub_poly<N, P: SizedPolynomial<N>, S: MutablePolynomial<N>>(
     poly: &P,
     sink: &mut S,

@@ -164,7 +164,6 @@ mod test {
 
     #[test]
     fn test_from_str_repeated_degree() {
-        let s = "5x+11x";
         let a = SparsePolynomial::<i32>::from_str("5x+11x").unwrap();
         let b = SparsePolynomial::from(vec![16, 0]);
         assert_eq!(b, a, "from_str should combine terms with equal degree");

@@ -6,8 +6,9 @@ pub trait SizedPolynomial<N> {
     fn len(&self) -> usize;
 
     /// Returns the term with the given degree from `SizedPolynomial`.
-    /// If the term degree is larger than the actual degree, ZeroTerm will be returned.
-    /// However, terms which are zero will also be returned as ZeroTerm.
+    /// If the term degree is larger than the actual degree, `ZeroTerm` will be returned.
+    /// However, terms which are zero will also be returned as `ZeroTerm`, so this does
+    /// not indicate that the final term has been reached.
     fn term_with_degree(&self, degree: usize) -> Term<N>;
 
     /// Returns an iterator for the `Polynomial`, yielding the coefficient and degree of each
@@ -63,10 +64,18 @@ pub trait GenericPolynomial<N>: SizedPolynomial<N> + MutablePolynomial<N> + Eval
 pub trait MutablePolynomial<N> {
     /// Adds the term with given coefficient and `degree` to self, returning an error
     /// if the particular term can not be added to self without violating constraints.
+    ///
+    /// # Errors
+    /// Fails if the term with coefficient `coeff` and degree `degree` can not be added
+    /// to `self` without violating one or more of `self`'s invariants.
     fn try_add_term(&mut self, coeff: N, degree: usize) -> Result<(), TryAddError>;
 
     /// Subtracts the term with given coefficient and `degree` from self, returning an error
     /// if the particular term can not be subtracted from self without violating constraints.
+    ///
+    /// # Errors
+    /// Fails if the term with coefficient `coeff` and degree `degree` can not be subtracted from
+    /// `self` without violating one or more of `self`'s invariants.
     fn try_sub_term(&mut self, coeff: N, degree: usize) -> Result<(), TryAddError>;
 }
 

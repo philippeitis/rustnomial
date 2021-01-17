@@ -1,4 +1,8 @@
 #![no_std]
+#![deny(clippy::missing_errors_doc)]
+#![deny(clippy::doc_markdown)]
+#![deny(clippy::redundant_clone)]
+
 #[macro_use]
 extern crate alloc;
 

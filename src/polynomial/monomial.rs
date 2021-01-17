@@ -74,10 +74,10 @@ impl<N: Copy + Zero> SizedPolynomial<N> for Monomial<N> {
     /// assert_eq!(Term::ZeroTerm, monomial.term_with_degree(1));
     /// ```
     fn term_with_degree(&self, degree: usize) -> Term<N> {
-        if degree != self.deg {
-            Term::ZeroTerm
-        } else {
+        if degree == self.deg {
             Term::new(self.coefficient, self.deg)
+        } else {
+            Term::ZeroTerm
         }
     }
 
@@ -139,11 +139,11 @@ where
             self.coefficient += coeff;
             self.deg = degree;
             Ok(())
-        } else if degree != self.deg {
-            Err(TryAddError::TooManyTerms)
-        } else {
+        } else if degree == self.deg {
             self.coefficient += coeff;
             Ok(())
+        } else {
+            Err(TryAddError::TooManyTerms)
         }
     }
 
@@ -152,11 +152,11 @@ where
             self.coefficient -= coeff;
             self.deg = degree;
             Ok(())
-        } else if degree != self.deg {
-            Err(TryAddError::TooManyTerms)
-        } else {
+        } else if degree == self.deg {
             self.coefficient -= coeff;
             Ok(())
+        } else {
+            Err(TryAddError::TooManyTerms)
         }
     }
 }

@@ -741,7 +741,7 @@ impl<N: Copy + Zero + AddAssign> AddAssign<Polynomial<N>> for Polynomial<N> {
     fn add_assign(&mut self, rhs: Polynomial<N>) {
         if rhs.len() > self.len() {
             let offset = rhs.len() - self.len();
-            let mut terms = rhs.terms.clone();
+            let mut terms = rhs.terms;
             for (index, &val) in terms[offset..].iter_mut().zip(&self.terms) {
                 *index += val;
             }
