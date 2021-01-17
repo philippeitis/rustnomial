@@ -45,7 +45,7 @@ macro_rules! poly_from_str {
             fn from_str(s: &str) -> Result<Self, Self::Err> {
                 let mut polynomial = $T::zero();
                 let mut has_iterated = false;
-                for term in TermTokenizer::new(s).map(|s| Term::from_str(s.as_str())) {
+                for term in TermTokenizer::new(s).map(|r| Term::from_str(&s[r])) {
                     has_iterated = true;
                     match term {
                         Err(e) => return Err(PolynomialFromStringError::TermFromString(e)),
@@ -164,6 +164,7 @@ mod test {
 
     #[test]
     fn test_from_str_repeated_degree() {
+        let s = "5x+11x";
         let a = SparsePolynomial::<i32>::from_str("5x+11x").unwrap();
         let b = SparsePolynomial::from(vec![16, 0]);
         assert_eq!(b, a, "from_str should combine terms with equal degree");

@@ -1,6 +1,6 @@
 use alloc::string::String;
-use alloc::vec::Vec;
-use core::str::FromStr;
+use core::ops::Range;
+use core::str::{CharIndices, FromStr};
 
 use num::{One, Zero};
 
@@ -107,48 +107,49 @@ where
     }
 }
 
-pub(crate) struct TermTokenizer {
-    chars: Vec<char>,
+pub(crate) struct TermTokenizer<'a> {
+    char_indices: CharIndices<'a>,
+    seen_start: bool,
     start_index: usize,
-    end_index: usize,
+    len: usize,
 }
 
-impl TermTokenizer {
-    pub(crate) fn new(s: &str) -> Self {
-        let chars: Vec<char> = s.chars().collect();
-        let start_index = match chars.iter().position(|&x| !x.is_whitespace()) {
-            Some(pos) => pos,
-            None => chars.len(),
-        };
+impl<'a> TermTokenizer<'a> {
+    pub(crate) fn new(s: &'a str) -> Self {
         TermTokenizer {
-            chars,
-            start_index,
-            end_index: start_index + 1,
+            char_indices: s.char_indices(),
+            seen_start: false,
+            start_index: 0,
+            len: s.len(),
         }
     }
 }
 
-impl Iterator for TermTokenizer {
-    type Item = String;
+impl<'a> Iterator for TermTokenizer<'a> {
+    type Item = Range<usize>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        if self.start_index >= self.chars.len() {
-            return None;
+        while let Some((index, c)) = self.char_indices.next() {
+            if c == '+' || c == '-' {
+                if self.seen_start {
+                    let range = self.start_index..index;
+                    self.start_index = index;
+                    return Some(range);
+                } else {
+                    self.seen_start = true;
+                }
+            } else if !self.seen_start && !c.is_whitespace() {
+                self.seen_start = true;
+            }
         }
 
-        let mut end_index = self.end_index;
-        while end_index < self.chars.len() {
-            if self.chars[end_index] == '+' || self.chars[end_index] == '-' {
-                let s: String = self.chars[self.start_index..end_index].iter().collect();
-                self.start_index = end_index;
-                self.end_index = end_index + 1;
-                return Some(s);
-            }
-            end_index += 1;
+        if self.start_index != self.len {
+            let range = self.start_index..self.len;
+            self.start_index = self.len;
+            Some(range)
+        } else {
+            None
         }
-        let s: String = self.chars[self.start_index..end_index].iter().collect();
-        self.start_index = end_index;
-        Some(s)
     }
 }
 
