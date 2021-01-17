@@ -1,4 +1,3 @@
-use alloc::vec::Vec;
 use core::ops::{AddAssign, Mul, SubAssign};
 
 use num::Zero;
@@ -97,7 +96,7 @@ macro_rules! poly_mul {
 /// use rustnomial::{poly_math::mul_poly_vec, SparsePolynomial, Polynomial, SizedPolynomial};
 /// let source = SparsePolynomial::from(vec![1, 2, 3, 4]);
 /// let mut sink = Polynomial::zero();
-/// assert!(mul_poly_vec(&source, vec![], &mut sink).is_ok());
+/// assert!(mul_poly_vec(&source, &[], &mut sink).is_ok());
 /// assert_eq!(Polynomial::zero(), sink);
 /// ```
 ///
@@ -106,7 +105,7 @@ macro_rules! poly_mul {
 /// `sink` fails.
 pub fn mul_poly_vec<N, R: SizedPolynomial<N>, S: MutablePolynomial<N>>(
     rhs: &R,
-    lhs: Vec<(N, usize)>,
+    lhs: &[(N, usize)],
     sink: &mut S,
 ) -> Result<(), TryAddError>
 where

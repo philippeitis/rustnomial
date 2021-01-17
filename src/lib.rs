@@ -2,6 +2,7 @@
 #![deny(clippy::missing_errors_doc)]
 #![deny(clippy::doc_markdown)]
 #![deny(clippy::redundant_clone)]
+#![deny(clippy::needless_pass_by_value)]
 
 #[macro_use]
 extern crate alloc;
