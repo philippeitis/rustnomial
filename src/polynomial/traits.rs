@@ -3,14 +3,14 @@ use num::Zero;
 use crate::{Degree, Term, TryAddError};
 
 pub trait SizedPolynomial<N> {
-    /// Returns the term with the given degree from `SizedPolynomial`.
+    /// Returns the term with the given degree from `self`.
     /// If the term degree is larger than the actual degree, `ZeroTerm` will be returned.
     /// However, terms which are zero will also be returned as `ZeroTerm`, so this does
     /// not indicate that the final term has been reached.
     fn term_with_degree(&self, degree: usize) -> Term<N>;
 
-    /// Returns an iterator for the `Polynomial`, yielding the coefficient and degree of each
-    /// non-zero term, in descending degree order.
+    /// Returns an iterator over the terms of `self`, yielding the coefficient and degree of each
+    /// non-zero term, in order of descending degree.
     ///
     /// # Example
     ///
@@ -30,15 +30,15 @@ pub trait SizedPolynomial<N> {
         TermIterator::new(self)
     }
 
-    /// Returns the degree of `SizedPolynomial`.
+    /// Returns the degree of `self`.
     fn degree(&self) -> Degree;
 
-    /// Returns the zero-instance of `SizedPolynomial`.
+    /// Returns the zero-instance of `Self`.
     fn zero() -> Self
     where
         Self: Sized;
 
-    /// Returns true if all terms are zero, and false if a non-zero term exists.
+    /// Returns true if all terms of `self` are zero, and false if a non-zero term exists.
     ///
     /// # Example
     ///
@@ -53,14 +53,14 @@ pub trait SizedPolynomial<N> {
         self.degree() == Degree::NegInf
     }
 
-    /// Sets the terms of `SizedPolynomial` to zero.
+    /// Sets the terms of `self` to zero.
     fn set_to_zero(&mut self);
 }
 
 pub trait GenericPolynomial<N>: SizedPolynomial<N> + MutablePolynomial<N> + Evaluable<N> {}
 
 pub trait MutablePolynomial<N> {
-    /// Adds the term with given coefficient and `degree` to self, returning an error
+    /// Tries to add the term with given coefficient and `degree` to `self`, returning an error
     /// if the particular term can not be added to self without violating constraints.
     ///
     /// # Errors
@@ -68,8 +68,9 @@ pub trait MutablePolynomial<N> {
     /// to `self` without violating one or more of `self`'s invariants.
     fn try_add_term(&mut self, coeff: N, degree: usize) -> Result<(), TryAddError>;
 
-    /// Subtracts the term with given coefficient and `degree` from self, returning an error
-    /// if the particular term can not be subtracted from self without violating constraints.
+    /// Tries to subtract the term with given coefficient and `degree` from `self`, returning
+    /// an error if the particular term can not be subtracted from self without violating
+    /// constraints.
     ///
     /// # Errors
     /// Fails if the term with coefficient `coeff` and degree `degree` can not be subtracted from
@@ -78,16 +79,17 @@ pub trait MutablePolynomial<N> {
 }
 
 pub trait FreeSizePolynomial<N> {
-    /// Creates an instance of `Self` with the provided terms
+    /// Creates an instance of `self` with the provided terms.
     fn from_terms(terms: &[(N, usize)]) -> Self
     where
         Self: Sized;
 
-    /// Adds the term with given coefficient and `degree` to self.
+    /// Adds the term with given coefficient `coeff` and degree `degree` to `self`.
     fn add_term(&mut self, coeff: N, degree: usize);
 }
 
 pub trait Evaluable<N> {
+    /// Evaluates `self` at `point`, and returns the result.
     fn eval(&self, point: N) -> N;
 }
 
