@@ -1,13 +1,12 @@
 use alloc::vec::Vec;
-
 use core::ops::{Add, AddAssign, Div, DivAssign, Mul, Neg, Sub, SubAssign};
 
 use num::{Complex, One, Zero};
 use roots::find_roots_sturm;
 
-use crate::numerics::{AbsSqrt, Cbrt, IsPositive, PowUsize};
+use crate::numerics::{AbsSqrt, Cbrt, IsPositive};
 use crate::polynomial::polynomial::{first_nonzero_index, first_term};
-use crate::{Degree, SizedPolynomial, Term};
+use crate::{Degree, Evaluable, SizedPolynomial, Term};
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Roots<N> {
@@ -161,18 +160,10 @@ fn normalize<N: Zero + Copy + DivAssign>(values: &mut Vec<N>) {
     }
 }
 
-fn eval<S: SizedPolynomial<f64>>(poly: &S, point: f64) -> f64 {
-    let mut sum = 0f64;
-    for (val, degree) in poly.term_iter() {
-        sum += val * point.upow(degree);
-    }
-    sum
-}
-
 /// Finds the roots of the polynomial with terms defined by the given vector, where each element
 /// is a tuple consisting of the coefficient and degree. Order is not guaranteed.
-pub(crate) fn find_roots<S: SizedPolynomial<f64>>(poly: &S) -> Roots<f64> {
-    match poly.term_iter().collect::<Vec<(f64, usize)>>().as_slice() {
+pub(crate) fn find_roots<S: SizedPolynomial<f64> + Evaluable<f64>>(poly: &S) -> Roots<f64> {
+    match poly.terms_as_vec().as_slice() {
         [] => Roots::InfiniteRoots,
         [(_, 0)] => Roots::NoRoots,
         [_] => Roots::ManyRealRoots(vec![0.]),
@@ -247,7 +238,7 @@ pub(crate) fn find_roots<S: SizedPolynomial<f64>>(poly: &S) -> Roots<f64> {
                 for root in temp_roots {
                     let root = {
                         let x = root.round();
-                        if eval(poly, x).abs() < eval(poly, root).abs() {
+                        if poly.eval(x).abs() < poly.eval(root).abs() {
                             x
                         } else {
                             root

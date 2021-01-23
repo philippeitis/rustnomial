@@ -14,7 +14,7 @@ macro_rules! fmt_poly {
             N: Zero + One + IsPositive + PartialEq + Abs + Copy + IsNegativeOne + fmt::Display,
         {
             fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-                let mut iter = self.term_iter();
+                let mut iter = self.ordered_term_iter();
                 if let Some((coeff, degree)) = iter.next() {
                     write_leading_term(f, coeff, degree)?;
                     for (coeff, degree) in iter {

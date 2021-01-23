@@ -1,3 +1,4 @@
+use alloc::vec::Vec;
 use core::fmt;
 use core::fmt::Display;
 use core::ops::{
@@ -40,6 +41,17 @@ impl<N> Monomial<N> {
     }
 }
 
+impl<N: Zero + Copy> Monomial<N> {
+    pub fn ordered_term_iter(&self) -> impl Iterator<Item = (N, usize)> {
+        let mut item = if self.coefficient.is_zero() {
+            None
+        } else {
+            Some((self.coefficient, self.deg))
+        };
+        core::iter::from_fn(move || core::mem::take(&mut item))
+    }
+}
+
 impl<N: Copy + Zero> Monomial<N> {
     fn as_term(&self) -> Term<N> {
         Term::new(self.coefficient, self.deg)
@@ -63,6 +75,10 @@ impl<N: Copy + Zero> SizedPolynomial<N> for Monomial<N> {
         } else {
             Term::ZeroTerm
         }
+    }
+
+    fn terms_as_vec(&self) -> Vec<(N, usize)> {
+        self.ordered_term_iter().collect()
     }
 
     /// Returns the degree of the `Monomial`.
@@ -314,7 +330,7 @@ where
     N: Zero + One + PartialEq + Copy + IsNegativeOne + Display,
 {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        if let Some((coeff, degree)) = self.term_iter().next() {
+        if let Term::Term(coeff, degree) = self.as_term() {
             write_leading_term(f, coeff, degree)
         } else {
             write!(f, "0")

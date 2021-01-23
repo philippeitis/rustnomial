@@ -107,6 +107,10 @@ impl<N: Zero + Copy> SizedPolynomial<N> for SparsePolynomial<N> {
         }
     }
 
+    fn terms_as_vec(&self) -> Vec<(N, usize)> {
+        self.ordered_term_iter().collect()
+    }
+
     /// Returns the degree of the `SparsePolynomial` it is called on, corresponding to the
     /// largest non-zero term.
     ///
@@ -129,7 +133,7 @@ impl<N: Zero + Copy> SizedPolynomial<N> for SparsePolynomial<N> {
     /// use rustnomial::{SizedPolynomial, SparsePolynomial};
     /// let zero = SparsePolynomial::<i32>::zero();
     /// assert!(zero.is_zero());
-    /// assert!(zero.term_iter().next().is_none());
+    /// assert!(zero.ordered_term_iter().next().is_none());
     /// assert!(zero.terms.is_empty());
     /// ```
     fn zero() -> SparsePolynomial<N> {
@@ -285,9 +289,21 @@ where
     }
 }
 
-impl<N> SparsePolynomial<N> {
+impl<N: Copy> SparsePolynomial<N> {
     pub fn new(terms: BTreeMap<usize, N>) -> SparsePolynomial<N> {
         SparsePolynomial { terms }
+    }
+}
+
+impl<N: Copy + Zero> SparsePolynomial<N> {
+    pub fn ordered_term_iter(&self) -> impl Iterator<Item = (N, usize)> + '_ {
+        self.terms.iter().rev().filter_map(|(&deg, &coeff)| {
+            if coeff.is_zero() {
+                None
+            } else {
+                Some((coeff, deg))
+            }
+        })
     }
 }
 
@@ -702,7 +718,7 @@ where
     type Output = SparsePolynomial<N>;
 
     fn sub(mut self, rhs: Polynomial<N>) -> SparsePolynomial<N> {
-        for (coeff, deg) in rhs.term_iter() {
+        for (coeff, deg) in rhs.ordered_term_iter() {
             match self.terms.get_mut(&deg) {
                 None => {
                     self.terms.insert(deg, -coeff);

@@ -1,3 +1,4 @@
+use alloc::vec::Vec;
 use core::ops::{
     Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Shr, ShrAssign, Sub, SubAssign,
 };
@@ -31,6 +32,21 @@ impl<N: Sized> LinearBinomial<N> {
     /// ```
     pub fn new(coefficients: [N; 2]) -> LinearBinomial<N> {
         LinearBinomial { coefficients }
+    }
+}
+
+impl<N: Zero + Copy> LinearBinomial<N> {
+    pub fn ordered_term_iter(&self) -> impl Iterator<Item = (N, usize)> + '_ {
+        self.coefficients
+            .iter()
+            .enumerate()
+            .filter_map(|(index, &coeff)| {
+                if coeff.is_zero() {
+                    None
+                } else {
+                    Some((coeff, 1 - index))
+                }
+            })
     }
 }
 
@@ -80,6 +96,10 @@ impl<N: Copy + Zero> SizedPolynomial<N> for LinearBinomial<N> {
         term_with_deg(&self.coefficients, degree)
     }
 
+    fn terms_as_vec(&self) -> Vec<(N, usize)> {
+        self.ordered_term_iter().collect()
+    }
+
     /// Returns the degree of the `LinearBinomial`.
     ///
     /// # Example
@@ -111,7 +131,7 @@ impl<N: Copy + Zero> SizedPolynomial<N> for LinearBinomial<N> {
     /// use rustnomial::{SizedPolynomial, LinearBinomial};
     /// let zero = LinearBinomial::<i32>::zero();
     /// assert!(zero.is_zero());
-    /// assert!(zero.term_iter().next().is_none());
+    /// assert!(zero.ordered_term_iter().next().is_none());
     /// ```
     fn zero() -> Self {
         LinearBinomial::new([N::zero(); 2])

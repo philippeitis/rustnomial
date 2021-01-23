@@ -172,11 +172,28 @@ where
             self.terms = self.terms[ind..].to_vec();
         };
     }
+
+    pub fn ordered_term_iter(&self) -> impl Iterator<Item = (N, usize)> + '_ {
+        let start = first_nonzero_index(&self.terms);
+        let terms = &self.terms[start..];
+        let deg = terms.len().saturating_sub(1);
+        terms.iter().enumerate().filter_map(move |(index, &coeff)| {
+            if coeff.is_zero() {
+                None
+            } else {
+                Some((coeff, deg - index))
+            }
+        })
+    }
 }
 
 impl<N: Copy + Zero> SizedPolynomial<N> for Polynomial<N> {
     fn term_with_degree(&self, degree: usize) -> Term<N> {
         term_with_deg(&self.terms, degree)
+    }
+
+    fn terms_as_vec(&self) -> Vec<(N, usize)> {
+        self.ordered_term_iter().collect()
     }
 
     /// Returns the degree of the `Polynomial` it is called on, corresponding to the
@@ -201,7 +218,7 @@ impl<N: Copy + Zero> SizedPolynomial<N> for Polynomial<N> {
     /// use rustnomial::{SizedPolynomial, Polynomial};
     /// let zero = Polynomial::<i32>::zero();
     /// assert!(zero.is_zero());
-    /// assert!(zero.term_iter().next().is_none());
+    /// assert!(zero.ordered_term_iter().next().is_none());
     /// assert!(zero.terms.is_empty());
     /// ```
     fn zero() -> Polynomial<N> {
@@ -605,7 +622,7 @@ where
     /// assert_eq!(a, b - c);
     /// ```
     fn eq(&self, other: &Self) -> bool {
-        self.term_iter().eq(other.term_iter())
+        self.ordered_term_iter().eq(other.ordered_term_iter())
     }
 }
 
@@ -653,8 +670,9 @@ where
 {
     type Output = Polynomial<N>;
 
-    fn neg(self) -> Polynomial<N> {
-        Polynomial::new(self.terms.iter().map(|&x| -x).collect())
+    fn neg(mut self) -> Polynomial<N> {
+        self.terms.iter_mut().for_each(|x| *x = -*x);
+        self
     }
 }
 
@@ -664,28 +682,9 @@ where
 {
     type Output = Polynomial<N>;
 
-    fn sub(self, rhs: Polynomial<N>) -> Polynomial<N> {
-        let lhs = self.terms;
-        let rhs = rhs.terms;
-        if rhs.len() > lhs.len() {
-            let mut terms = rhs.clone();
-            let offset = rhs.len() - lhs.len();
-
-            terms[..offset].iter_mut().for_each(|term| *term = -*term);
-            terms[offset..]
-                .iter_mut()
-                .zip(lhs)
-                .for_each(|(term, val)| *term = val - *term);
-
-            Polynomial::new(terms)
-        } else {
-            let mut terms = lhs.clone();
-            terms[lhs.len() - rhs.len()..]
-                .iter_mut()
-                .zip(rhs)
-                .for_each(|(term, val)| *term -= val);
-            Polynomial::new(terms)
-        }
+    fn sub(mut self, rhs: Polynomial<N>) -> Polynomial<N> {
+        self -= rhs;
+        self
     }
 }
 
@@ -693,27 +692,59 @@ impl<N> SubAssign<Polynomial<N>> for Polynomial<N>
 where
     N: Neg<Output = N> + Sub<Output = N> + SubAssign + Copy + Zero,
 {
-    fn sub_assign(&mut self, rhs: Polynomial<N>) {
-        let lhs = &self.terms;
-        let rhs = rhs.terms;
+    fn sub_assign(&mut self, mut rhs: Polynomial<N>) {
+        // This impl eats rhs's terms.
+        if rhs.terms.len() > self.terms.len() {
+            let offset = rhs.terms.len() - self.terms.len();
+            let (right, left) = rhs.terms.split_at_mut(offset);
 
-        if rhs.len() > lhs.len() {
-            let mut terms = rhs.clone();
-            let offset = rhs.len() - lhs.len();
-
-            for index in terms[..offset].iter_mut() {
-                *index = -*index;
-            }
-
-            for (index, &val) in terms[offset..].iter_mut().zip(lhs) {
-                *index = val - *index;
-            }
-            self.terms = terms;
+            right.iter_mut().for_each(|term| *term = -*term);
+            left.iter_mut()
+                .zip(&self.terms)
+                .for_each(|(term, &val)| *term = val - *term);
+            self.terms = rhs.terms;
         } else {
-            let offset = lhs.len() - rhs.len();
-            for (index, val) in self.terms[offset..].iter_mut().zip(rhs) {
-                *index -= val;
-            }
+            let offset = self.terms.len() - rhs.terms.len();
+            self.terms[offset..]
+                .iter_mut()
+                .zip(rhs.terms)
+                .for_each(|(term, val)| *term -= val);
+        }
+    }
+}
+
+impl<N> Sub<&Polynomial<N>> for Polynomial<N>
+where
+    N: Zero + Copy + Sub<Output = N> + SubAssign + Neg<Output = N>,
+{
+    type Output = Polynomial<N>;
+
+    fn sub(mut self, rhs: &Polynomial<N>) -> Polynomial<N> {
+        self -= rhs;
+        self
+    }
+}
+
+impl<N> SubAssign<&Polynomial<N>> for Polynomial<N>
+where
+    N: Neg<Output = N> + Sub<Output = N> + SubAssign + Copy + Zero,
+{
+    fn sub_assign(&mut self, rhs: &Polynomial<N>) {
+        // This impl eats preprends the relevant terms from rhs into self.
+        if rhs.terms.len() > self.terms.len() {
+            let offset = rhs.terms.len() - self.terms.len();
+            let (right, left) = rhs.terms.split_at(offset);
+            self.terms
+                .iter_mut()
+                .zip(left)
+                .for_each(|(lhs, &rhs)| *lhs = *lhs - rhs);
+            self.terms.splice(0..0, right.iter().map(|coeff| -*coeff));
+        } else {
+            let offset = self.terms.len() - rhs.terms.len();
+            self.terms[offset..]
+                .iter_mut()
+                .zip(&rhs.terms)
+                .for_each(|(term, &val)| *term -= val);
         }
     }
 }
@@ -726,9 +757,9 @@ where
 
     fn add(self, rhs: Polynomial<N>) -> Polynomial<N> {
         let (mut terms, small) = if rhs.terms.len() > self.terms.len() {
-            (rhs.terms.clone(), &self.terms)
+            (rhs.terms, &self.terms)
         } else {
-            (self.terms.clone(), &rhs.terms)
+            (self.terms, &rhs.terms)
         };
 
         let offset = terms.len() - small.len();

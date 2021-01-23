@@ -1,3 +1,4 @@
+use alloc::vec::Vec;
 use core::ops::{
     Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Shr, ShrAssign, Sub, SubAssign,
 };
@@ -33,6 +34,21 @@ impl<N: Sized> QuadraticTrinomial<N> {
     /// ```
     pub fn new(coefficients: [N; 3]) -> QuadraticTrinomial<N> {
         QuadraticTrinomial { coefficients }
+    }
+}
+
+impl<N: Zero + Copy> QuadraticTrinomial<N> {
+    pub fn ordered_term_iter(&self) -> impl Iterator<Item = (N, usize)> + '_ {
+        self.coefficients
+            .iter()
+            .enumerate()
+            .filter_map(|(index, &coeff)| {
+                if coeff.is_zero() {
+                    None
+                } else {
+                    Some((coeff, 2 - index))
+                }
+            })
     }
 }
 
@@ -110,6 +126,10 @@ impl<N: Copy + Zero> SizedPolynomial<N> for QuadraticTrinomial<N> {
     /// ```
     fn term_with_degree(&self, degree: usize) -> Term<N> {
         term_with_deg(&self.coefficients, degree)
+    }
+
+    fn terms_as_vec(&self) -> Vec<(N, usize)> {
+        self.ordered_term_iter().collect()
     }
 
     /// Returns the degree of the `QuadraticTrinomial`.
