@@ -5,7 +5,7 @@ extern crate rustnomial;
 mod bench {
     extern crate test;
 
-    use std::collections::HashMap;
+    use std::collections::BTreeMap;
 
     use self::test::{black_box, Bencher};
 
@@ -129,25 +129,6 @@ mod bench {
                 ap.terms = terms.clone();
                 ap.trim();
                 assert_eq!(expected_vec, ap.terms)
-            })
-        });
-    }
-
-    #[bench]
-    fn bench_trim_sparse(b: &mut Bencher) {
-        let mut ap = SparsePolynomial::from(vec![]);
-        let mut terms = HashMap::new();
-        terms.insert(0, 2);
-        terms.insert(1, 1);
-        terms.insert(2, 0);
-        let mut expected_terms = HashMap::new();
-        expected_terms.insert(0, 2);
-        expected_terms.insert(1, 1);
-        b.iter(|| {
-            black_box({
-                ap.terms = terms.clone();
-                ap.trim();
-                assert_eq!(expected_terms, ap.terms)
             })
         });
     }
