@@ -1222,6 +1222,14 @@ mod test {
     }
 
     #[test]
+    fn test_trim() {
+        let input_ouput_vecs = vec![(vec![0, 1, 2], vec![1, 2]), (vec![0; 10000], vec![])];
+        for (test, expected) in input_ouput_vecs.into_iter() {
+            let a = Polynomial::new(test);
+            assert_eq!(expected, a.terms)
+        }
+    }
+    #[test]
     fn test_degree() {
         let a = Polynomial::new(vec![0, 0, 0, -1, -2, 3]);
         assert_eq!(Degree::Num(2), a.degree());

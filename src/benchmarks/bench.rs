@@ -107,14 +107,12 @@ mod bench {
 
     #[bench]
     fn bench_trim_empty_dense(b: &mut Bencher) {
-        let mut ap = Polynomial::new(vec![]);
+        let mut ap = Polynomial::zero();
         let terms = vec![0; 10000];
-        let empty_vec = Vec::<i32>::new();
         b.iter(|| {
             black_box({
                 ap.terms = terms.clone();
                 ap.trim();
-                assert_eq!(empty_vec, ap.terms)
             })
         });
     }
@@ -123,12 +121,10 @@ mod bench {
     fn bench_trim_dense(b: &mut Bencher) {
         let mut ap = Polynomial::new(vec![]);
         let terms = vec![0, 1, 2];
-        let expected_vec = vec![1, 2];
         b.iter(|| {
             black_box({
                 ap.terms = terms.clone();
                 ap.trim();
-                assert_eq!(expected_vec, ap.terms)
             })
         });
     }
