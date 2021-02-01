@@ -145,14 +145,9 @@ where
     /// let polynomial = Polynomial::new(vec![1.0, 4.0, 4.0]);
     /// ```
     pub fn new(terms: Vec<N>) -> Polynomial<N> {
-        let first_non_zero = first_nonzero_index(&terms);
-        Polynomial {
-            terms: if first_non_zero != 0 {
-                terms[first_non_zero..].to_vec()
-            } else {
-                terms
-            },
-        }
+        let mut p = Polynomial { terms };
+        p.trim();
+        p
     }
 
     /// Reduces the size of the `Polynomial` in memory if the leading terms are zero.
@@ -169,8 +164,8 @@ where
     pub fn trim(&mut self) {
         let ind = first_nonzero_index(&self.terms);
         if ind != 0 {
-            self.terms = self.terms[ind..].to_vec();
-        };
+            self.terms.drain(0..ind);
+        }
     }
 
     pub fn ordered_term_iter(&self) -> impl Iterator<Item = (N, usize)> + '_ {
