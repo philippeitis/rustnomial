@@ -234,11 +234,7 @@ macro_rules! from_sparse_a_to_b {
     ($A:ty, $B:ty) => {
         impl From<SparsePolynomial<$A>> for SparsePolynomial<$B> {
             fn from(item: SparsePolynomial<$A>) -> Self {
-                let mut map = BTreeMap::<usize, $B>::new();
-                for (&deg, &val) in item.terms.iter() {
-                    map.insert(deg, val as $B);
-                }
-                SparsePolynomial::new(map)
+                SparsePolynomial::new(item.terms.iter().map(|(&k, &v)| (k, v as $B)).collect())
             }
         }
     };
