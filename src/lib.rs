@@ -3,6 +3,7 @@
 #![deny(clippy::doc_markdown)]
 #![deny(clippy::redundant_clone)]
 #![deny(clippy::needless_pass_by_value)]
+#![cfg_attr(feature = "array_polynomials", feature(min_const_generics))]
 
 #[macro_use]
 extern crate alloc;

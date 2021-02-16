@@ -9,3 +9,6 @@ pub mod polynomial;
 pub mod sparsepolynomial;
 pub mod traits;
 pub mod trinomial;
+
+#[cfg(feature = "array_polynomials")]
+pub mod array_polynomial;
