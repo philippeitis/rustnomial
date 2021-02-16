@@ -29,11 +29,11 @@ pub struct Polynomial<N> {
     pub terms: Vec<N>,
 }
 
-pub(crate) fn first_nonzero_index<N>(terms: &[N]) -> usize
+pub(crate) fn first_nonzero_index<N>(coeffs: &[N]) -> usize
 where
     N: Zero + Copy,
 {
-    for (degree, chunk) in terms.chunks_exact(4).enumerate() {
+    for (degree, chunk) in coeffs.chunks_exact(4).enumerate() {
         for (index, &val) in chunk.iter().enumerate() {
             if !val.is_zero() {
                 return degree * 4 + index;
@@ -41,8 +41,8 @@ where
         }
     }
 
-    let mut len = terms.chunks_exact(4).len() * 4;
-    for &value in terms.chunks_exact(4).remainder().iter() {
+    let mut len = coeffs.chunks_exact(4).len() * 4;
+    for &value in coeffs.chunks_exact(4).remainder().iter() {
         if !value.is_zero() {
             return len;
         }
@@ -83,15 +83,15 @@ where
     }
 }
 
-fn degree<N>(poly_vec: &[N]) -> Degree
+pub(crate) fn degree<N>(coeffs: &[N]) -> Degree
 where
     N: Zero + Copy,
 {
-    let index = first_nonzero_index(poly_vec);
-    if index == poly_vec.len() {
+    let index = first_nonzero_index(coeffs);
+    if index == coeffs.len() {
         Degree::NegInf
     } else {
-        Degree::Num(poly_vec.len() - index - 1)
+        Degree::Num(coeffs.len() - index - 1)
     }
 }
 
