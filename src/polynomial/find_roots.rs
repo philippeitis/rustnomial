@@ -24,6 +24,7 @@ pub enum Roots<N> {
     OnlyRealRoots(Vec<f64>),
 }
 
+#[inline(always)]
 pub(crate) fn discriminant_trinomial<N>(a: N, b: N, c: N) -> N
 where
     N: Copy + Mul<Output = N> + Sub<Output = N> + From<u8>,
@@ -117,7 +118,7 @@ where
 fn div<
     N: Zero + Copy + Neg<Output = N> + AddAssign + SubAssign + Mul<Output = N> + Div<Output = N> + One,
 >(
-    values: &mut Vec<N>,
+    values: &mut [N],
     root: N,
 ) -> Vec<N> {
     let zero = N::zero();
@@ -149,7 +150,7 @@ fn div<
     div
 }
 
-fn normalize<N: Zero + Copy + DivAssign>(values: &mut Vec<N>) {
+fn normalize<N: Zero + Copy + DivAssign>(values: &mut [N]) {
     let f_i = first_nonzero_index(values);
     if f_i == values.len() {
         return;
