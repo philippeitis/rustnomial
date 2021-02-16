@@ -4,6 +4,7 @@
 #![deny(clippy::redundant_clone)]
 #![deny(clippy::needless_pass_by_value)]
 #![cfg_attr(feature = "array_polynomials", feature(min_const_generics))]
+#![cfg_attr(feature = "sparse_poly_trim", feature(btree_retain))]
 
 #[macro_use]
 extern crate alloc;

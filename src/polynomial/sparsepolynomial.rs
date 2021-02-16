@@ -291,6 +291,28 @@ impl<N: Copy> SparsePolynomial<N> {
     }
 }
 
+#[cfg(feature = "sparse_poly_trim")]
+impl<N> SparsePolynomial<N>
+where
+    N: Zero + Copy,
+{
+    /// Reduces the size of the `SparsePolynomial` in memory if there exist terms which are zero.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use rustnomial::SparsePolynomial;
+    /// use std::collections::BTreeMap;
+    /// let mut polynomial = SparsePolynomial::from(vec![0.0f32, 0.0, 1.0, 0.0, 4.0, 4.0]);
+    /// polynomial.trim();
+    /// let expected: BTreeMap<usize, f32> = vec![(3usize, 1.0f32), (1, 4.0), (0, 4.0)].into_iter().collect();
+    /// assert_eq!(expected, polynomial.terms);
+    /// ```
+    pub fn trim(&mut self) {
+        self.terms.retain(|_, val| !val.is_zero());
+    }
+}
+
 impl<N: Copy + Zero> SparsePolynomial<N> {
     pub fn ordered_term_iter(&self) -> impl Iterator<Item = (N, usize)> + '_ {
         self.terms.iter().rev().filter_map(|(&deg, &coeff)| {

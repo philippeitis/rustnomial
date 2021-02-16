@@ -24,6 +24,8 @@ path = "src/benchmarks/bench.rs"
 
 [features]
 default = []
+array_polynomials = []
+sparse_poly_trim = []
 
 [dependencies]
 num = "0.3.0"
