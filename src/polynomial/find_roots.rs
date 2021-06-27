@@ -161,10 +161,9 @@ fn normalize<N: Zero + Copy + DivAssign>(values: &mut [N]) {
     }
 }
 
-/// Finds the roots of the polynomial with terms defined by the given vector, where each element
-/// is a tuple consisting of the coefficient and degree. Order is not guaranteed.
-pub(crate) fn find_roots<S: SizedPolynomial<f64> + Evaluable<f64>>(poly: &S) -> Roots<f64> {
-    match poly.terms_as_vec().as_slice() {
+/// Finds roots for special cases (eg. cubic polynomials and below, and monomials).
+pub(crate) fn find_roots_special(poly: &[(f64, usize)]) -> Option<Roots<f64>> {
+    Some(match poly {
         [] => Roots::InfiniteRoots,
         [(_, 0)] => Roots::NoRoots,
         [_] => Roots::ManyRealRoots(vec![0.]),
@@ -201,65 +200,83 @@ pub(crate) fn find_roots<S: SizedPolynomial<f64> + Evaluable<f64>>(poly: &S) -> 
                 _ => unreachable!(),
             }
         }
-        [vals @ ..] => {
-            // NOTE: According to
-            // https://en.wikipedia.org/wiki/Geometrical_properties_of_polynomial_roots
-            // the largest root can be no larger than the largest coefficient divided by the
-            // coefficient of the degree 0 term (assuming it isn't zero - but in that case,
-            // we can just divide the polynomial by x).
-            let (leading, degree) = vals[0];
-            let mut values = vec![0f64; degree + 1];
-            let mut nvalues = vec![0f64; degree + 1];
+        _ => return None,
+    })
+}
 
-            nvalues[0] = leading;
-            for (val, val_deg) in vals[1..].iter() {
-                values[degree - val_deg] = *val / leading;
-                nvalues[degree - val_deg] = *val;
-            }
+/// Finds the roots of the polynomial with terms defined by the given vector, where each element
+/// is a tuple consisting of the coefficient and degree. Order is not guaranteed.
+pub(crate) fn find_roots<S: SizedPolynomial<f64> + Evaluable<f64>>(poly: &S) -> Roots<f64> {
+    let vals = poly.terms_as_vec();
 
-            let mut roots = vec![];
-            loop {
-                let temp_roots: Vec<f64> = find_roots_sturm(&values[1..], &mut 1e-8f64)
-                    .into_iter()
-                    .filter_map(Result::ok)
-                    .collect();
+    if let Some(roots) = find_roots_special(&vals) {
+        return roots;
+    }
 
-                if temp_roots.is_empty() {
-                    match poly.degree() {
-                        Degree::Num(x) => {
-                            if x == temp_roots.len() {
-                                return Roots::ManyRealRoots(roots);
-                            }
-                        }
-                        _ => unreachable!("Polynomial should not be zero in this stage."),
+    // NOTE: According to
+    // https://en.wikipedia.org/wiki/Geometrical_properties_of_polynomial_roots
+    // the largest root can be no larger than the largest coefficient divided by the
+    // coefficient of the degree 0 term (assuming it isn't zero - but in that case,
+    // we can just divide the polynomial by x).
+    let (leading, degree) = vals[0];
+    let mut values = vec![0f64; degree + 1];
+    let mut nvalues = vec![0f64; degree + 1];
+
+    nvalues[0] = leading;
+    for (val, val_deg) in vals[1..].iter() {
+        values[degree - val_deg] = *val / leading;
+        nvalues[degree - val_deg] = *val;
+    }
+
+    let mut roots = vec![];
+    loop {
+        let temp_roots: Vec<f64> = find_roots_sturm(&values[1..], &mut 1e-8f64)
+            .into_iter()
+            .filter_map(Result::ok)
+            .collect();
+
+        if temp_roots.is_empty() {
+            match poly.degree() {
+                Degree::Num(x) => {
+                    if x == temp_roots.len() {
+                        return Roots::ManyRealRoots(roots);
                     }
-                    return Roots::OnlyRealRoots(roots);
                 }
-
-                for root in temp_roots {
-                    let root = {
-                        let x = root.round();
-                        if poly.eval(x).abs() < poly.eval(root).abs() {
-                            x
-                        } else {
-                            root
-                        }
-                    };
-                    roots.push(root);
-                    nvalues = div(&mut nvalues, root);
-                }
-
-                if nvalues.is_empty() {
-                    return Roots::ManyRealRoots(roots);
-                }
-                normalize(&mut nvalues);
-                let leading = nvalues[0];
-                values = nvalues
-                    .iter()
-                    .map(|&val| val / leading)
-                    .collect::<Vec<f64>>();
+                _ => unreachable!("Polynomial should not be zero in this stage."),
             }
+            return if roots.is_empty() {
+                Roots::NoRoots
+            } else {
+                Roots::OnlyRealRoots(roots)
+            };
         }
+
+        for root in temp_roots {
+            let root = {
+                let x = root.round();
+                if poly.eval(x).abs() < poly.eval(root).abs() {
+                    x
+                } else {
+                    root
+                }
+            };
+            roots.push(root);
+            nvalues = div(&mut nvalues, root);
+        }
+
+        if nvalues.is_empty() {
+            return if roots.is_empty() {
+                Roots::NoRoots
+            } else {
+                Roots::ManyRealRoots(roots)
+            };
+        }
+        normalize(&mut nvalues);
+        let leading = nvalues[0];
+        values = nvalues
+            .iter()
+            .map(|&val| val / leading)
+            .collect::<Vec<f64>>();
     }
 }
 
@@ -315,6 +332,12 @@ mod test {
             Roots::ManyRealRoots(vec![-3., -2., -2., -2., -2., -2., -2., -2., -2., -2.]),
             find_roots(&p)
         );
+    }
+
+    #[test]
+    fn test_quad_no_real_roots() {
+        let p = Polynomial::<f64>::new(vec![1.0, 1.0, 1.0, 1.0, 1.0]);
+        assert_eq!(Roots::NoRoots, find_roots(&p));
     }
 
     // #[test]
