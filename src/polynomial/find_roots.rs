@@ -26,23 +26,23 @@ pub enum Roots<N> {
 
 #[inline(always)]
 pub(crate) fn discriminant_trinomial<N>(a: N, b: N, c: N) -> N
-    where
-        N: Copy + Mul<Output=N> + Sub<Output=N> + From<u8>,
+where
+    N: Copy + Mul<Output = N> + Sub<Output = N> + From<u8>,
 {
     b * b - a * c * N::from(4)
 }
 
 pub(crate) fn trinomial_roots<N>(a: N, b: N, c: N) -> Roots<N>
-    where
-        N: Copy
-        + Mul<Output=N>
-        + Div<Output=N>
-        + Sub<Output=N>
-        + Add<Output=N>
+where
+    N: Copy
+        + Mul<Output = N>
+        + Div<Output = N>
+        + Sub<Output = N>
+        + Add<Output = N>
         + AbsSqrt
         + IsPositive
         + Zero
-        + Neg<Output=N>
+        + Neg<Output = N>
         + From<u8>,
 {
     let discriminant = discriminant_trinomial(a, b, c);
@@ -63,18 +63,18 @@ pub(crate) fn trinomial_roots<N>(a: N, b: N, c: N) -> Roots<N>
 
 #[allow(clippy::many_single_char_names)]
 pub(crate) fn cubic_roots<N>(a: N, b: N, c: N, d: N) -> Roots<N>
-    where
-        N: Copy
-        + Mul<Output=N>
-        + Div<Output=N>
-        + Sub<Output=N>
-        + Add<Output=N>
+where
+    N: Copy
+        + Mul<Output = N>
+        + Div<Output = N>
+        + Sub<Output = N>
+        + Add<Output = N>
         + AbsSqrt
         + Cbrt
         + IsPositive
         + Zero
         + One
-        + Neg<Output=N>
+        + Neg<Output = N>
         + From<u8>,
 {
     let sqr = |x: N| x * x;
@@ -116,7 +116,7 @@ pub(crate) fn cubic_roots<N>(a: N, b: N, c: N, d: N) -> Roots<N>
 // }
 
 fn div<
-    N: Zero + Copy + Neg<Output=N> + AddAssign + SubAssign + Mul<Output=N> + Div<Output=N> + One,
+    N: Zero + Copy + Neg<Output = N> + AddAssign + SubAssign + Mul<Output = N> + Div<Output = N> + One,
 >(
     values: &mut [N],
     root: N,
@@ -200,7 +200,7 @@ pub(crate) fn find_roots_special(poly: &[(f64, usize)]) -> Option<Roots<f64>> {
                 _ => unreachable!(),
             }
         }
-        _ => return None
+        _ => return None,
     })
 }
 
@@ -280,7 +280,6 @@ pub(crate) fn find_roots<S: SizedPolynomial<f64> + Evaluable<f64>>(poly: &S) -> 
     }
 }
 
-
 #[cfg(test)]
 mod test {
     use crate::polynomial::find_roots::{cubic_roots, find_roots};
@@ -338,10 +337,7 @@ mod test {
     #[test]
     fn test_quad_no_real_roots() {
         let p = Polynomial::<f64>::new(vec![1.0, 1.0, 1.0, 1.0, 1.0]);
-        assert_eq!(
-            Roots::NoRoots,
-            find_roots(&p)
-        );
+        assert_eq!(Roots::NoRoots, find_roots(&p));
     }
 
     // #[test]
