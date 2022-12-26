@@ -29,4 +29,4 @@ sparse_poly_trim = []
 
 [dependencies]
 num = "0.4.0"
-roots = "0.0.7"
+roots = "0.0.8"
